@@ -1,0 +1,104 @@
+:root {
+    --color-bg: #282c34;
+    --color-text: #c6d0f5;
+    /* --color-blue: #8caaee; */
+    --color-blue: rgb(148, 177, 255);
+    --color-green: #a6d189;
+    --color-purple: #babbf1;
+    --color-yellow: #e5c890;
+    --color-red: #e78284;
+    --color-orange: #ef9f76;
+    --tab-full-width: 3rem;
+}
+
+@font-face {
+    font-family: 'author';
+    src: url(./fonts/author/Author-Extralight.otf);
+    font-weight: 100;
+}
+
+@font-face {
+    font-family: 'author';
+    src: url(./fonts/author/Author-Light.otf);
+    font-weight: 200;
+}
+
+@font-face {
+    font-family: 'author';
+    src: url(./fonts/author/Author-Regular.otf);
+    font-weight: 300;
+}
+
+@font-face {
+    font-family: 'author';
+    src: url(./fonts/author/Author-Medium.otf);
+    font-weight: 400;
+}
+
+@font-face {
+    font-family: 'author';
+    src: url(./fonts/author/Author-Semibold.otf);
+    font-weight: 600;
+}
+
+@font-face {
+    font-family: 'author';
+    src: url(./fonts/author/Author-Bold.otf);
+    font-weight: 900;
+}
+
+* {
+    user-select: none;
+    -webkit-user-select: none;
+    font-family: 'author', sans-serif;
+    font-weight: 200;
+    color: var(--color-text);
+    text-decoration-thickness: 0.1rem;
+}
+
+html {
+    background-color: var(--color-bg);
+    position: relative;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+.noisy::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%0A%3Csvg xmlns='http://www.w3.org/2000/svg' width='500' height='500'%3E%3Cfilter id='noise' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeBlend mode='screen'/%3E%3C/filter%3E%3Crect width='500' height='500' filter='url(%23noise)' opacity='0.5'/%3E%3C/svg%3E");
+    mix-blend-mode: soft-light;
+    pointer-events: none;
+}
+
+#editor {
+    font-size: 23pt;
+    max-width: min(700px, 90vw);
+    margin: 10vw auto;
+    white-space: pre-wrap;
+    text-shadow: 2px 4px 3px rgba(0, 0, 0, 0.3);
+}
+
+#editor p {
+    margin: 0;
+    line-height: 2.15rem;
+    min-height: 1rem;
+}
+
+.caret {
+    position: absolute;
+    background-color: currentColor;
+    width: 1px;
+    transform: translateX(-50%);
+    height: 1rem;
+    pointer-events: none;
+    transition: left 0.1s, top 0.1s;
+}
+
+#info {
+    font-size: 20pt;
+    position: fixed;
+    left: 10px;
+    bottom: 10px;
+}
