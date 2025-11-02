@@ -5,18 +5,54 @@
     <title>Derive</title>
 
     <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/png" href="shadow.png">
+    <link rel="apple-touch-icon" href="shadow.png">
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Derive">
+    <meta name="format-detection" content="telephone=no">
+
+    <script>
+        window.MathJax = {
+            loader: {load: ['input/tex', 'output/svg']},
+            tex: {packages: ['base', 'ams'], },
+            svg: {fontCache: 'global'},
+            options: {
+                // enableMenu: false,
+                renderActions: {
+                    addMenu: [],
+                    assistiveMml: [],
+                    explorer: []
+                },
+                // a11y: {
+                //     speakText: false,
+                //     brailleText: false
+                // }
+            }
+        };
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/mathjax@4/startup.js"></script>
 </head>
 
 <body>
-    <input style="position: fixed; width: 0; height: 0; border: none; outline: none; background-color: transparent;"
+    <input
+        style="position: fixed; width: 0; height: 0; border: none; outline: none; background-color: transparent; font-size: 32px"
         type="text" id="focus" value="Focus" />
     <!-- <input style="background-color: transparent;" type="text" id="unfocus" value="Unfocus" /> -->
-    <div id="unfocus">Unfocus</div>
+    <!-- <div id="unfocus">Unfocus</div> -->
 
-    <div id="editor">Hello world!</div>
+    <div id="editor"></div>
+    <div id="placeholder" onclick="window.editor.input.caret.updateCarets([window.editor.doc.chars-1])"></div>
 
-    <div id="info" style="text-shadow: 2px 4px 3px rgba(0,0,0,0.3);"></div>
+    <div id="leftInfo" class="info noisy"></div>
+    <div id="rightInfo" class="info noisy"></div>
 
+    <script>
+        window.MathJax = MathJax;
+    </script>
     <script type="module" src="main.js"></script>
 </body>
 

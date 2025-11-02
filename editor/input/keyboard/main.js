@@ -1,14 +1,19 @@
 class Keyboard {
     constructor(editor, layout) {
         this.editor = editor;
+        this.layout = layout;
 
         this.commandSets = [];
         import("./hotkeys.js").then(hotkey => {
             this.commandSets.push(hotkey.createCommandSet(this.editor));
 
-            if (layout == "regular") {
+            if (layout === "regular") {
                 import("./regular.js").then(regular => {
                     this.commandSets.push(regular.createCommandSet(this.editor));
+                });
+            } else if (layout === "vim") {
+                import("./vim.js").then(vim => {
+                    this.commandSets.push(vim.createCommandSet(this.editor));
                 });
             }
         })

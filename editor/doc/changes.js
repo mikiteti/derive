@@ -66,23 +66,59 @@ const splitNode = (node) => {
 class Change {
     constructor(editor) {
         this.editor = editor;
+
+        this.callbacks = [];
+        this.emptyCallbackList();
+        this.stickLeft = [];
     }
 
-    delete(from = this.editor.render.caret.position - 1, to = from + 1) {
-        console.log(`removing from ${from} to ${to}`);
+    addCallback(callback) {
+        this.callbacks.push(callback);
+    }
+
+    runCallbacks(callbackList = this.callbackList) {
+        let changedLines = callbackList.changedLines;
+        for (let callback of this.callbacks) callback(this.editor, changedLines);
+        this.emptyCallbackList();
+    }
+
+    emptyCallbackList() {
+        this.callbackList = { changedLines: new Set() };
+    }
+
+    completeCallbackList(callbackList) {
+        for (let line of callbackList.changedLines) this.callbackList.changedLines.add(line);
+    }
+
+    delete(from, to = from + 1, { noCallback = false, markStickLeft = false } = {}) {
+        console.log(`deleting from ${from} to ${to}`);
+        if (from === to) return [];
+        if (from > to) [from, to] = [to, from];
+
         let line1 = this.editor.doc.lineAt(from), line2 = this.editor.doc.lineAt(to);
+        let positionsToShift = line2.positions.filter(e => e.index >= to).map(e => [e, e.index - (to - from)]);
+        let positionsToMaybeDelete = [line1, ...this.editor.doc.linesBetween(line1.number, line2.number), line2]
+            .map(e => e.positions).flat()
+            .filter(e => e.index >= from && e.index < to);
+
         if (line1 == line2) {
             let text = line1.text.substring(0, from - line1.from) + line1.text.substring(to - line1.from);
             line1.update(text);
 
-            return [line1];
+            for (let pos of positionsToShift) pos[0].reassign(pos[1]);
+            if (markStickLeft) this.stickLeft = line1.positions.filter(e => (e.index === from && positionsToShift.map(e => e[0]).indexOf(e) === -1));
+            for (let pos of positionsToMaybeDelete) pos.stickWhenDeleted ? pos.reassign(from) : pos.delete();
+
+            let changedLines = [line1];
+            if (!noCallback) this.runCallbacks({ changedLines });
+            else this.completeCallbackList({ changedLines });
+            return changedLines;
         }
 
-        let newText = line1.text.substring(0, from - line1.from) + line2.text.substring(to - line2.from); // TODO
+        let newText = line1.text.substring(0, from - line1.from) + line2.text.substring(to - line2.from);
         let linesToRemove = this.editor.doc.linesBetween(line1.number, line2.number).concat([line2]);
         // console.log({ linesToRemove: linesToRemove.map(line => line.text) });
         for (let line of linesToRemove) {
-            // console.log(line.text, line.parent.children, line.parent);
             line.delete();
             // console.log(line.text, line.parent.children, line.parent);
         }
@@ -92,30 +128,25 @@ class Change {
         while (removedChildren[0]?.parent?.parent) { // deleting empty ancestors
             let parents = [];
             for (let child of removedChildren) if (parents.at(-1) !== child.parent && child.parent.children.length == 0) parents.push(child.parent);
-            // console.log("empty parents of removed nodes", parents);
 
             removedChildren = [];
             for (let parent of parents) {
                 if (parent.children.length === 0) {
                     removedChildren.push(parent);
-                    // console.log("deleting", parent);
                     parent.delete();
                     continue;
                 }
             }
         }
-        // console.log(this.editor.doc);
 
         let changedLayers = [[line1.parent, line2.parent]];
         while (changedLayers[0][0].parent?.parent) changedLayers.unshift(changedLayers[0].map(n => n.parent));
-        // console.log(changedLayers);
 
         for (let changedNodes of changedLayers) {
             while (changedNodes.length && changedNodes[0].parent) {
                 changedNodes = changedNodes.filter(n => n.isTooSmall);
                 if (changedNodes.length == 0) break;
                 if (changedNodes[1] && changedNodes[0] == changedNodes[1]) changedNodes.pop();
-                // console.log("rebalancing changed nodes: ", changedNodes);
                 let newChanged = [];
                 newChanged = newChanged.concat(mergeOrBorrow(changedNodes[0].previousSibling, changedNodes[0]));
                 if (changedNodes.length > 1) newChanged = newChanged.concat(mergeOrBorrow(changedNodes[1], changedNodes[1].nextSibling));
@@ -124,18 +155,38 @@ class Change {
             }
         }
 
-        return [line1, ...linesToRemove];
+        for (let pos of positionsToShift) pos[0].reassign(pos[1]);
+        for (let pos of positionsToMaybeDelete) pos.stickWhenDeleted ? pos.reassign(from) : pos.delete();
+
+        let changedLines = [line1, ...linesToRemove];
+        if (!noCallback) this.runCallbacks({ changedLines });
+        else this.completeCallbackList({ changedLines });
+        return changedLines;
     }
 
-    insert(string, at = this.editor.render.caret.position) {
+    insert(string, at, { noCallback = false, stickLeft = false } = {}) {
+        if (string === "") return [];
+        if (at.index) at = at.index;
+
         // console.log(`inserting "${string}" at ${at}`);
+        let positionsToShift = this.editor.doc.lineAt(at).positions.filter(e =>
+            stickLeft || e.stickLeftOnInsert || this.stickLeft.indexOf(e) !== -1 ?
+                e.index > at :
+                e.index >= at).map(e => [e, e.index + string.length]);
+        this.stickLeft = [];
+
         let lines = string.split("\n");
         if (lines.length == 1) {
             let line = this.editor.doc.lineAt(at);
             let text = line.text.substring(0, at - line.from) + string + line.text.substring(at - line.from);
             line.update(text);
 
-            return [line];
+            for (let pos of positionsToShift) pos[0].reassign(pos[1]);
+
+            let changedLines = [line]
+            if (!noCallback) this.runCallbacks({ changedLines });
+            else this.completeCallbackList({ changedLines });
+            return changedLines;
         }
 
         let firstLine = this.editor.doc.lineAt(at), text = firstLine.text;
@@ -165,11 +216,36 @@ class Change {
             node = node.parent;
         }
 
-        return [firstLine, ...Lines];
+        for (let pos of positionsToShift) pos[0].reassign(pos[1]);
+
+        let changedLines = [firstLine, ...Lines]
+        if (!noCallback) this.runCallbacks({ changedLines });
+        else this.completeCallbackList({ changedLines });
+        return changedLines;
     }
 
-    replace(text, from = this.editor.render.caret.position, to = from) {
-        return [...this.delete(from, to), ...this.insert(text, from)];
+    replace(text, from, to = from, { noCallback = false } = {}) {
+        if (from > to) [from, to] = [to, from];
+        let changedLines = [...this.delete(from, to, { noCallback, markStickLeft: text.length > 0 }), ...this.insert(text, from, { noCallback })];
+        return changedLines;
+    }
+
+    multiInsert(inserts) { // [{at: Position, string: string}]
+        let changedLines = new Set();
+        for (let insert of inserts) {
+            let changed = this.insert(insert.string, insert.at.index);
+            for (let c of changed) changedLines.add(c);
+        }
+
+        this.runCallbacks({ changedLines });
+        return changedLines;
+    }
+
+    noCallback(change) {
+        if (!change.text && !change.insert) return this.delete(change.from, change.to, { noCallback: true });
+
+        if (change.to) return this.replace(change.text || change.insert, change.from, change.to, { noCallback: true });
+        else return this.insert(change.text || change.insert, change.from || change.at, { noCallback: true });
     }
 }
 

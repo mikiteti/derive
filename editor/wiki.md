@@ -3,15 +3,14 @@
 - [x] chars, lines, words, text
 - [x] line(n)
 - [x] lineAt(index)
-- [ ] textBetween(index1, index2)
 - [ ] linesBetween(line1, line2)
+- [ ] textBetween(index1, index2)
 
 
-### Write
-- [ ] insert(from, to, text)
-- [ ] addDeco(Deco, Line|{from, to})
-- [ ] removeDeco(Deco)
-- [ ] setTabs(Line, {int full, bool half, int wide})
+### Change
+- [x] delete(from, to)
+- [x] insert(text, at)
+- [x] replace(text, from, to)
 
 ## Line
 ### Read
@@ -19,27 +18,35 @@
 - [x] number
 - [x] from, to
 - [x] element
-- [ ] tabs
-- [ ] decos{mark, line}
+- [x] tabs
+- [x] decos{deco1: true, deco2: true}
+
+### Write
+- [x] addDeco(Deco, Line|{from, to})
+- [x] removeDeco(Deco)
+- [x] setTabs(Line, {int full, bool half, int wide})
 
 # Render
 ### Read
 - [x] Caret
-- [ ] Selection
 - [x] textarea
+- [ ] Selection
 
 ### Write
 - [x] renderAll()
-- [ ] renderLine(Line)
+- [x] renderLine(Line)
 - [ ] renderBetween(index1, index2)
 
 ## Caret
 ### Read
 - [x] position
-- [x] style
+- [x] tabstops[[index11, index12], [index21, index22]]
+- [ ] style
 
 ### Write
-- [x] placeAtIndex(index)
+- [x] placeAt(index)
+- [x] placeAtCoordinates(lineElement: DOMElement, x: Float, y: Float, updateScreenX: Bool, alternativeLineElement: DOMElement)
+- [x] addTabStops(indexes: [Int], index: Int, append: Bool)
 - [ ] setStyle("line"|"block"|"short")
 
 ## Selection
@@ -53,7 +60,7 @@
 # Input
 ### Read
 - [x] Keyboard
-- [x] textarea -- same as render.textarea
+- [x] textarea == render.textarea
 
 ### Listen
 - [x] keyPress

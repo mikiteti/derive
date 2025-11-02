@@ -9,6 +9,29 @@
     --color-red: #e78284;
     --color-orange: #ef9f76;
     --tab-full-width: 3rem;
+    --editor-width: min(700px, 90vw);
+    --font-size: calc(var(--editor-width) / 23);
+}
+
+@font-face {
+    font-family: 'tex';
+    src: url("./fonts/ligatures/normal.woff2");
+    font-weight: 200;
+    /* src: url("./fonts/mathjax/mjx-tex-n.woff2"); */
+    /* unicode-range: U+2190, U+2192, U+2194, U+21A4, U+21A6, U+21D0, U+21D2, U+21D4; */
+}
+
+@font-face {
+    font-family: 'tex';
+    src: url("./fonts/ligatures/bold.woff2");
+    font-weight: 400;
+    /* src: url("./fonts/mathjax/mjx-tex-n.woff2"); */
+    /* unicode-range: U+2190, U+2192, U+2194, U+21A4, U+21A6, U+21D0, U+21D2, U+21D4; */
+}
+
+@font-face {
+    font-family: 'feijoa';
+    src: url("./fonts/Feijoa-Font/Feijoa Medium.otf");
 }
 
 @font-face {
@@ -48,12 +71,22 @@
 }
 
 * {
-    user-select: none;
-    -webkit-user-select: none;
-    font-family: 'author', sans-serif;
+    user-select: text;
+    touch-action: manipulation;
+    -webkit-user-select: text;
     font-weight: 200;
     color: var(--color-text);
-    text-decoration-thickness: 0.1rem;
+    text-decoration-thickness: 0.07rem;
+}
+
+*:not(.DM *) {
+    /* font-family: 'author', sans-serif; */
+    font-family: 'tex', 'author';
+}
+
+html,
+body {
+    margin: 0;
 }
 
 html {
@@ -61,6 +94,7 @@ html {
     position: relative;
     min-height: 100vh;
     overflow-x: hidden;
+    scrollbar-width: thin;
 }
 
 .noisy::before {
@@ -70,35 +104,156 @@ html {
     background: url("data:image/svg+xml,%0A%3Csvg xmlns='http://www.w3.org/2000/svg' width='500' height='500'%3E%3Cfilter id='noise' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeBlend mode='screen'/%3E%3C/filter%3E%3Crect width='500' height='500' filter='url(%23noise)' opacity='0.5'/%3E%3C/svg%3E");
     mix-blend-mode: soft-light;
     pointer-events: none;
+    border-radius: inherit;
 }
 
 #editor {
-    font-size: 23pt;
-    max-width: min(700px, 90vw);
-    margin: 10vw auto;
+    font-size: var(--font-size);
+    max-width: var(--editor-width);
+    margin: 10vw auto 0 auto;
     white-space: pre-wrap;
     text-shadow: 2px 4px 3px rgba(0, 0, 0, 0.3);
 }
 
 #editor p {
     margin: 0;
-    line-height: 2.15rem;
-    min-height: 1rem;
+    line-height: calc(1.1 * var(--font-size));
+}
+
+#placeholder {
+    width: 100vw;
+    height: 90vh;
 }
 
 .caret {
+    color: white;
     position: absolute;
     background-color: currentColor;
-    width: 1px;
-    transform: translateX(-50%);
-    height: 1rem;
     pointer-events: none;
-    transition: left 0.1s, top 0.1s;
+    /* mix-blend-mode: difference; */
+    /* mix-blend-mode: overlay; */
+    mix-blend-mode: exclusion;
+    border: 0px solid currentColor;
+    border-radius: 1px;
 }
 
-#info {
-    font-size: 20pt;
+.smooth {
+    transition: left 0.1s, top 0.1s, width 0.1s, height 0.1s;
+}
+
+.info {
+    background-color: var(--color-bg);
+    font-size: 16pt;
     position: fixed;
+    bottom: 0;
+    padding: 0;
+}
+
+#leftInfo {
     left: 10px;
-    bottom: 10px;
+    padding-right: 10px;
+    border-top-right-radius: 10px;
+}
+
+#rightInfo {
+    right: 10px;
+    padding-left: 10px;
+    border-top-left-radius: 10px;
+}
+
+#editor p * {
+    pointer-events: none;
+    color: inherit;
+    font-weight: inherit;
+}
+
+.display-math {
+    color: var(--color-yellow);
+    font-size: calc(var(--font-size) * 0.8);
+}
+
+.underline .content {
+    text-decoration: underline;
+}
+
+.small {
+    font-size: calc(var(--font-size) * 0.7);
+}
+
+.large {
+    font-size: calc(var(--font-size) * 1.4);
+}
+
+.middle {
+    text-align: center;
+}
+
+.Bold {
+    font-weight: 600;
+}
+
+.bold {
+    font-weight: 400;
+}
+
+.accent {
+    color: var(--color-blue);
+}
+
+.capital {
+    font-variant: small-caps;
+    font-size: calc(var(--font-size) * 1.4);
+}
+
+::highlight(selection) {
+    background-color: var(--color-blue);
+    color: black;
+}
+
+.hidden {
+    height: 0;
+    transform: scaleY(0);
+}
+
+.DM {
+    font-size: 0.7em;
+    overflow-x: scroll;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+}
+
+.DM * {
+    pointer-events: none;
+}
+
+#editor .DM:not(:has(+ p + p)) mjx-container[display] {
+    /* not last display math */
+    margin-bottom: 0;
+}
+
+@property --border-offset-angle {
+    syntax: "<angle>";
+    initial-value: 0deg;
+    inherits: true;
+}
+
+@keyframes spin-border-offset {
+    from {
+        --border-offset-angle: 0deg;
+    }
+
+    to {
+        --border-offset-angle: 360deg;
+    }
+}
+
+.spin_border .content {
+    --border-width: 1px;
+    /* --background-color: var(--color-background-secondary); */
+    animation: 3s spin-border-offset linear infinite;
+    border: 1px solid transparent;
+    background-image: linear-gradient(var(--color-bg), var(--color-bg)),
+        conic-gradient(from var(--border-offset-angle), transparent, transparent, var(--color-blue), transparent, transparent, var(--color-blue), transparent);
+    background-origin: border-box;
+    background-clip: padding-box, border-box;
 }

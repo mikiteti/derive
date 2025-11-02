@@ -1,7 +1,9 @@
 import newChange from "./changes.js";
 import { nodeSizes } from "../assets.js";
+import { nodeAt } from "../assets.js";
 
 const previousSibling = (obj) => {
+    if (obj.deleted) return null;
     let depth = 0, node = obj;
     while (node.parent && node.parent.children[0] === node) {
         node = node.parent;
@@ -21,6 +23,7 @@ const previousSibling = (obj) => {
 }
 
 const nextSibling = (obj) => {
+    if (obj.deleted) return null;
     let depth = 0, node = obj;
     while (node.parent && node.parent.children.at(-1) === node) {
         node = node.parent;
@@ -162,6 +165,7 @@ class Doc extends Node {
     }
 
     line(lineNum) {
+        lineNum = (lineNum % this.lines + this.lines) % this.lines;
         let sum = 0, currentNode = this;
         while (!currentNode.children[0].isLine) {
             for (let child of currentNode.children) {
@@ -217,6 +221,11 @@ class Doc extends Node {
         for (let i = line1 + 1; i < line2; i++) lines.push(this.line(i));
         return lines;
     }
+
+    charAt(index) {
+        let line = this.lineAt(index);
+        return line.text.slice(index - line.from, index - line.from + 1) || " ";
+    }
 }
 
 export { Doc }
@@ -227,9 +236,12 @@ class Line {
         this.text = text;
         this.parent = parent;
         this.tabs = { full: tabs?.full || 0 };
-        this.decos = decos;
+        this.decos = new Set(decos);
         this.lines = 1;
         this.isLine = true;
+
+        this.unrenderedChanges = new Set(["text", "tabs", "decos"]);
+        this.positions = [];
 
         this._updates = 1;
     }
@@ -239,6 +251,7 @@ class Line {
     }
 
     update(text = "") {
+        this.unrenderedChanges.add("text");
         this.text = text;
         this._updates++;
         this.parent.update();
@@ -248,6 +261,25 @@ class Line {
         this.deleted = true;
         this.parent.children.splice(this.parent.children.indexOf(this), 1);
         this.update();
+    }
+
+    addPosition(position) {
+        if (this.positions.length === 0 || this.positions.at(-1).index <= position.index) {
+            this.positions.push(position);
+            return;
+        }
+
+        for (let i in this.positions) {
+            if (this.positions[i].index > position.index) {
+                this.positions = [...this.positions.slice(0, i), position, ...this.positions.slice(i)];
+                break;
+            }
+        }
+    }
+
+    removePosition(position) {
+        let index = this.positions.indexOf(position);
+        if (index !== -1) this.positions = [...this.positions.slice(0, index), ...this.positions.slice(index + 1)];
     }
 
     get number() {
@@ -270,6 +302,35 @@ class Line {
 
     assignElement(element) {
         this.element = element;
+    }
+
+    addDeco(deco) {
+        let decos = Array.isArray(deco) ? deco : [deco];
+        for (let deco of decos) {
+            this.unrenderedChanges.add("deco");
+            this.decos.add(deco)
+        }
+    }
+
+    removeDeco(deco) {
+        let decos = Array.isArray(deco) ? deco : [deco];
+        for (let deco of decos) {
+            this.unrenderedChanges.add("deco");
+            this.decos.delete(deco);
+        }
+    }
+
+    toggleDeco(deco) {
+        let decos = Array.isArray(deco) ? deco : [deco];
+        for (let deco of decos) {
+            this.unrenderedChanges.add("deco");
+            this.decos.has(deco) ? this.decos.delete(deco) : this.decos.add(deco);
+        }
+    }
+
+    setTabs(type, number) {
+        this.unrenderedChanges.add("tabs");
+        this.tabs[type] = Math.max(number, 0);
     }
 
     get from() {
@@ -322,14 +383,25 @@ defineSmartProperties(Line, lineProperties);
 export { Line }
 
 
-
+window.positionCount = 0;
 class Position {
-    constructor(pos, doc = window.doc) {
+    constructor(pos, doc = window.doc, { stickWhenDeleted = true, stickLeftOnInsert = false, caret, track = true } = {}) {
+        if (track) window.positionCount++;
+        this.doc = doc;
+        this.stickWhenDeleted = stickWhenDeleted;
+        this.stickLeftOnInsert = stickLeftOnInsert;
+        if (caret) this.caret = caret;
+        this.track = track;
+        this.assign(pos);
+    }
+
+    assign(pos) {
         if (!Array.isArray(pos)) { // pos is absolute index
             let index = pos;
 
-            let sum = 0, currentNode = doc;
+            let sum = 0, currentNode = this.doc, counter = 0;
             while (!currentNode.isLine) {
+                if (currentNode.children.length === 0) continue;
                 for (let child of currentNode.children) {
                     if (sum + child.chars <= index) {
                         sum += child.chars;
@@ -338,13 +410,16 @@ class Position {
                         break;
                     }
                 }
+                counter++;
+                if (counter > 10) break;
             }
 
-            [this.Line, this.column] = [currentNode, index - sum];
+            this.Line = currentNode;
+            this.column = index - sum;
         } else { // pos is [line, column]
             let [line, column] = pos;
 
-            let sum = 0, currentNode = doc;
+            let sum = 0, currentNode = this.doc;
             while (!currentNode.isLine) {
                 for (let child of currentNode.children) {
                     if (sum + child.lines <= line) {
@@ -356,8 +431,11 @@ class Position {
                 }
             }
 
-            [this.Line, this.column] = [currentNode, column];
+            this.Line = currentNode;
+            this.column = column;
         }
+
+        if (this.track) this.Line.addPosition(this);
     }
 
     get index() {
@@ -379,6 +457,83 @@ class Position {
     get line() {
         return this.Line.number;
     }
+
+    reassign(pos) {
+        if (pos === this.index) return this;
+        if (this.Line) this.Line.removePosition(this);
+        this.assign(pos);
+
+        if (this.range && !this.range.deleted) this.range.reassignCallback();
+
+        return this;
+    }
+
+    delete() {
+        window.positionCount--;
+        this.Line.removePosition(this);
+        this.deleted = true;
+        if (this.range && !this.range.deleted) {
+            this.range.delete();
+            this.range = undefined;
+        }
+    }
+
+    addToRange(range, pair) {
+        this.range = range;
+        this.pair = pair;
+    }
 }
 
 export { Position }
+
+class Range {
+    constructor(editor, from, to) {
+        console.log("range created from", from, "to", to);
+        this.editor = editor;
+        this.doc = editor.doc;
+        this.from = from;
+        this.to = to;
+        from.addToRange(this, to);
+        to.addToRange(this, from);
+    }
+
+    reassignCallback() {
+        if (!this.Range) return;
+        let maybeReveal = this.Range.collapsed;
+        this.Range.setStart(...nodeAt(this.start));
+        this.Range.setEnd(...nodeAt(this.end));
+        if (maybeReveal && !this.Range.collapsed) {
+            console.log("revealing range", this);
+            this.editor.render.selection.revealRange(this);
+        } if (!maybeReveal && this.Range.collapsed) {
+            console.log("hiding range", this);
+            this.editor.render.selection.hideRange(this);
+        }
+    }
+
+    get collapsed() {
+        return this.from.index !== this.to.index;
+    }
+
+    get start() {
+        return this.from.index <= this.to.index ? this.from : this.to;
+    }
+
+    get end() {
+        let bigger = this.from.index <= this.to.index ? this.to : this.from;
+        let addOne = this.editor.input.caret.style !== "bar";
+        if (addOne) {
+            return new Position(bigger.index + 1, this.editor.doc, { track: false });
+        } else return bigger;
+    }
+
+    delete() {
+        if (this.Range) this.editor.render.selection.removeRange(this);
+        this.from = undefined;
+        this.to = undefined;
+        this.deleted = true;
+    }
+}
+window.range = Range;
+
+export { Range }

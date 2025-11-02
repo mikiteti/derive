@@ -1,14 +1,17 @@
+import { findXIndecesInLine, getVisualLineAt } from "../../assets.js";
+
 const abc = "ABCDEFGHIJKLMNOPQRSTUVWXYZáéíóöőúüűzabcdefghijklmnopqrstuvwxyzÁÉÍÓÖŐÚÜŰ 1234567890!@#$%^&*()-=_+[]\\{}|;':\",./<>?`~".split("");
 
 const createCommandSet = (editor) => {
     let currentEvent;
-    const doc = editor.doc, render = editor.render, caret = editor.render.caret;
+    const doc = editor.doc, render = editor.render, caret = editor.input.caret, snippets = editor.input.snippets;
+    console.log({ snippets });
 
-    const findStartOfPreviousWord = () => {
-        let line = doc.lineAt(caret.position), currentPos = caret.position;
-        if (caret.position == line.from) {
+    const findStartOfPreviousWord = (pos) => {
+        let line = pos.Line, currentPos = pos.index;
+        if (currentPos == line.from) {
             line = doc.line(line.number - 1);
-            if (line == undefined) return caret.position;
+            if (line == undefined) return currentPos;
             currentPos = line.to;
         }
         let text = line.text.substring(0, currentPos - 1 - line.from);
@@ -17,9 +20,9 @@ const createCommandSet = (editor) => {
         return line.from + column;
     }
 
-    const findEndOfNextWord = () => {
-        let line = doc.lineAt(caret.position), currentPos = caret.position;
-        if (caret.position == line.to) {
+    const findEndOfNextWord = (pos) => {
+        let line = pos.Line, currentPos = pos.index;
+        if (currentPos == line.to) {
             line = doc.line(line.number + 1);
             currentPos = line.from;
         }
@@ -30,76 +33,132 @@ const createCommandSet = (editor) => {
         return currentPos + column;
     }
 
+    const moveDown = ({ keepFixedEnd = false } = {}) => {
+        for (let sc of caret.carets) {
+            let indeces = findXIndecesInLine(sc.screenPosition.x, sc.position.Line);
+            while (indeces.length && indeces[0] <= sc.position.index) indeces.shift();
+            if (indeces.length) {
+                sc.placeAt(indeces[0], { updateScreenX: false, keepFixedEnd });
+                continue;
+            }
+
+            let nextLine = editor.doc.line(sc.position.Line.number + 1);
+            if (!nextLine) continue;
+            indeces = findXIndecesInLine(sc.screenPosition.x, nextLine);
+            sc.placeAt(indeces[0], { updateScreenX: false, keepFixedEnd });
+        }
+    }
+
+    const moveUp = ({ keepFixedEnd = false } = {}) => {
+        for (let sc of caret.carets) {
+            let indeces = findXIndecesInLine(sc.screenPosition.x, sc.position.Line);
+            while (indeces.length && indeces.at(-1) >= sc.position.index) indeces.pop();
+            if (indeces.length) {
+                sc.placeAt(indeces.at(-1), { updateScreenX: false, keepFixedEnd });
+                continue;
+            }
+
+            let prevLine = editor.doc.line(sc.position.Line.number - 1);
+            if (!prevLine) continue;
+            indeces = findXIndecesInLine(sc.screenPosition.x, prevLine);
+            sc.placeAt(indeces.at(-1), { updateScreenX: false, keepFixedEnd });
+        }
+    }
+
     const commands = {
-        ArrowLeft: () => caret.placeAt(caret.position - 1),
-        ArrowRight: () => caret.placeAt(caret.position + 1),
+        ArrowLeft: () => caret.placeAllAt(pos => pos.index - 1),
+        ArrowRight: () => caret.placeAllAt(pos => pos.index + 1),
+        "S+ArrowRight": () => caret.placeAllAt(pos => pos.index + 1, { keepFixedEnd: true }),
+        "S+ArrowLeft": () => caret.placeAllAt(pos => pos.index - 1, { keepFixedEnd: true }),
         Backspace: () => {
-            let changedLines = doc.change.delete();
-            for (let line of changedLines) render.renderLine(line);
-            caret.placeAt(caret.position - 1);
+            caret.changeForAll(sc => {
+                if (sc.fixedEnd == undefined && // if at opening bracket and corresponding closing bracket is just after, delete that too
+                    "([{".includes(doc.charAt(sc.position.index - 1))) {
+                    let closing = { "(": ")", "[": "]", "{": "}" }[doc.charAt(sc.position.index - 1)];
+                    for (let i = sc.position.index; i < sc.position.Line.to; i++) {
+                        let curChar = doc.charAt(i);
+                        if (curChar === closing) return { from: sc.position.index - 1, to: i + 1 };
+                        if (curChar === " ") continue;
+                        break;
+                    }
+                }
+
+                if (sc.fixedEnd) return { from: sc.position.index, to: sc.fixedEnd.index };
+                return { from: sc.position.index - 1, to: sc.position.index };
+            });
         },
-        "M+ArrowLeft": () => { caret.placeAt(doc.lineAt(caret.position).from); },
-        "M+ArrowRight": () => { caret.placeAt(doc.lineAt(caret.position).to); },
+        "S+Backspace": () => {
+            caret.changeForAll(sc => {
+                if (sc.fixedEnd) return { from: sc.position.index, to: sc.fixedEnd.index };
+                return { from: sc.position.index, to: sc.position.index + 1 };
+            });
+        },
+        "M+ArrowLeft": () => { caret.placeAllAt(pos => getVisualLineAt(pos).from); snippets.deleteTabStops(); },
+        "M+ArrowRight": () => { caret.placeAllAt(pos => getVisualLineAt(pos).to); snippets.deleteTabStops(); },
+        "M+S+ArrowLeft": () => { caret.placeAllAt(pos => getVisualLineAt(pos).from, { keepFixedEnd: true }); },
+        "M+S+ArrowRight": () => { caret.placeAllAt(pos => getVisualLineAt(pos).to, { keepFixedEnd: true }); },
         "M+Backspace": () => {
-            let line = doc.lineAt(caret.position);
-            let changedLines = doc.change.delete(line.from, caret.position);
-            for (let line of changedLines) render.renderLine(line);
-            caret.placeAt(line.from);
+            caret.changeForAll(sc => {
+                let line = sc.position.Line;
+                return { from: line.from, to: sc.position.index };
+            }, pos => pos.index);
         },
         "A+ArrowLeft": () => {
-            caret.placeAt(findStartOfPreviousWord());
+            caret.placeAllAt(pos => findStartOfPreviousWord(pos));
         },
         "A+ArrowRight": () => {
-            caret.placeAt(findEndOfNextWord());
+            caret.placeAllAt(pos => findEndOfNextWord(pos));
+        },
+        "A+S+ArrowLeft": () => {
+            caret.placeAllAt(pos => findStartOfPreviousWord(pos), { keepFixedEnd: true });
+        },
+        "A+S+ArrowRight": () => {
+            caret.placeAllAt(pos => findEndOfNextWord(pos), { keepFixedEnd: true });
         },
         "A+Backspace": () => {
-            let pos = findStartOfPreviousWord();
-            let lines = doc.change.delete(pos, caret.position);
-            for (let line of lines) render.renderLine(line);
-            caret.placeAt(pos);
+            caret.changeForAll(sc => {
+                let p = findStartOfPreviousWord(sc.position);
+                return { from: p, to: sc.position.index };
+            });
         },
         "Enter": () => {
-            let changedLines = doc.change.insert("\n", caret.position);
-            // console.log({ changedLines });
-            for (let line of changedLines || []) render.renderLine(line);
-            caret.placeAt(caret.position + 1);
-            // window.checkTreeStructure();
+            caret.changeForAll(sc => {
+                if (sc.fixedEnd) return { insert: "\n", from: sc.position.index, to: sc.fixedEnd.index };
+                return { insert: "\n", at: sc.position.index };
+            });
         },
-        // "S+Enter": () => {
-        //     let changedLines = doc.change.insert("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n", caret.position);
-        //     console.log({ changedLines });
-        //     for (let line of changedLines || []) render.renderLine(line);
-        //     caret.placeAt(caret.position + 1);
-        //     window.checkTreeStructure();
-        // },
-        // "M+v": () => {
-        //     let changedLines = doc.change.insert("hello world\nhello world again\nhello world for a third time", caret.position);
-        //     console.log({ changedLines });
-        //     for (let line of changedLines || []) render.renderLine(line);
-        //     caret.placeAt(caret.position + 1);
-        // },
-        "M+c": () => {
-            navigator.clipboard.writeText(doc.lineAt(caret.position).text + "\n").then(() => {
-                console.log('Copied!', doc.lineAt(caret.position).text);
-            }).catch(console.error);
-        },
-        "M+v": () => {
-            navigator.clipboard.readText().then(text => {
-                for (let line of doc.change.insert(text, caret.position)) render.renderLine(line);
-                caret.placeAt(caret.position + text.length);
-            })
-        }
+        "ArrowDown": () => { moveDown(); },
+        "ArrowUp": () => { moveUp(); },
+        "S+ArrowDown": () => { moveDown({ keepFixedEnd: true }); },
+        "S+ArrowUp": () => { moveUp({ keepFixedEnd: true }); },
+        "Escape": () => { caret.updateCarets([caret.carets[0].position.index]); },
     };
 
     for (let letter of abc) commands[letter] = () => {
-        let changedLines = doc.change.insert(letter);
-        for (let line of changedLines) render.renderLine(line);
-        caret.placeAt(caret.position + 1);
+        for (let sc of caret.carets) {
+            doc.change.noCallback(
+                sc.fixedEnd ?
+                    { insert: letter, from: sc.position.index, to: sc.fixedEnd.index } :
+                    { insert: letter, at: sc.position.index }
+            );
+        }
+
+        let jump;
+        if (doc.change.callbackList.changedLines.size === 1) jump = snippets.multiHandle(caret.carets.map(e => e.position));
+        doc.change.runCallbacks();
+        if (jump) snippets.jumpToNextTabStops();
+
+        let lines = new Set(caret.carets.map(e => e.position.Line));
+        for (let line of lines) snippets.features.autoEnlarge(line);
     }
 
     const command = (e) => {
         currentEvent = e;
-        let keyName = (e.metaKey ? "M+" : "") + (e.altKey ? "A+" : "") + (e.ctrlKey ? "C+" : "") + (e.shiftKey && abc.indexOf(e.key) == -1 ? "S+" : "") + e.key;
+        let keyName = (e.metaKey ? "M+" : "")
+            + (e.altKey ? "A+" : "")
+            + (e.ctrlKey ? "C+" : "")
+            + (e.shiftKey && (abc.indexOf(e.key) == -1 || e.metaKey || e.altKey || e.ctrlKey) ? "S+" : "")
+            + e.key;
         return commands[keyName];
     }
 
