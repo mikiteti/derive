@@ -80,6 +80,7 @@ const getColumnAt = (element, x, y, { style = "bar" } = {}) => {
 
     while (walker.nextNode()) {
         const node = walker.currentNode;
+        if (node.parentNode.matches("mjx-container *, .IM, .IM *")) continue;
         const text = node.nodeValue;
 
         let prevX;
@@ -104,7 +105,7 @@ const getColumnAt = (element, x, y, { style = "bar" } = {}) => {
         index += text.length;
     }
 
-    return index - 1; // not between any two characters, returning last possible position
+    return index - 1 - (style !== "bar"); // not between any two characters, returning last possible position
 }
 
 // const findFirstRectBorder = (node, from = 0, to = node.textContent.length) => {
@@ -186,7 +187,11 @@ const getLineBreaks = (line, nodes) => {
     if (nodes == undefined) {
         const walker = document.createTreeWalker(line.element, NodeFilter.SHOW_TEXT);
         nodes = [];
-        while (walker.nextNode()) nodes.push(walker.currentNode);
+        while (walker.nextNode()) {
+            let textNode = walker.currentNode;
+            if (textNode.parentNode.matches("mjx-container *, .IM, .IM *")) continue;
+            nodes.push(textNode);
+        }
     }
 
     const lineBreaks = [];
@@ -235,7 +240,11 @@ const nodeAt = (pos) => {
     let nodes = [], index = pos.index - pos.Line.from;
     const walker = document.createTreeWalker(pos.Line.element, NodeFilter.SHOW_TEXT);
     nodes = [];
-    while (walker.nextNode()) nodes.push(walker.currentNode);
+    while (walker.nextNode()) {
+        let textNode = walker.currentNode;
+        if (textNode.parentNode.matches("mjx-container *, .IM, .IM *")) continue;
+        nodes.push(textNode);
+    }
 
     let i = 0;
     for (let node of nodes) {
@@ -253,7 +262,7 @@ const findXInVisualLine = (x, nodes, from, to) => {
     range.setEnd(..._nodeAt(nodes, max));
 
     let rects = range.getClientRects();
-    if (rects[rects[0].width === 0 ? 1 : 0].left > x) return min;
+    if (rects.length && rects[rects[0].width === 0 ? 1 : 0].left > x) return min;
     if (rects[rects[rects.length - 1].width === 0 ? rects.length - 2 : rects.length - 1].right < x) return max - 1;
     let lastUpdate = false;
     while (max - min > 1 && !lastUpdate) {
@@ -262,7 +271,7 @@ const findXInVisualLine = (x, nodes, from, to) => {
         range.setStart(..._nodeAt(nodes, min));
         range.setEnd(..._nodeAt(nodes, current));
         rects = range.getClientRects();
-        if (rects[rects[0].width === 0 ? 1 : 0].left <= x
+        if (rects.length && rects[rects[0].width === 0 ? 1 : 0].left <= x
             && rects[rects[rects.length - 1].width === 0 ? rects.length - 2 : rects.length - 1].right >= x) max = current;
         else min = current;
     }
@@ -277,7 +286,11 @@ const findXIndecesInLine = (x, line) => { // works even when height: 0; transfor
 
     const walker = document.createTreeWalker(line.element, NodeFilter.SHOW_TEXT);
     const nodes = [];
-    while (walker.nextNode()) nodes.push(walker.currentNode);
+    while (walker.nextNode()) {
+        let textNode = walker.currentNode;
+        if (textNode.parentNode.matches("mjx-container *, .IM, .IM *")) continue;
+        nodes.push(textNode);
+    }
 
     let linebreaks = getLineBreaks(line, nodes);
     linebreaks.unshift(0);
@@ -314,11 +327,14 @@ const exportFile = () => {
         let line = window.doc.line(i);
         let decos = [];
         for (let deco of line.decos) decos.push(deco);
-        file.lines.push({
-            text: line.text,
-            tabs: line.tabs,
-            decos: decos,
-        });
+        let marks = line.marks.map(e => ({ role: e.role, from: e.from.index, to: e.to.index }));
+        let myLine = {};
+        if (line.text.length) myLine.text = line.text;
+        if (line.tabs) myLine.tabs = line.tabs;
+        if (decos.length) myLine.decos = decos;
+        if (marks.length) myLine.marks = marks;
+
+        file.lines.push(myLine);
     }
 
     console.log(file);

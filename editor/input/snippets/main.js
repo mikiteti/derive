@@ -41,28 +41,37 @@ class Snippets {
         this.snippets = snips.slice().sort((a, b) => ((b.priority || 0) - (a.priority || 0)));
     }
 
-    checkEnvironment(current, wanted) {
-        if (wanted.includes("m") && current.has("display-math")) return true;
-        if (wanted.includes("t") && !current.has("display-math")) return true;
+    checkEnvironment(pos, wanted) {
+        let current = pos.Line.decos.has("math") ? "dm" : "t";
+        if (current === "t") {
+            for (let mark of pos.Line.marks) {
+                if (mark.role === "math" && mark.from.index < pos.index && mark.to.index >= pos.index) {
+                    current = "im"
+                    break;
+                }
+            }
+        }
 
-        // current: ["display-math"]
-        // wanted: "mA"
 
-        // let map = {
-        //     "display-math": "m",
-        // }
-        // for (let deco of current) if (wanted.includes(map[deco])) return true;
-
-        return false;
+        switch (current) {
+            case "dm":
+                if (wanted.includes("m")) return true;
+                return false;
+            case "im":
+                if (wanted.includes("m")) return true;
+                return false;
+            case "t":
+                if (wanted.includes("t")) return true;
+                return false;
+        }
     }
 
     handleDocChanges(at) {
         let line = this.editor.doc.lineAt(at);
         let text = line.text.slice(0, at - line.from);
-        let environment = line.decos;
+        let pos = new Position(at, this.editor.doc, { track: false });
 
-        for (let snippet of this.snippets.filter(e => this.checkEnvironment(environment, e.in))) {
-            let pos = new Position(at, this.editor.doc, { track: false });
+        for (let snippet of this.snippets.filter(e => this.checkEnvironment(pos, e.in))) {
             for (let env of [["text{", "}"], ["mathrf{", "}"]]) if (this.features.isInEnv(pos, env)) return;
 
             let to = snippet.to, index, match, tabstops = JSON.parse(JSON.stringify(snippet.tabstops));

@@ -19,7 +19,9 @@ const defaultSnippets = [
 
     { from: "=>", to: "\\implies ", in: "mA" },
     { from: "->", to: "\\longrightarrow ", in: "mA" }, // →
-    { from: "<->", to: "\\longleftrightarrow ", in: "mA", priority: 1 },
+    { from: "\\longleftarrow >", to: "\\longleftrightarrow ", in: "mA", priority: 1 },
+    // { from: "<=>", to: "\\longleftrightarrow ", in: "mA", priority: 1 },
+    // { from: "\\leq >", to: "\\longleftrightarrow ", in: "mA", priority: 1 },
     { from: "equiv", to: "\\Longleftrightarrow ", in: "mA", priority: 1 },
     // {from: "<=", to: "\\impliedby ", in: "mA"},
     { from: "<-", to: "\\longleftarrow ", in: "mA" }, // ←
@@ -85,7 +87,7 @@ const defaultSnippets = [
     // {from: "sts", to: "_\\text{${0}}", in: "mA"},
 
     { from: "sq", to: "\\sqrt{${0}}${1}", in: "mA" },
-    { from: "dsq", to: "\\sqrt[${0}]{${1}}${2}", in: "mA" },
+    { from: "dsq", to: "\\sqrt[${0}]{${1}}${2}", in: "mA", priority: 1 },
     { from: "//", to: "\\frac{${0}}{${1}}${2}", in: "mA" },
     { from: "ee", to: "e^{ ${0} }${1}", in: "mA" },
     { from: "conj", to: "^{*}${0}", in: "mA" },
@@ -225,7 +227,7 @@ const defaultSnippets = [
     { from: /([^\\])int/, to: "[[0]]\\int ${0} \\, d${1:x} ${2}", in: "mA", priority: -1 },
     { from: /^int/, to: "\\int ${0} \\, d${1:x} ${2}", in: "mA", priority: -1 },
     { from: "dint", to: "\\int_{${0:0}}^{${1:1}} ${2} \\, d${3:x} ${4}", in: "mA" },
-    { from: "oint", to: "\\oint_{${0}} ${1} \\, d${2:\\ell} ${3}", in: "mA" },
+    { from: "oint", to: "\\oint_{${0}} ${1} \\, d ${2:\\ell} ${3}", in: "mA" },
     { from: "iint", to: "\\iint", in: "mA" },
     { from: "iiint", to: "\\iiint", in: "mA" },
     { from: "oinf", to: "\\int_{0}^{\\infty} ${0} \\, d${1:x} ${2}", in: "mA" },
@@ -275,6 +277,7 @@ const defaultSnippets = [
     { from: "(", to: "(${0})${1}", in: "mA" },
     { from: "{", to: "{${0}}${1}", in: "mA" },
     { from: "[", to: "[${0}]${1}", in: "mA" },
+    { from: " {", to: "\\{${0}\\}${1}", in: "mA", priority: 1 }, // test
     { from: "lr(", to: "\\left( ${0} \\right) ${1}", in: "mA" },
     { from: "lr{", to: "\\left\\{ ${0} \\right\\} ${1}", in: "mA" },
     { from: "lr[", to: "\\left[ ${0} \\right] ${1}", in: "mA" },

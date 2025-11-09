@@ -16,7 +16,7 @@ class Render {
         editor.doc.change.addCallback(renderChangedLines);
         queueMicrotask(() => { editor.doc.change.addCallback(renderCarets); });
 
-        this.decos = ["underline", "bold", "Bold", "accent", "display-math", "middle", "small", "large", "capital", "spin_border"];
+        this.decos = ["underline", "bold", "Bold", "accent", "math", "middle", "small", "large", "capital", "spin_border"];
         this.selection = new Selection(editor, textarea);
     }
 
@@ -35,7 +35,7 @@ class Render {
 
     createLineElement(line) {
         let lineElement = document.createElement("p");
-        if (line.decos.has("display-math")) lineElement.classList.add("hidden");
+        if (line.decos.has("math")) lineElement.classList.add("hidden");
 
         lineElement.Line = line;
         line.assignElement(lineElement);
@@ -78,7 +78,7 @@ class Render {
 
     async handleDM(line) {
         await window.MathJax.startup.promise;
-        if (!line.decos.has("display-math")) {
+        if (!line.decos.has("math")) {
             if (!line.element.DM) return;
             line.element.DM.remove();
             queueMicrotask(_ => {
@@ -116,6 +116,8 @@ class Render {
     }
 
     renderLine(line) {
+        let promise;
+
         if (line.deleted) {
             line.element.remove();
             if (line.element.DM) line.element.DM.remove();
@@ -123,14 +125,73 @@ class Render {
             return;
         } else if (!line.element) {
             this.createLineElement(line);
-            ["text", "tabs", "deco"].forEach(e => line.unrenderedChanges.add(e));
+            ["text", "tabs", "deco", "marks", "caret"].forEach(e => line.unrenderedChanges.add(e));
         }
 
-        if (line.unrenderedChanges.delete("text")) {
-            line.element.innerHTML = "<span class='content'>" + line.text + "</span><span class='endChar'> </span>";
-            if (line.decos.has("display-math")) {
+        let caretChanged = line.unrenderedChanges.delete("caret");
+        let textChanged = line.unrenderedChanges.delete("text");
+        let marksChanged = line.unrenderedChanges.delete("marks");
+        if (textChanged || marksChanged || caretChanged) { // TODO
+            let content = document.createElement("span");
+            content.classList.add("content");
+            let text = line.text, innerHTML = "";
+            let index = 0;
+            for (let mark of line.marks.filter(e => e.role === "math").sort((a, b) => a.start.index - b.start.index)) {
+                let wrapper = document.createElement("span");
+                wrapper.classList.add("wrapper");
+                let textSource = text.slice(index, mark.start.index - line.from);
+                let mathSource = text.slice(mark.start.index - line.from, mark.end.index - line.from);
+                // content.innerHTML += textSource;
+                content.appendChild(document.createTextNode(textSource));
+                let math = document.createElement("span");
+                math.classList.add("math");
+                math.innerText = mathSource;
+                wrapper.append(math);
+                content.appendChild(wrapper);
+                wrapper.classList.remove("editingSource");
+                for (let sc of this.editor?.input?.caret?.carets || []) if (sc.from >= mark.start.index && sc.from <= mark.end.index - !!mark.end.stickLeftOnInsert) {
+                    wrapper.classList.add("editingSource");
+                    break;
+                }
+                // innerHTML += textSource + "<span class='math'>" + mathSource + "</span>";
+                if (mark.IM == undefined) mark.IM = document.createElement("span");
+                let IM = mark.IM;
+                IM.classList.add("IM");
+                mark.IM = IM;
+                IM.mark = mark;
+                IM.source = mathSource;
+                promise = window.MathJax.tex2svgPromise(mathSource, { display: false });
+                promise.then(node => {
+                    // console.log(node, IM, math, content);
+                    IM.replaceChildren(node);
+                    math.after(IM);
+                });
+                index = mark.end.index - line.from;
+            }
+            // content.innerHTML += text.slice(index);
+            content.appendChild(document.createTextNode(text.slice(index)));
+            // innerHTML += text.slice(index);
+            // line.element.innerHTML = "<span class='content'>" + innerHTML + "</span><span class='endChar'> </span>";
+            line.element.replaceChildren(content);
+            // line.element.innerHTML += "<span class='endChar'> </span>";
+            let endChar = document.createElement("span");
+            endChar.classList.add("endChar");
+            endChar.innerHTML = " ";
+            line.element.appendChild(endChar);
+            if (line.decos.has("math")) {
                 this.handleDM(line);
             }
+        }
+
+        if (line.decos.has("math") && caretChanged) {
+            let hide = true;
+            for (let sc of this.editor.input?.caret?.carets || []) {
+                if (sc.position.index >= line.from && sc.position.index <= line.to) {
+                    hide = false;
+                    break;
+                }
+            }
+            hide ? this.hideLine(line) : this.revealLine(line);
         }
 
         if (line.unrenderedChanges.delete("tabs")) {
@@ -146,6 +207,8 @@ class Render {
         }
 
         this.renderInfo();
+
+        return promise;
     }
 
     hideLine(line) {

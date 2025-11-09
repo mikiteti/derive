@@ -5,7 +5,13 @@ const newDoc = ({ editor, file } = {}) => {
     window.checkTreeStructure = () => { checkTreeStructure(editor.doc) };
     window.showTreeStructure = () => { showTreeStructure(editor.doc) };
     // let lines = text.split("\n").map(val => new Line({ text: val }));
-    let lines = file.lines.map(line => new Line({ editor, text: line.text, tabs: line.tabs, decos: line.decos }));
+    let lines = file.lines.map(line => new Line({
+        editor,
+        text: line.text || "",
+        tabs: line.tabs || { full: 0 },
+        decos: line.decos || [],
+        marks: line.marks || [],
+    }));
     let leaves = new Array(Math.ceil(lines.length / nodeSizes.leaf.initial)).fill(0).map(_ => new Leaf({ editor, children: lines.splice(0, nodeSizes.leaf.initial) }));
     let nodes = new Array(Math.ceil(leaves.length / nodeSizes.node.initial)).fill(0).map(_ => new Node({ editor, children: leaves.splice(0, nodeSizes.node.initial) }));
     return new Doc({ editor, children: nodes });

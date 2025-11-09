@@ -38,7 +38,7 @@ const getFeatures = (editor, {
     }
 
     const autoEnlarge = (Line) => {
-        if (!Line.decos.has("display-math")) return [];
+        if (!Line.decos.has("math")) return [];
 
         const left = "\\left", right = "\\right";
         let inserts = { left: [], right: [] };
@@ -78,7 +78,7 @@ const getFeatures = (editor, {
     }
 
     const autoFraction = (pos) => {
-        if (!pos.Line.decos.has("display-math")) return;
+        if (!pos.Line.decos.has("math")) return;
         if (editor.doc.charAt(pos.index - 1) !== "/") return;
         if (editor.doc.charAt(pos.index - 2) === "/") return;
         for (let env of autoFractionExcludedEnvs) if (isInEnv(pos, env)) return;

@@ -61,7 +61,7 @@ const createCommandSet = (editor) => {
         },
         "M+d": () => {
             caret.forAll(pos => {
-                pos.Line.toggleDeco("display-math");
+                pos.Line.toggleDeco("math");
                 render.renderLine(pos.Line);
             });
             caret.placeAllAt();
@@ -126,6 +126,27 @@ const createCommandSet = (editor) => {
                 render.renderLine(pos.Line);
             });
             caret.placeAllAt();
+        },
+        "M+i": () => {
+            for (let sc of caret.carets) {
+                if (sc.fixedEnd) continue;
+                if (sc.fixedEnd && sc.fixedEnd.Line !== sc.position.Line) continue;
+                let line = sc.position.Line;
+
+                for (let mark of line.marks.filter(e => e.role === "math")) {
+                    if (mark.to.index === sc.from) {
+                        mark.to.stickLeftOnInsert = !mark.to.stickLeftOnInsert;
+                        line.unrenderedChanges.add("marks");
+                        render.renderLine(line);
+                        caret.placeAllAt();
+                        return;
+                    }
+                }
+
+                line.addMark({ from: sc.from, to: sc.to, role: "math" });
+                render.renderLine(line);
+                caret.placeAllAt();
+            }
         },
         "M+0": () => {
             caret.forAll(pos => {

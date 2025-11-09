@@ -54,9 +54,12 @@ class SingleCaret {
         return caretElement;
     }
 
-    placeAt(index = this.position.index, { updateScreenX = true, hideMath = true, keepFixedEnd = false } = {}) {
+    async placeAt(index = this.position.index, { updateScreenX = true, hideMath = true, keepFixedEnd = false } = {}) {
         if (keepFixedEnd !== -1) keepFixedEnd ? this.addFixedEnd() : this.removeFixedEnd(); // -1: don't change, false: remove, true: add
-        if (hideMath && this.position.Line.decos.has("display-math")) this.editor.render.hideLine(this.position.Line);
+        // if (hideMath && this.position.Line.decos.has("math")) this.editor.render.hideLine(this.position.Line);
+        this.position.Line.unrenderedChanges.add("caret");
+        let renderLines = [this.position.Line];
+        // this.editor.render.renderLine(this.position.Line);
         // if (index !== this.position.index && this.editor.input.caret.carets.map(c => c.position.index).includes(index)) {
         //     this.editor.input.caret.removeCaret(this.editor.input.caret.carets.indexOf(this));
         // }
@@ -64,7 +67,13 @@ class SingleCaret {
         if (index < 0 || index >= this.doc.chars) return;
 
         this.position.reassign(index);
-        if (hideMath && this.position.Line.decos.has("display-math")) this.editor.render.revealLine(this.position.Line);
+        if (hideMath && this.position.Line.decos.has("math")) this.editor.render.revealLine(this.position.Line);
+        this.position.Line.unrenderedChanges.add("caret");
+        renderLines.push(this.position.Line);
+        for (let line of renderLines) {
+            let promise = this.editor.render.renderLine(line); // if inline math needs to be rendered, wait for it
+            if (promise) await promise;
+        }
         let line = this.position.Line;
 
         const walker = document.createTreeWalker(line.element, NodeFilter.SHOW_TEXT);
@@ -72,6 +81,7 @@ class SingleCaret {
 
         while (walker.nextNode()) {
             let textNode = walker.currentNode;
+            if (textNode.parentNode.matches("mjx-container *, .IM, .IM *")) continue;
             let text = textNode.nodeValue;
 
             let innerColumn = index - line.from - column;
@@ -194,6 +204,18 @@ class SingleCaret {
         this.position.delete();
         this.element.remove();
     }
+
+    get from() {
+        if (!this.fixedEnd) return this.position.index;
+        let pos = this.position.index, fix = this.fixedEnd.index;
+        return Math.min(pos, fix);
+    }
+
+    get to() {
+        if (!this.fixedEnd) return this.position.index + (this.editor.input.caret.style === "bar" ? 0 : 1);
+        let pos = this.position.index, fix = this.fixedEnd.index;
+        return Math.max(pos, fix) + (this.editor.input.caret.style === "bar" ? 0 : 1);
+    }
 }
 
 const checkOverlappingCarets = (editor) => {
@@ -212,7 +234,7 @@ const checkOverlappingCarets = (editor) => {
 const hideMath = (editor, changedLines) => {
     let linesToReveal = editor.input.caret.carets.map(e => e.position.Line);
     for (let line of changedLines) {
-        linesToReveal.includes(line) || !line.decos.has("display-math") ? editor.render.revealLine(line) : editor.render.hideLine(line);
+        linesToReveal.includes(line) || !line.decos.has("math") ? editor.render.revealLine(line) : editor.render.hideLine(line);
     }
 }
 
@@ -242,8 +264,8 @@ class Caret {
             if (newPlace == undefined) newPlace = caret.position.index;
             newPositions.push(newPlace);
             let prevLine = caret.position.Line, newLine = this.editor.doc.lineAt(newPlace);
-            if (prevLine.decos.has("display-math")) this.editor.render.hideLine(prevLine);
-            if (newLine.decos.has("display-math")) this.editor.render.revealLine(newLine);
+            if (prevLine.decos.has("math")) this.editor.render.hideLine(prevLine);
+            if (newLine.decos.has("math")) this.editor.render.revealLine(newLine);
         }
         for (let i in this.carets) this.carets[i].placeAt(newPositions[i], { updateScreenX, hideMath: false, keepFixedEnd });
     }

@@ -219,6 +219,7 @@ class Change {
         for (let pos of positionsToShift) pos[0].reassign(pos[1]);
 
         let changedLines = [firstLine, ...Lines]
+        if (string === "\n" && firstLine.decos.has("math")) changedLines[1].addDeco("math");
         if (!noCallback) this.runCallbacks({ changedLines });
         else this.completeCallbackList({ changedLines });
         return changedLines;

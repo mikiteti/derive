@@ -16,6 +16,7 @@ const createCommandSet = (editor) => {
         "i": "bar",
         "R": "underline",
     };
+    const headCommands = { "c": "change", "d": "delete" };
     const array = (func) => {
         return (...args) => ([func(...args)])
     }
@@ -192,14 +193,16 @@ const createCommandSet = (editor) => {
         "iden": (pos) => pos.index,
 
         // motions
-        "h": (count = 1) => (pos => pos.index - count),
-        "l": (count = 1) => (pos => pos.index + count),
-        "b": (count = 1) => (pos => { return findStartOfWord(parsePosition(pos.index - 1), count) }), // TODO: obviously
+        "h": (count = 1) => (pos => Math.max(pos.index - count, pos.Line.from)),
+        "l": (count = 1) => (pos => Math.min(pos.index + count, pos.Line.to - 1)),
+        "h!": (count = 1) => (pos => pos.index - count),
+        "l!": (count = 1) => (pos => pos.index + count),
+        "b": (count = 1) => (pos => { return findStartOfWord(parsePosition(pos.index - 1), count) }),
         "w": (count = 1) => (pos => { return findStartOfWord(parsePosition(findEndOfWord(pos, (blank.includes(doc.charAt(pos.index)) ? 0 : 1) + count)), 1) }), // TODO: obviously
-        "e": (count = 1) => (pos => { return findEndOfWord(parsePosition(pos.index + 1), count) }), // TODO: obviously
-        "B": (count = 1) => (pos => { return findStartOfWORD(parsePosition(pos.index - 1), count) }), // TODO: obviously
+        "e": (count = 1) => (pos => { return findEndOfWord(parsePosition(pos.index + 1), count) }),
+        "B": (count = 1) => (pos => { return findStartOfWORD(parsePosition(pos.index - 1), count) }),
         "W": (count = 1) => (pos => { return findStartOfWORD(parsePosition(findEndOfWORD(pos, (blank.includes(doc.charAt(pos.index)) ? 0 : 1) + count)), 1) }), // TODO: obviously
-        "E": (count = 1) => (pos => { return findEndOfWORD(parsePosition(pos.index + 1), count) }), // TODO: obviously
+        "E": (count = 1) => (pos => { return findEndOfWORD(parsePosition(pos.index + 1), count) }),
         // "j": (count = 1) => (pos => {
         //     let line = doc.line(pos.Line.number + count);
         //     return Math.min(line.from + pos.index - pos.Line.from, line.to - 1);
@@ -305,8 +308,7 @@ const createCommandSet = (editor) => {
     const parseCommand = (command) => { // command ~ "viW"
         console.log(`Parsing current command`);
         let headCommand;
-        let headCommands = { "c": "change", "d": "delete" };
-        if (MODE === "n" && headCommands[command[0]]) { // so that "d2e" and "diw" work
+        if (MODE === "n" && headCommands[command[0]] && command[0] !== command[1]) { // so that "d2e" and "diw" work
             headCommand = headCommands[command[0]];
             console.log("We have a headcommand!");
             command = command.slice(1);
@@ -322,7 +324,7 @@ const createCommandSet = (editor) => {
 
         const iActions = {
             "ArrowLeft": [["move", moves["h"](1)]],
-            "ArrowRight": [["move", moves["l"](1)]],
+            "ArrowRight": [["move", moves["l!"](1)]],
             "\\AArrowLeft": [["move", moves["B"](1)]],
             "\\AArrowRight": [["move", moves["E"](1)], ["move", moves["l"](1)]],
             "\\MArrowLeft": [["move", moves["0"]]],
@@ -353,6 +355,8 @@ const createCommandSet = (editor) => {
             // motions
             "h": moves["h"](count),
             "l": moves["l"](count),
+            "h!": moves["h!"](count),
+            "l!": moves["l!"](count),
             "e": moves["e"](count),
             "b": moves["b"](count),
             "w": moves["w"](count),
@@ -382,14 +386,14 @@ const createCommandSet = (editor) => {
 
         const nActions = { // complex actions, like mode changes and line openings
             "i": [["mode", "i"]],
-            "a": [["mode", "i"], ["move", moves["l"](1)]],
+            "a": [["mode", "i"], ["move", moves["l!"](1)]],
             "I": [["mode", "i"], ["move", moves["_"]]],
-            "A": [["mode", "i"], ["move", moves["$"]], ["move", moves["l"](1)]],
+            "A": [["mode", "i"], ["move", moves["$"]], ["move", moves["l!"](1)]],
             "v": [["mode", "v"]],
             "V": [["mode", "v"], ["move", (pos) => ([moves["0"](pos), moves["$"](pos)])]],
             "Escape": [["removeCarets"]],
-            "o": [["move", moves["$"]], ["move", moves["l"](1)], ["insert", "\n"], ["mode", "i"]],
-            "O": [["move", nMoves["_"]], ["insert", "\n"], ["move", nMoves["h"]], ["mode", "i"]],
+            "o": [["move", moves["$"]], ["move", moves["l!"](1)], ["insert", "\n"], ["mode", "i"]],
+            "O": [["move", nMoves["_"]], ["insert", "\n"], ["move", nMoves["h!"]], ["mode", "i"]],
             ";": [["move", (pos) => {
                 if (lastInlineFind == undefined) return pos.index;
                 return find(pos, lastInlineFind);
@@ -402,10 +406,11 @@ const createCommandSet = (editor) => {
             }]],
             "X": [["delete", moves["h"](1), moves["h"](1)]],
             "x": [["delete", moves["iden"], moves["iden"]]],
+            // "x": [["delete", pos => Math.min(pos.index, pos.Line.to - 1), pos => Math.min(pos.index, pos.Line.to - 1)]], 
             "C": [["change", moves["iden"], moves["$"]]],
             "D": [["delete", moves["iden"], moves["$"]]],
-            // "cc": [["change", moves["0"], moves["$"]]],
-            // "dd": [["delete", moves["0"], moves["$"]]],
+            "cc": [["change", moves["0"], moves["$"]]],
+            "dd": [["delete", pos => moves["0"](pos) - 1, moves["$"]], ["move", pos => pos.index + 1]],
         }
 
         if (MODE === "n") {
@@ -445,7 +450,9 @@ const createCommandSet = (editor) => {
         if (MODE === "v") {
             if (lastPressed === "Escape" || lastPressed === "\\Cc") return [["mode", "n"]];
             if (nMoves[command]) return [["move", array(nMoves[command])]];
+            if (textObjects[command]) return [["move", array(textObjects[command])]];
 
+            if (headCommands[command]) return [[headCommands[command], moves["iden"], moves["fixedEnd"]]];
             return [];
         }
 

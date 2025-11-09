@@ -10,7 +10,7 @@
     --color-orange: #ef9f76;
     --tab-full-width: 3rem;
     --editor-width: min(700px, 90vw);
-    --font-size: calc(var(--editor-width) / 23);
+    --font-size: calc(var(--editor-width) / 25);
 }
 
 @font-face {
@@ -167,8 +167,8 @@ html {
     font-weight: inherit;
 }
 
-.display-math {
-    color: var(--color-yellow);
+.math {
+    color: var(--color-yellow) !important;
     font-size: calc(var(--font-size) * 0.8);
 }
 
@@ -201,8 +201,10 @@ html {
 }
 
 .capital {
-    font-variant: small-caps;
-    font-size: calc(var(--font-size) * 1.4);
+    /* font-variant: small-caps; */
+    /* font-size: calc(var(--font-size) * 1.4); */
+    text-transform: uppercase;
+    font-size: calc(var(--font-size) * 1.2);
 }
 
 ::highlight(selection) {
@@ -215,8 +217,13 @@ html {
     transform: scaleY(0);
 }
 
+.IM {
+    /* color: var(--color-yellow) !important; */
+    pointer-events: all !important;
+}
+
 .DM {
-    font-size: 0.7em;
+    font-size: 0.8em;
     overflow-x: scroll;
     overflow-y: hidden;
     scrollbar-width: thin;
@@ -256,4 +263,33 @@ html {
         conic-gradient(from var(--border-offset-angle), transparent, transparent, var(--color-blue), transparent, transparent, var(--color-blue), transparent);
     background-origin: border-box;
     background-clip: padding-box, border-box;
+}
+
+.wrapper:not(.editingSource) .math {
+    /* display: none !important; */
+    opacity: 0;
+    position: absolute;
+}
+
+.wrapper.editingSource {
+    position: relative;
+}
+
+.wrapper.editingSource .IM {
+    position: absolute;
+    background-color: black;
+    border-radius: 3px;
+    left: 50%;
+    top: 0;
+    transform: translate(-50%, -100%);
+    padding: 5px;
+    width: max-content;
+    font-size: calc(0.8 * var(--font-size));
+}
+
+.wrapper.editingSource .math {
+    font-size: inherit;
+    font-weight: 200 !important;
+    color: var(--color-yellow) !important;
+    text-decoration: none;
 }

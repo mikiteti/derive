@@ -16,13 +16,16 @@ class Input {
             if (!this.editor.interactive) return;
             e.preventDefault(); // no selections
 
-            if (!e.target.Line) {
+            if (!e.target.Line && !e.target.mark) {
                 console.log("not a line, can't handle click");
                 return;
             }
 
-            let index = e.target.classList.contains("DM") ? e.target.Line.to
-                : e.target.Line.from + getColumnAt(e.target, e.clientX, e.clientY, { style: this.caret.style });
+            let index;
+            console.log(e.target);
+            if (e.target.classList.contains("DM")) index = e.target.Line.to;
+            else if (e.target.classList.contains("IM")) index = e.target.mark.to.index - 1;
+            else index = e.target.Line.from + getColumnAt(e.target, e.clientX, e.clientY, { style: this.caret.style });
             e.altKey ? this.caret.addCaret(index) : this.caret.updateCarets([index]);
             this.snippets.deleteTabStops();
         });

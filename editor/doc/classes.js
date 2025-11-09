@@ -164,6 +164,10 @@ class Doc extends Node {
         this.size = { min: 0, max: Infinity };
     }
 
+    parseMarks() {
+        for (let i = 0; i < this.lines; i++) this.line(i).parseMarks();
+    }
+
     line(lineNum) {
         lineNum = (lineNum % this.lines + this.lines) % this.lines;
         let sum = 0, currentNode = this;
@@ -231,16 +235,17 @@ class Doc extends Node {
 export { Doc }
 
 class Line {
-    constructor({ editor, text, parent, tabs, decos }) {
+    constructor({ editor, parent, text = "", tabs = { full: 0 }, decos = [], marks = [] } = {}) {
         this.editor = editor;
         this.text = text;
         this.parent = parent;
         this.tabs = { full: tabs?.full || 0 };
         this.decos = new Set(decos);
+        this.marks = marks; // for now, while doc is not ready
         this.lines = 1;
         this.isLine = true;
 
-        this.unrenderedChanges = new Set(["text", "tabs", "decos"]);
+        this.unrenderedChanges = new Set(["text", "tabs", "decos", "marks"]);
         this.positions = [];
 
         this._updates = 1;
@@ -248,6 +253,16 @@ class Line {
 
     assignParent(parent) {
         this.parent = parent;
+    }
+
+    parseMarks() {
+        this.marks = this.marks.map(e => new Mark(this.editor, e));
+        // this.marks = this.marks.map(e => new Range(
+        //     this.editor,
+        //     new Position(e.from, this.editor.doc),
+        //     new Position(e.to, this.editor.doc),
+        //     { role: e.role }
+        // ));
     }
 
     update(text = "") {
@@ -331,6 +346,22 @@ class Line {
     setTabs(type, number) {
         this.unrenderedChanges.add("tabs");
         this.tabs[type] = Math.max(number, 0);
+    }
+
+    addMark(mark) {
+        let marks = Array.isArray(mark) ? mark : [mark];
+        for (let mark of marks) this.marks.push(new Mark(this.editor, mark));
+    }
+
+    removeMark(mark) {
+        let marks = Array.isArray(mark) ? mark : [mark];
+        for (let mark of marks) {
+            if (!this.marks.includes(mark)) continue;
+
+            let index = this.marks.indexOf(mark);
+            this.marks = this.marks.slice(0, index).concat(this.marks.slice(index + 1));
+            mark.delete();
+        }
     }
 
     get from() {
@@ -487,17 +518,19 @@ class Position {
 export { Position }
 
 class Range {
-    constructor(editor, from, to) {
+    constructor(editor, from, to, { role = "selection" } = {}) {
         console.log("range created from", from, "to", to);
         this.editor = editor;
         this.doc = editor.doc;
         this.from = from;
         this.to = to;
+        this.role = role;
         from.addToRange(this, to);
         to.addToRange(this, from);
     }
 
     reassignCallback() {
+        if (this.role !== "selection") return;
         if (!this.Range) return;
         let maybeReveal = this.Range.collapsed;
         this.Range.setStart(...nodeAt(this.start));
@@ -521,7 +554,7 @@ class Range {
 
     get end() {
         let bigger = this.from.index <= this.to.index ? this.to : this.from;
-        let addOne = this.editor.input.caret.style !== "bar";
+        let addOne = this.role === "selection" && this.editor.input.caret.style !== "bar";
         if (addOne) {
             return new Position(bigger.index + 1, this.editor.doc, { track: false });
         } else return bigger;
@@ -537,3 +570,26 @@ class Range {
 window.range = Range;
 
 export { Range }
+
+class Mark extends Range {
+    constructor(editor, { from, to, role = "math" } = {}) {
+        super(
+            editor,
+            new Position(from, editor.doc, { stickLeftOnInsert: true }),
+            new Position(to, editor.doc),
+            { role },
+        )
+    }
+
+    delete() {
+        this.from.delete();
+        this.to.delete();
+        this.from = undefined;
+        this.to = undefined;
+        this.deleted = true;
+    }
+
+    reassignCallback() {
+        this.from.Line.unrenderedChanges.add("marks");
+    }
+}
