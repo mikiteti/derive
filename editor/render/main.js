@@ -116,7 +116,7 @@ class Render {
     }
 
     renderLine(line) {
-        let promise;
+        let promises = [];
 
         if (line.deleted) {
             line.element.remove();
@@ -131,17 +131,16 @@ class Render {
         let caretChanged = line.unrenderedChanges.delete("caret");
         let textChanged = line.unrenderedChanges.delete("text");
         let marksChanged = line.unrenderedChanges.delete("marks");
-        if (textChanged || marksChanged || caretChanged) { // TODO
+        if (textChanged || marksChanged) {
             let content = document.createElement("span");
             content.classList.add("content");
-            let text = line.text, innerHTML = "";
+            let text = line.text;
             let index = 0;
             for (let mark of line.marks.filter(e => e.role === "math").sort((a, b) => a.start.index - b.start.index)) {
                 let wrapper = document.createElement("span");
                 wrapper.classList.add("wrapper");
                 let textSource = text.slice(index, mark.start.index - line.from);
                 let mathSource = text.slice(mark.start.index - line.from, mark.end.index - line.from);
-                // content.innerHTML += textSource;
                 content.appendChild(document.createTextNode(textSource));
                 let math = document.createElement("span");
                 math.classList.add("math");
@@ -149,37 +148,46 @@ class Render {
                 wrapper.append(math);
                 content.appendChild(wrapper);
                 wrapper.classList.remove("editingSource");
-                for (let sc of this.editor?.input?.caret?.carets || []) if (sc.from >= mark.start.index && sc.from <= mark.end.index - !!mark.end.stickLeftOnInsert) {
-                    wrapper.classList.add("editingSource");
-                    break;
-                }
-                // innerHTML += textSource + "<span class='math'>" + mathSource + "</span>";
+                for (let sc of this.editor?.input?.caret?.carets || [])
+                    if (sc.from >= mark.start.index + !mark.start.stickLeftOnInsert && sc.from <= mark.end.index - !!mark.end.stickLeftOnInsert) {
+                        wrapper.classList.add("editingSource");
+                        break;
+                    }
                 if (mark.IM == undefined) mark.IM = document.createElement("span");
                 let IM = mark.IM;
                 IM.classList.add("IM");
                 mark.IM = IM;
+                mark.wrapper = wrapper;
                 IM.mark = mark;
                 IM.source = mathSource;
-                promise = window.MathJax.tex2svgPromise(mathSource, { display: false });
+                let promise = window.MathJax.tex2svgPromise(mathSource, { display: false });
+                promises.push(promise);
                 promise.then(node => {
-                    // console.log(node, IM, math, content);
                     IM.replaceChildren(node);
                     math.after(IM);
                 });
                 index = mark.end.index - line.from;
             }
-            // content.innerHTML += text.slice(index);
             content.appendChild(document.createTextNode(text.slice(index)));
-            // innerHTML += text.slice(index);
-            // line.element.innerHTML = "<span class='content'>" + innerHTML + "</span><span class='endChar'> </span>";
             line.element.replaceChildren(content);
-            // line.element.innerHTML += "<span class='endChar'> </span>";
             let endChar = document.createElement("span");
             endChar.classList.add("endChar");
             endChar.innerHTML = " ";
             line.element.appendChild(endChar);
             if (line.decos.has("math")) {
                 this.handleDM(line);
+            }
+        }
+
+        if (caretChanged && !marksChanged && !textChanged) {
+            for (let mark of line.marks.filter(e => e.wrapper)) {
+                let wrapper = mark.wrapper;
+                wrapper.classList.remove("editingSource");
+                for (let sc of this.editor?.input?.caret?.carets || [])
+                    if (sc.from >= mark.start.index + !mark.start.stickLeftOnInsert && sc.from <= mark.end.index - !!mark.end.stickLeftOnInsert) {
+                        wrapper.classList.add("editingSource");
+                        break;
+                    }
             }
         }
 
@@ -208,7 +216,11 @@ class Render {
 
         this.renderInfo();
 
-        return promise;
+        return new Promise((res, rej) => {
+            Promise.all(promises).then(_ => {
+                requestAnimationFrame(() => { res() });
+            });
+        });
     }
 
     hideLine(line) {

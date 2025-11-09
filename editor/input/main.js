@@ -22,7 +22,6 @@ class Input {
             }
 
             let index;
-            console.log(e.target);
             if (e.target.classList.contains("DM")) index = e.target.Line.to;
             else if (e.target.classList.contains("IM")) index = e.target.mark.to.index - 1;
             else index = e.target.Line.from + getColumnAt(e.target, e.clientX, e.clientY, { style: this.caret.style });
@@ -48,7 +47,7 @@ class Input {
         document.addEventListener("keydown", (e) => {
             if (!this.editor.interactive) return;
             let command = this.keyboard.command(e);
-            console.log({ command });
+            // console.log({ command });
 
             if (command) e.preventDefault();
             else return;

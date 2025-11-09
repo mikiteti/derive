@@ -1,4 +1,3 @@
-import { Range } from "../doc/classes.js";
 import { nodeAt } from "../assets.js";
 
 class Selection {

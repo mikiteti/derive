@@ -91,7 +91,7 @@ class Change {
     }
 
     delete(from, to = from + 1, { noCallback = false, markStickLeft = false } = {}) {
-        console.log(`deleting from ${from} to ${to}`);
+        // console.log(`deleting from ${from} to ${to}`);
         if (from === to) return [];
         if (from > to) [from, to] = [to, from];
 
@@ -116,6 +116,13 @@ class Change {
         }
 
         let newText = line1.text.substring(0, from - line1.from) + line2.text.substring(to - line2.from);
+        if (from === line1.from) { // if first line is deleted completely, keep last line's decos
+            let line1decos = [], line2decos = [];
+            for (let deco of line1.decos) line1decos.push(deco);
+            for (let deco of line2.decos) line2decos.push(deco);
+            line1.removeDeco(line1decos);
+            line1.addDeco(line2decos);
+        }
         let linesToRemove = this.editor.doc.linesBetween(line1.number, line2.number).concat([line2]);
         // console.log({ linesToRemove: linesToRemove.map(line => line.text) });
         for (let line of linesToRemove) {
@@ -164,7 +171,7 @@ class Change {
         return changedLines;
     }
 
-    insert(string, at, { noCallback = false, stickLeft = false } = {}) {
+    insert(string, at, { noCallback = false, stickLeft = false, preserveDM = true } = {}) {
         if (string === "") return [];
         if (at.index) at = at.index;
 
@@ -216,18 +223,26 @@ class Change {
             node = node.parent;
         }
 
-        for (let pos of positionsToShift) pos[0].reassign(pos[1]);
+        for (let pos of positionsToShift) {
+            let initialLine = pos[0].Line;
+            pos[0].reassign(pos[1]);
+            if (pos[0].caret) {
+                console.log(pos[0]);
+                initialLine.unrenderedChanges.add("caret");
+                this.editor.render.renderLine(initialLine);
+            }
+        }
 
         let changedLines = [firstLine, ...Lines]
-        if (string === "\n" && firstLine.decos.has("math")) changedLines[1].addDeco("math");
+        if (preserveDM && string === "\n" && firstLine.decos.has("math")) changedLines[1].addDeco("math");
         if (!noCallback) this.runCallbacks({ changedLines });
         else this.completeCallbackList({ changedLines });
         return changedLines;
     }
 
-    replace(text, from, to = from, { noCallback = false } = {}) {
+    replace(text, from, to = from, { noCallback = false, preserveDM = true } = {}) {
         if (from > to) [from, to] = [to, from];
-        let changedLines = [...this.delete(from, to, { noCallback, markStickLeft: text.length > 0 }), ...this.insert(text, from, { noCallback })];
+        let changedLines = [...this.delete(from, to, { noCallback, markStickLeft: text.length > 0 }), ...this.insert(text, from, { noCallback, preserveDM })];
         return changedLines;
     }
 

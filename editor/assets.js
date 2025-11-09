@@ -271,12 +271,12 @@ const findXInVisualLine = (x, nodes, from, to) => {
         range.setStart(..._nodeAt(nodes, min));
         range.setEnd(..._nodeAt(nodes, current));
         rects = range.getClientRects();
-        if (rects.length && rects[rects[0].width === 0 ? 1 : 0].left <= x
+        if (rects.length && rects[rects[0].width === 0 ? 1 : 0]?.left <= x
             && rects[rects[rects.length - 1].width === 0 ? rects.length - 2 : rects.length - 1].right >= x) max = current;
         else min = current;
     }
 
-    return (rects[rects[rects.length - 1].width === 0 ? rects.length - 2 : rects.length - 1].right - x > x - rects[rects[0].width === 0 ? 1 : 0].left)
+    return (rects[rects[rects.length - 1].width === 0 ? rects.length - 2 : rects.length - 1]?.right - x > x - rects[rects[0].width === 0 ? 1 : 0]?.left)
         ? min
         : Math.min(max, to - 1);
 }

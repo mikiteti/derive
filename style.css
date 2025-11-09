@@ -4,13 +4,15 @@
     /* --color-blue: #8caaee; */
     --color-blue: rgb(148, 177, 255);
     --color-green: #a6d189;
-    --color-purple: #babbf1;
+    /* --color-purple: #babbf1; */
+    --color-purple: #aaabee;
     --color-yellow: #e5c890;
     --color-red: #e78284;
     --color-orange: #ef9f76;
     --tab-full-width: 3rem;
     --editor-width: min(700px, 90vw);
     --font-size: calc(var(--editor-width) / 25);
+    --color-accent: var(--color-blue);
 }
 
 @font-face {
@@ -197,7 +199,7 @@ html {
 }
 
 .accent {
-    color: var(--color-blue);
+    color: var(--color-accent);
 }
 
 .capital {
@@ -208,18 +210,13 @@ html {
 }
 
 ::highlight(selection) {
-    background-color: var(--color-blue);
+    background-color: var(--color-accent);
     color: black;
 }
 
 .hidden {
     height: 0;
     transform: scaleY(0);
-}
-
-.IM {
-    /* color: var(--color-yellow) !important; */
-    pointer-events: all !important;
 }
 
 .DM {
@@ -260,7 +257,7 @@ html {
     animation: 3s spin-border-offset linear infinite;
     border: 1px solid transparent;
     background-image: linear-gradient(var(--color-bg), var(--color-bg)),
-        conic-gradient(from var(--border-offset-angle), transparent, transparent, var(--color-blue), transparent, transparent, var(--color-blue), transparent);
+        conic-gradient(from var(--border-offset-angle), transparent, transparent, var(--color-accent), transparent, transparent, var(--color-accent), transparent);
     background-origin: border-box;
     background-clip: padding-box, border-box;
 }
@@ -275,10 +272,17 @@ html {
     position: relative;
 }
 
+.IM {
+    /* color: var(--color-yellow) !important; */
+    pointer-events: all !important;
+}
+
 .wrapper.editingSource .IM {
     position: absolute;
-    background-color: black;
-    border-radius: 3px;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(3px);
+    box-shadow: 2px 4px 3px rgba(0, 0, 0, 0.3);
+    border-radius: 6px;
     left: 50%;
     top: 0;
     transform: translate(-50%, -100%);

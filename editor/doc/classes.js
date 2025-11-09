@@ -351,6 +351,7 @@ class Line {
     addMark(mark) {
         let marks = Array.isArray(mark) ? mark : [mark];
         for (let mark of marks) this.marks.push(new Mark(this.editor, mark));
+        this.unrenderedChanges.add("marks");
     }
 
     removeMark(mark) {
@@ -362,6 +363,7 @@ class Line {
             this.marks = this.marks.slice(0, index).concat(this.marks.slice(index + 1));
             mark.delete();
         }
+        this.unrenderedChanges.add("marks");
     }
 
     get from() {
@@ -415,9 +417,13 @@ export { Line }
 
 
 window.positionCount = 0;
+window.positions = new Set();
 class Position {
     constructor(pos, doc = window.doc, { stickWhenDeleted = true, stickLeftOnInsert = false, caret, track = true } = {}) {
-        if (track) window.positionCount++;
+        if (track) {
+            window.positionCount++;
+            window.positions.add(this);
+        }
         this.doc = doc;
         this.stickWhenDeleted = stickWhenDeleted;
         this.stickLeftOnInsert = stickLeftOnInsert;
@@ -492,6 +498,10 @@ class Position {
     reassign(pos) {
         if (pos === this.index) return this;
         if (this.Line) this.Line.removePosition(this);
+        if (this.range && this.range.inline) { // TODO: break into multiple marks
+            let newLine = this.doc.lineAt(pos);
+            if (newLine !== this.Line) return;
+        }
         this.assign(pos);
 
         if (this.range && !this.range.deleted) this.range.reassignCallback();
@@ -501,6 +511,7 @@ class Position {
 
     delete() {
         window.positionCount--;
+        window.positions.delete(this);
         this.Line.removePosition(this);
         this.deleted = true;
         if (this.range && !this.range.deleted) {
@@ -519,7 +530,7 @@ export { Position }
 
 class Range {
     constructor(editor, from, to, { role = "selection" } = {}) {
-        console.log("range created from", from, "to", to);
+        // console.log("range created from", from, "to", to);
         this.editor = editor;
         this.doc = editor.doc;
         this.from = from;
@@ -579,6 +590,7 @@ class Mark extends Range {
             new Position(to, editor.doc),
             { role },
         )
+        this.inline = true;
     }
 
     delete() {

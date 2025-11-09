@@ -157,7 +157,7 @@ class Snippets {
     }
 
     deleteTabStops() {
-        for (let i of this.tabstops) for (let pos of i) pos.delete();
+        for (let i of this.tabstops) for (let pos of i.positions) pos.delete();
         this.tabstops = [];
     }
 }

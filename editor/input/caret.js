@@ -57,8 +57,11 @@ class SingleCaret {
     async placeAt(index = this.position.index, { updateScreenX = true, hideMath = true, keepFixedEnd = false } = {}) {
         if (keepFixedEnd !== -1) keepFixedEnd ? this.addFixedEnd() : this.removeFixedEnd(); // -1: don't change, false: remove, true: add
         // if (hideMath && this.position.Line.decos.has("math")) this.editor.render.hideLine(this.position.Line);
-        this.position.Line.unrenderedChanges.add("caret");
-        let renderLines = [this.position.Line];
+        let renderLines = [];
+        if (index !== this.position.index) {
+            this.position.Line.unrenderedChanges.add("caret");
+            renderLines.push(this.position.Line);
+        }
         // this.editor.render.renderLine(this.position.Line);
         // if (index !== this.position.index && this.editor.input.caret.carets.map(c => c.position.index).includes(index)) {
         //     this.editor.input.caret.removeCaret(this.editor.input.caret.carets.indexOf(this));
@@ -69,7 +72,7 @@ class SingleCaret {
         this.position.reassign(index);
         if (hideMath && this.position.Line.decos.has("math")) this.editor.render.revealLine(this.position.Line);
         this.position.Line.unrenderedChanges.add("caret");
-        renderLines.push(this.position.Line);
+        if (renderLines[0] !== this.position.Line) renderLines.push(this.position.Line);
         for (let line of renderLines) {
             let promise = this.editor.render.renderLine(line); // if inline math needs to be rendered, wait for it
             if (promise) await promise;

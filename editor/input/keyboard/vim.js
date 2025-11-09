@@ -20,6 +20,9 @@ const createCommandSet = (editor) => {
     const array = (func) => {
         return (...args) => ([func(...args)])
     }
+    const min = (...funcs) => {
+        return (...args) => (Math.min(...funcs.map(func => func(...args))));
+    }
 
     const findStartOfWORD = (pos, count = 1) => { // TODO: implement count
         const getType = (char) => {
@@ -138,15 +141,16 @@ const createCommandSet = (editor) => {
     const findNextVisualLine = (pos, count = 1) => {
         if (!pos.caret) return pos.index;
         let indeces = findXIndecesInLine(pos.caret.screenPosition.x, pos.Line);
+        if (caret.style !== "bar" && indeces.at(-1) === pos.Line.to) indeces[indeces.length - 1]--;
         let bestBet = indeces[0];
         while (indeces.length && indeces[0] <= pos.index) {
             indeces.shift();
             if (indeces.length) bestBet = indeces[0];
         }
         if (indeces.length >= count) return indeces[count - 1];
-        console.log("not in currentline, bestbet", bestBet);
+        // console.log("not in currentline, bestbet", bestBet);
         count -= indeces.length;
-        console.log(count);
+        // console.log(count);
 
         let number = pos.Line.number;
         while (count > 0) {
@@ -154,6 +158,7 @@ const createCommandSet = (editor) => {
             let nextLine = editor.doc.line(number);
             if (!nextLine || number >= editor.doc.lines) return bestBet;
             indeces = findXIndecesInLine(pos.caret.screenPosition.x, nextLine);
+            if (caret.style !== "bar" && indeces.at(-1) === nextLine.to) indeces[indeces.length - 1]--;
             if (indeces.length >= count) return indeces[count - 1];
             count -= indeces.length;
             bestBet = indeces.at(-1);
@@ -164,15 +169,16 @@ const createCommandSet = (editor) => {
     const findPreviousVisualLine = (pos, count = 1) => {
         if (!pos.caret) return pos.index;
         let indeces = findXIndecesInLine(pos.caret.screenPosition.x, pos.Line);
+        if (caret.style !== "bar" && indeces.at(-1) === pos.Line.to) indeces[indeces.length - 1]--;
         let bestBet = indeces[0];
         while (indeces.length && indeces.at(-1) >= pos.index) {
             indeces.pop();
             if (indeces.length) bestBet = indeces.at(-1);
         }
         if (indeces.length >= count) return indeces[indeces.length - count];
-        console.log("not in currentline, bestbet", bestBet);
+        // console.log("not in currentline, bestbet", bestBet);
         count -= indeces.length;
-        console.log(count);
+        // console.log(count);
 
         let number = pos.Line.number;
         while (count > 0) {
@@ -180,6 +186,7 @@ const createCommandSet = (editor) => {
             let prevLine = editor.doc.line(number);
             if (!prevLine || number < 0) return bestBet;
             indeces = findXIndecesInLine(pos.caret.screenPosition.x, prevLine);
+            if (caret.style !== "bar" && indeces.at(-1) === prevLine.to) indeces[indeces.length - 1]--;
             if (indeces.length >= count) return indeces[indeces.length - count];
             count -= indeces.length;
             bestBet = indeces[0];
@@ -213,6 +220,8 @@ const createCommandSet = (editor) => {
         "$": (pos) => pos.Line.to - 1,
         "0": (pos) => pos.Line.from,
         "_": (pos) => pos.Line.from,
+        "G": (pos) => doc.chars - 1,
+        "gg": (pos) => 0,
         // ...
 
         // text objects
@@ -228,31 +237,31 @@ const createCommandSet = (editor) => {
 
     const functions = {
         mode: (m) => {
-            console.log(`setting MODE to ${m}`);
+            // console.log(`setting MODE to ${m}`);
             MODE = m;
             currentCommand = "";
             let keep = -1;
             if (m === "n" || m === "i") keep = false;
             caret.changeStyle(caretStyles[m], { keepFixedEnd: keep });
         },
-        insert: (text, { noCallback = false } = {}) => {
-            console.log(`inserting ${text} at caret position(s)`)
+        insert: (text, { noCallback = false, preserveDM = true } = {}) => {
+            // console.log(`inserting ${text} at caret position(s)`)
             for (let sc of caret.carets) {
                 sc.fixedEnd ?
-                    doc.change.replace(text, sc.position.index, sc.fixedEnd.index, { noCallback: true }) :
-                    doc.change.insert(text, sc.position.index, { noCallback: true });
+                    doc.change.replace(text, sc.position.index, sc.fixedEnd.index, { noCallback: true, preserveDM }) :
+                    doc.change.insert(text, sc.position.index, { noCallback: true, preserveDM });
             }
             if (!noCallback) doc.change.runCallbacks();
         },
         delete: (getFrom, getTo) => {
-            console.log(`deleting from ${getFrom} to ${getTo}`)
+            // console.log(`deleting from ${getFrom} to ${getTo}`)
             caret.changeForAll(sc => {
                 let from = getFrom(sc.position), to = getTo(sc.position);
                 return { from: Math.min(from, to), to: Math.max(from, to) + 1 }; // inclusive change
             });
         },
         replace: (getFrom, getTo, text) => {
-            console.log(`replacing between ${getFrom} and ${getTo} to ${text}`);
+            // console.log(`replacing between ${getFrom} and ${getTo} to ${text}`);
             caret.changeForAll(sc => {
                 let from = getFrom(sc.position), to = getTo(sc.position);
                 return { from: Math.min(from, to), to: Math.max(from, to) + 1, insert: text }; // inclusive change
@@ -263,9 +272,10 @@ const createCommandSet = (editor) => {
             functions["mode"]("i");
         },
         move: (getNewPos, { updateScreenX = true } = {}) => {
-            console.log(`moving carets with the rule ${getNewPos}, ${updateScreenX}`)
+            // console.log(`moving carets with the rule ${getNewPos}, ${updateScreenX}`)
             for (let sc of caret.carets) {
                 let newPos = getNewPos(sc.position);
+                // if (caret.style !== "bar" && doc.lineAt(newPos).to === newPos) newPos--;
                 if (!Array.isArray(newPos)) sc.placeAt(newPos, { updateScreenX });
                 else if (newPos.length === 1) sc.placeAt(newPos[0], { keepFixedEnd: true, updateScreenX });
                 else {
@@ -275,11 +285,15 @@ const createCommandSet = (editor) => {
                 }
             }
         }, // if getNewPos returns one int, don't keep fixed end, if it returns [int], keep it, if it returns [int, int] set first int to fixedEnd, second to position
-        removeCarets: () => { console.log("removing unnecessary carets"); },
+        removeCarets: () => {
+            caret.updateCarets([caret.carets[0].position.index]);
+            snippets.deleteTabStops();
+        },
         runSnippets: () => {
-            console.log("running snippets");
+            // console.log("running snippets");
             let jump;
-            if (doc.change.callbackList.changedLines.size === 1) jump = snippets.multiHandle(caret.carets.map(e => e.position));
+            // if (doc.change.callbackList.changedLines.size === 1) jump = snippets.multiHandle(caret.carets.map(e => e.position));
+            jump = snippets.multiHandle(caret.carets.map(e => e.position));
             doc.change.runCallbacks();
             if (jump) snippets.jumpToNextTabStops();
 
@@ -306,11 +320,11 @@ const createCommandSet = (editor) => {
     };
 
     const parseCommand = (command) => { // command ~ "viW"
-        console.log(`Parsing current command`);
+        // console.log(`Parsing current command`);
         let headCommand;
         if (MODE === "n" && headCommands[command[0]] && command[0] !== command[1]) { // so that "d2e" and "diw" work
             headCommand = headCommands[command[0]];
-            console.log("We have a headcommand!");
+            // console.log("We have a headcommand!");
             command = command.slice(1);
         }
 
@@ -320,10 +334,10 @@ const createCommandSet = (editor) => {
             command = command.slice(1);
         }
         if (count === 0) count = 1;
-        console.log({ count });
+        // console.log({ count });
 
         const iActions = {
-            "ArrowLeft": [["move", moves["h"](1)]],
+            "ArrowLeft": [["move", moves["h!"](1)]],
             "ArrowRight": [["move", moves["l!"](1)]],
             "\\AArrowLeft": [["move", moves["B"](1)]],
             "\\AArrowRight": [["move", moves["E"](1)], ["move", moves["l"](1)]],
@@ -368,6 +382,8 @@ const createCommandSet = (editor) => {
             "$": moves["$"],
             "0": moves["0"],
             "_": moves["_"],
+            "G": moves["G"],
+            "gg": moves["gg"],
             // ...
         }
 
@@ -382,6 +398,9 @@ const createCommandSet = (editor) => {
             "i(": moves["i("],
             "i)": moves["i("],
             // ...
+
+            "j": (pos) => [pos.Line.from, doc.line(pos.Line.number + count).to],
+            "k": (pos) => [pos.Line.from, doc.line(pos.Line.number - count).to],
         }
 
         const nActions = { // complex actions, like mode changes and line openings
@@ -392,7 +411,7 @@ const createCommandSet = (editor) => {
             "v": [["mode", "v"]],
             "V": [["mode", "v"], ["move", (pos) => ([moves["0"](pos), moves["$"](pos)])]],
             "Escape": [["removeCarets"]],
-            "o": [["move", moves["$"]], ["move", moves["l!"](1)], ["insert", "\n"], ["mode", "i"]],
+            "o": [["move", moves["$"]], ["move", moves["l!"](1)], ["insert", "\n", { preserveDM: false }], ["mode", "i"]],
             "O": [["move", nMoves["_"]], ["insert", "\n"], ["move", nMoves["h!"]], ["mode", "i"]],
             ";": [["move", (pos) => {
                 if (lastInlineFind == undefined) return pos.index;
@@ -405,7 +424,7 @@ const createCommandSet = (editor) => {
                 return find(pos, reverseFind);
             }]],
             "X": [["delete", moves["h"](1), moves["h"](1)]],
-            "x": [["delete", moves["iden"], moves["iden"]]],
+            "x": [["delete", min(moves["iden"], moves["$"]), min(moves["iden"], moves["$"])]],
             // "x": [["delete", pos => Math.min(pos.index, pos.Line.to - 1), pos => Math.min(pos.index, pos.Line.to - 1)]], 
             "C": [["change", moves["iden"], moves["$"]]],
             "D": [["delete", moves["iden"], moves["$"]]],
@@ -414,7 +433,7 @@ const createCommandSet = (editor) => {
         }
 
         if (MODE === "n") {
-            if (lastPressed === "Escape") {
+            if (lastPressed === "Escape" && currentCommand !== "Escape") {
                 currentCommand = "";
                 return [];
             }
@@ -438,9 +457,9 @@ const createCommandSet = (editor) => {
             // Caret movements
             if (!headCommand) {
                 if (nMoves[command]) return [["move", nMoves[command], { updateScreenX: !["j", "k"].includes(command) }]];
-                if (textObjects[command]) return [["move", textObjects[command]]];
+                // if (textObjects[command]) return [["move", textObjects[command]]];
             } else {
-                if (nMoves[command]) return [[headCommand, moves["iden"], nMoves[command]]];
+                // if (nMoves[command]) return [[headCommand, moves["iden"], nMoves[command]]];
                 if (textObjects[command]) return [["move", textObjects[command]], [headCommand, moves["iden"], moves["fixedEnd"]]];
             }
 
@@ -461,9 +480,9 @@ const createCommandSet = (editor) => {
     }
 
     const getMergedCommand = () => {
-        console.log(`Running currentCommand in MODE ${MODE}`);
+        // console.log(`Running currentCommand in MODE ${MODE}`);
         let commandsToRun = parseCommand(currentCommand);
-        console.log(`Commands to run: ${commandsToRun}`);
+        // console.log(`Commands to run: ${commandsToRun}`);
         if (commandsToRun.length > 0) {
             currentCommand = "";
             caret.changeStyle(caretStyles[MODE]);
@@ -477,21 +496,21 @@ const createCommandSet = (editor) => {
         }
         return () => {
             for (let c of commandsToRun) functions[c[0]](...c.slice(1));
-            console.log(`Commands ran`);
+            // console.log(`Commands ran`);
         }
     }
 
     const appendCurrentCommand = (letter) => { // letter ~ \\Co, i, \\M\\AArrowLeft
-        console.log(`Appending ${letter} to currentCommand`);
+        // console.log(`Appending ${letter} to currentCommand`);
         currentCommand += letter;
         lastPressed = letter;
-        console.log(`CurrentCommand: ${currentCommand}`);
+        // console.log(`CurrentCommand: ${currentCommand}`);
         return getMergedCommand();
     }
 
     const command = (e) => {
         currentEvent = e;
-        console.log(e);
+        // console.log(e);
         if (["Meta", "Alt", "Control", "Shift"].includes(e.key)) return;
 
         let letter = e.key;

@@ -137,14 +137,21 @@ const createCommandSet = (editor) => {
                     if (mark.to.index === sc.from) {
                         mark.to.stickLeftOnInsert = !mark.to.stickLeftOnInsert;
                         line.unrenderedChanges.add("marks");
-                        render.renderLine(line);
                         caret.placeAllAt();
+                        return;
+                    }
+                    if (mark.from.index === sc.from) {
+                        mark.from.stickLeftOnInsert = !mark.from.stickLeftOnInsert;
+                        line.unrenderedChanges.add("marks");
+                        caret.placeAllAt();
+                        return;
+                    }
+                    if (mark.from.index < sc.from && mark.to.index > sc.from) { // TODO
                         return;
                     }
                 }
 
                 line.addMark({ from: sc.from, to: sc.to, role: "math" });
-                render.renderLine(line);
                 caret.placeAllAt();
             }
         },
@@ -170,6 +177,27 @@ const createCommandSet = (editor) => {
             caret.placeAllAt();
         },
         "M+3": () => {
+            caret.forAll(pos => {
+                pos.Line.addDeco(["underline", "bold", "accent"]);
+                render.renderLine(pos.Line);
+            });
+            caret.placeAllAt();
+        },
+        "M+S+a": () => {
+            caret.forAll(pos => {
+                pos.Line.addDeco(["middle", "Bold", "accent", "capital", "underline"]);
+                render.renderLine(pos.Line);
+            });
+            caret.placeAllAt();
+        },
+        "M+S+s": () => {
+            caret.forAll(pos => {
+                pos.Line.addDeco(["middle", "bold", "accent", "small"]);
+                render.renderLine(pos.Line);
+            });
+            caret.placeAllAt();
+        },
+        "M+S+d": () => {
             caret.forAll(pos => {
                 pos.Line.addDeco(["underline", "bold", "accent"]);
                 render.renderLine(pos.Line);
