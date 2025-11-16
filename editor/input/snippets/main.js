@@ -131,7 +131,7 @@ class Snippets {
         for (let t of tabstops.reverse()) {
             this.tabstops.unshift({
                 placeholder: t.placeholder,
-                positions: t.positions.map(e => new Position(e, this.editor.doc, { stickLeftOnInsert: true }))
+                positions: t.positions.map(e => new Position(e, this.editor.doc, { stickLeftOnInsert: true, stickWhenDeleted: false }))
             });
         }
 
@@ -145,7 +145,9 @@ class Snippets {
     }
 
     jumpToNextTabStops() {
-        console.log("jumping to next tabstops", this.tabstops[0].placeholder);
+        while (this.tabstops[0] && this.tabstops[0].positions.filter(e => !e.deleted).length === 0) this.tabstops.shift();
+        if (this.tabstops.length === 0) return;
+        this.tabstops[0].positions = this.tabstops[0].positions.filter(e => !e.deleted);
         this.editor.input.caret.updateCarets(
             // this.tabstops[0].positions.map(e => e.index)
             this.tabstops[0].placeholder === "" ?

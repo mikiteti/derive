@@ -1,8 +1,6 @@
-import newEditor from "./editor/main.js";
-
-let myFile = {
+const Rezgesek = {
     "content": [
-        { "text": "Rezgések", "tabs": { "full": 0 }, "decos": ["h1", "middle", "Bold", "accent", "capital", "underline"] },
+        { "text": "Rezgesek", "tabs": { "full": 0 }, "decos": ["h1", "middle", "Bold", "accent", "capital", "underline"] },
         { "text": "Harmonikus oszcillátorok", "tabs": { "full": 0 }, "decos": ["h2", "middle", "bold", "accent", "small"] },
         { "text": "Szabad Rezgés", "tabs": { "full": 0 }, "decos": ["h3", "underline", "bold", "accent"] },
         { "text": "• Eredő erő: F_{x}=-Dx", "tabs": { "full": 0 }, "marks": [{ "role": "math", "from": 61, "to": 70 }] },
@@ -95,35 +93,4 @@ let myFile = {
     ]
 };
 
-window.MathJax.startup.promise.then(_ => {
-    const editor = newEditor({ file: myFile, layout: "vim", interactive: !matchMedia('(pointer: coarse)').matches });
-    window.editor = editor;
-    window.doc = editor.doc;
-    window.render = editor.render;
-    window.selection = editor.render.selection;
-    window.input = editor.input;
-    window.caret = editor.input?.caret;
-    window.snippets = editor.input?.snippets;
-    console.log({ editor });
-    console.log({ doc: window.doc });
-    setTimeout(() => { // TODO: find out why caret behaves badly on startup
-        window.caret?.placeAllAt();
-    }, 200);
-    queueMicrotask(() => {
-        window.editor.render.textarea.animate([
-            { opacity: "0" },
-            { opacity: "1" },
-        ], {
-            duration: 100,
-        });
-    });
-});
-
-document.addEventListener("click", e => {
-    if (!window.editor.interactive) return;
-    document.getElementById("focus").focus();
-});
-
-window.addEventListener("resize", _ => {
-    window.caret?.placeAllAt();
-});
+export default Rezgesek;

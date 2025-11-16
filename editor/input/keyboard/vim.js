@@ -141,7 +141,7 @@ const createCommandSet = (editor) => {
     const findNextVisualLine = (pos, count = 1) => {
         if (!pos.caret) return pos.index;
         let indeces = findXIndecesInLine(pos.caret.screenPosition.x, pos.Line);
-        if (caret.style !== "bar" && indeces.at(-1) === pos.Line.to) indeces[indeces.length - 1]--;
+        if (caret.style !== "bar" && indeces.at(-1) === pos.Line.to && pos.Line.chars > 1) indeces[indeces.length - 1]--;
         let bestBet = indeces[0];
         while (indeces.length && indeces[0] <= pos.index) {
             indeces.shift();
@@ -158,7 +158,7 @@ const createCommandSet = (editor) => {
             let nextLine = editor.doc.line(number);
             if (!nextLine || number >= editor.doc.lines) return bestBet;
             indeces = findXIndecesInLine(pos.caret.screenPosition.x, nextLine);
-            if (caret.style !== "bar" && indeces.at(-1) === nextLine.to) indeces[indeces.length - 1]--;
+            if (caret.style !== "bar" && indeces.at(-1) === nextLine.to && nextLine.chars > 1) indeces[indeces.length - 1]--;
             if (indeces.length >= count) return indeces[count - 1];
             count -= indeces.length;
             bestBet = indeces.at(-1);
@@ -169,7 +169,7 @@ const createCommandSet = (editor) => {
     const findPreviousVisualLine = (pos, count = 1) => {
         if (!pos.caret) return pos.index;
         let indeces = findXIndecesInLine(pos.caret.screenPosition.x, pos.Line);
-        if (caret.style !== "bar" && indeces.at(-1) === pos.Line.to) indeces[indeces.length - 1]--;
+        if (caret.style !== "bar" && indeces.at(-1) === pos.Line.to && pos.Line.chars > 1) indeces[indeces.length - 1]--;
         let bestBet = indeces[0];
         while (indeces.length && indeces.at(-1) >= pos.index) {
             indeces.pop();
@@ -186,7 +186,7 @@ const createCommandSet = (editor) => {
             let prevLine = editor.doc.line(number);
             if (!prevLine || number < 0) return bestBet;
             indeces = findXIndecesInLine(pos.caret.screenPosition.x, prevLine);
-            if (caret.style !== "bar" && indeces.at(-1) === prevLine.to) indeces[indeces.length - 1]--;
+            if (caret.style !== "bar" && indeces.at(-1) === prevLine.to && prevLine.chars > 1) indeces[indeces.length - 1]--;
             if (indeces.length >= count) return indeces[indeces.length - count];
             count -= indeces.length;
             bestBet = indeces[0];
@@ -198,6 +198,7 @@ const createCommandSet = (editor) => {
     let currentCommand = "", lastPressed = "";
     const moves = {
         "iden": (pos) => pos.index,
+        "safety": (pos) => Math.min(pos.index, pos.Line.to - (caret.style === "bar" || pos.Line.chars === 1 ? 0 : 1)),
 
         // motions
         "h": (count = 1) => (pos => Math.max(pos.index - count, pos.Line.from)),
@@ -320,7 +321,8 @@ const createCommandSet = (editor) => {
     };
 
     const parseCommand = (command) => { // command ~ "viW"
-        // console.log(`Parsing current command`);
+        if (MODE === "n" && caret.carets[0].fixedEnd) MODE = "v";
+
         let headCommand;
         if (MODE === "n" && headCommands[command[0]] && command[0] !== command[1]) { // so that "d2e" and "diw" work
             headCommand = headCommands[command[0]];
@@ -347,7 +349,7 @@ const createCommandSet = (editor) => {
 
             "Backspace": [["backspace"]],
             "\\SBackspace": [["delete", moves["iden"], moves["iden"]]],
-            "\\ABackspace": [["delete", moves["b"](1), moves["h"](1)]],
+            "\\ABackspace": [["delete", moves["B"](1), moves["h"](1)]],
             "\\MBackspace": [["delete", moves["0"], moves["h"](1)]],
 
             "Enter": [["insert", "\n"]],
@@ -401,11 +403,12 @@ const createCommandSet = (editor) => {
 
             "j": (pos) => [pos.Line.from, doc.line(pos.Line.number + count).to],
             "k": (pos) => [pos.Line.from, doc.line(pos.Line.number - count).to],
+            "G": (pos) => [moves["iden"], doc.chars - 1],
         }
 
         const nActions = { // complex actions, like mode changes and line openings
             "i": [["mode", "i"]],
-            "a": [["mode", "i"], ["move", moves["l!"](1)]],
+            "a": [["mode", "i"], ["move", (pos) => (pos.Line.chars === 1 ? pos.index : pos.index + 1)]],
             "I": [["mode", "i"], ["move", moves["_"]]],
             "A": [["mode", "i"], ["move", moves["$"]], ["move", moves["l!"](1)]],
             "v": [["mode", "v"]],
@@ -469,9 +472,10 @@ const createCommandSet = (editor) => {
         if (MODE === "v") {
             if (lastPressed === "Escape" || lastPressed === "\\Cc") return [["mode", "n"]];
             if (nMoves[command]) return [["move", array(nMoves[command])]];
-            if (textObjects[command]) return [["move", array(textObjects[command])]];
+            if (textObjects[command]) return [["move", textObjects[command]]];
 
-            if (headCommands[command]) return [[headCommands[command], moves["iden"], moves["fixedEnd"]]];
+            let mode = { "c": "i", "d": "n" };
+            if (headCommands[command]) return [[headCommands[command], moves["iden"], moves["fixedEnd"]], ["mode", mode[command]]];
             return [];
         }
 
@@ -480,9 +484,7 @@ const createCommandSet = (editor) => {
     }
 
     const getMergedCommand = () => {
-        // console.log(`Running currentCommand in MODE ${MODE}`);
         let commandsToRun = parseCommand(currentCommand);
-        // console.log(`Commands to run: ${commandsToRun}`);
         if (commandsToRun.length > 0) {
             currentCommand = "";
             caret.changeStyle(caretStyles[MODE]);
@@ -496,6 +498,7 @@ const createCommandSet = (editor) => {
         }
         return () => {
             for (let c of commandsToRun) functions[c[0]](...c.slice(1));
+            if (MODE === "n") functions["move"](moves["safety"]);
             // console.log(`Commands ran`);
         }
     }
@@ -510,7 +513,6 @@ const createCommandSet = (editor) => {
 
     const command = (e) => {
         currentEvent = e;
-        // console.log(e);
         if (["Meta", "Alt", "Control", "Shift"].includes(e.key)) return;
 
         let letter = e.key;

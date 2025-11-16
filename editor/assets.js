@@ -256,32 +256,42 @@ const nodeAt = (pos) => {
 }
 
 const findXInVisualLine = (x, nodes, from, to) => {
+    // console.log({ x, nodes, from, to });
     let min = from, max = to;
     let range = document.createRange();
     range.setStart(..._nodeAt(nodes, min));
     range.setEnd(..._nodeAt(nodes, max));
 
-    let rects = range.getClientRects();
-    if (rects.length && rects[rects[0].width === 0 ? 1 : 0].left > x) return min;
-    if (rects[rects[rects.length - 1].width === 0 ? rects.length - 2 : rects.length - 1].right < x) return max - 1;
+    let Rects = range.getClientRects();
+    let rects = [];
+    for (let rect of Rects) if (rect.width !== 0) rects.push(rect);
+    if (rects.length && rects[0].left > x) return min;
+    if (rects.at(-1).right < x) return max - 1;
     let lastUpdate = false;
     while (max - min > 1 && !lastUpdate) {
         if (max - min <= 1) lastUpdate = true;
         let current = Math.floor((min + max) / 2);
         range.setStart(..._nodeAt(nodes, min));
         range.setEnd(..._nodeAt(nodes, current));
-        rects = range.getClientRects();
-        if (rects.length && rects[rects[0].width === 0 ? 1 : 0]?.left <= x
-            && rects[rects[rects.length - 1].width === 0 ? rects.length - 2 : rects.length - 1].right >= x) max = current;
+        Rects = range.getClientRects();
+        rects = [];
+        for (let rect of Rects) if (rect.width !== 0) rects.push(rect);
+        // console.log(rects);
+        if (rects.length && rects[0].left <= x
+            && rects.at(-1).right >= x) max = current;
         else min = current;
     }
 
-    return (rects[rects[rects.length - 1].width === 0 ? rects.length - 2 : rects.length - 1]?.right - x > x - rects[rects[0].width === 0 ? 1 : 0]?.left)
+    // console.log("no, did the whole binary search: ", (rects.at(-1)?.right - x > x - rects[0]?.left) ? min : Math.min(max, to - 1));
+    return (rects.at(-1)?.right - x > x - rects[0]?.left)
         ? min
         : Math.min(max, to - 1);
 }
 
 const findXIndecesInLine = (x, line) => { // works even when height: 0; transform: scaleY(0)
+    if (line.chars === 1) return [line.from];
+
+    // console.log({ x, line });
     const indeces = [];
 
     const walker = document.createTreeWalker(line.element, NodeFilter.SHOW_TEXT);
@@ -293,14 +303,17 @@ const findXIndecesInLine = (x, line) => { // works even when height: 0; transfor
     }
 
     let linebreaks = getLineBreaks(line, nodes);
+    // console.log({ linebreaks });
     linebreaks.unshift(0);
-    linebreaks.push(line.element.innerText.length);
+    linebreaks.push(line.chars);
+    // console.log({ linebreaks });
 
     for (let i = 0; i < linebreaks.length - 1; i++) {
         let from = linebreaks[i], to = linebreaks[i + 1];
         indeces.push(findXInVisualLine(x, nodes, from, to) + line.from);
     }
 
+    // console.log({ indeces, lineFrom: line.from, lineTo: line.to });
     return indeces;
 }
 
@@ -321,10 +334,10 @@ const getVisualLineAt = (position, editor) => {
     return { from, to };
 }
 
-const exportFile = () => {
-    let file = { lines: [] };
-    for (let i = 0; i < window.doc.lines; i++) {
-        let line = window.doc.line(i);
+const exportFile = (editor = window.editor) => {
+    let file = { content: [] };
+    for (let i = 0; i < editor.doc.lines; i++) {
+        let line = editor.doc.line(i);
         let decos = [];
         for (let deco of line.decos) decos.push(deco);
         let marks = line.marks.map(e => ({ role: e.role, from: e.from.index, to: e.to.index }));
@@ -334,7 +347,7 @@ const exportFile = () => {
         if (decos.length) myLine.decos = decos;
         if (marks.length) myLine.marks = marks;
 
-        file.lines.push(myLine);
+        file.content.push(myLine);
     }
 
     console.log(file);

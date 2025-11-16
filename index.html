@@ -5,6 +5,7 @@
     <title>Derive</title>
 
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="extensions/obsidian.css">
     <link rel="icon" type="image/png" href="shadow.png">
     <link rel="apple-touch-icon" href="shadow.png">
 
@@ -21,16 +22,11 @@
             tex: {packages: ['base', 'ams'], inlineMath: [["$", "$"]]},
             svg: {fontCache: 'global'},
             options: {
-                // enableMenu: false,
                 renderActions: {
                     addMenu: [],
                     assistiveMml: [],
                     explorer: []
                 },
-                // a11y: {
-                //     speakText: false,
-                //     brailleText: false
-                // }
             }
         };
     </script>
@@ -44,16 +40,22 @@
     <!-- <input style="background-color: transparent;" type="text" id="unfocus" value="Unfocus" /> -->
     <!-- <div id="unfocus">Unfocus</div> -->
 
-    <div id="editor"></div>
-    <div id="placeholder" onclick="window.editor.input.caret.updateCarets([window.editor.doc.chars-1])"></div>
+    <main></main>
 
-    <div id="leftInfo" class="info noisy"></div>
-    <div id="rightInfo" class="info noisy"></div>
+    <div id="modalBg"></div>
+    <div id="commandPalette" class="modal">
+        <input class="fuzzyFinder" type="text" />
+        <div class="list"></div>
+    </div>
+    <div id="filePicker" class="modal">
+        <input class="fuzzyFinder" type="text" placeholder="Find or create notes..." />
+        <div class="list"></div>
+    </div>
 
     <script>
         window.MathJax = MathJax;
     </script>
-    <script type="module" src="main.js"></script>
+    <script type="module" src="state/main.js"></script>
 </body>
 
 </html>

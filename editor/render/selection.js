@@ -1,9 +1,9 @@
 import { nodeAt } from "../assets.js";
 
 class Selection {
-    constructor(editor, textarea = editor.render.textarea) {
+    constructor(editor) {
         this.editor = editor;
-        this.textarea = textarea;
+        this.textarea = editor.elements.textarea;
         this.doc = editor.doc;
 
         this.ranges = new Set();

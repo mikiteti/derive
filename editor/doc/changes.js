@@ -162,7 +162,10 @@ class Change {
             }
         }
 
-        for (let pos of positionsToShift) pos[0].reassign(pos[1]);
+        for (let pos of positionsToShift) {
+            let justDoIt = !!pos[0].range?.isMark && positionsToShift.map(e => e[0]).indexOf(pos[0].pair) !== -1;
+            pos[0].reassign(pos[1], { justDoIt });
+        }
         for (let pos of positionsToMaybeDelete) pos.stickWhenDeleted ? pos.reassign(from) : pos.delete();
 
         let changedLines = [line1, ...linesToRemove];
@@ -176,10 +179,12 @@ class Change {
         if (at.index) at = at.index;
 
         // console.log(`inserting "${string}" at ${at}`);
-        let positionsToShift = this.editor.doc.lineAt(at).positions.filter(e =>
-            stickLeft || e.stickLeftOnInsert || this.stickLeft.indexOf(e) !== -1 ?
+        let positionsToShift = this.editor.doc.lineAt(at).positions.filter(e => {
+            if (e.range && e.range.isMark && e.range.end === e && e.index === e.Line.to && !preserveDM) return false;
+            return stickLeft || e.stickLeftOnInsert || this.stickLeft.indexOf(e) !== -1 ?
                 e.index > at :
-                e.index >= at).map(e => [e, e.index + string.length]);
+                e.index >= at
+        }).map(e => [e, e.index + string.length]);
         this.stickLeft = [];
 
         let lines = string.split("\n");
@@ -225,9 +230,9 @@ class Change {
 
         for (let pos of positionsToShift) {
             let initialLine = pos[0].Line;
-            pos[0].reassign(pos[1]);
+            let justDoIt = !!pos[0].range?.isMark && positionsToShift.map(e => e[0]).indexOf(pos[0].pair) !== -1;
+            pos[0].reassign(pos[1], { justDoIt });
             if (pos[0].caret) {
-                console.log(pos[0]);
                 initialLine.unrenderedChanges.add("caret");
                 this.editor.render.renderLine(initialLine);
             }

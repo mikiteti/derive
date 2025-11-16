@@ -292,7 +292,7 @@ const defaultSnippets = [
     // {from: /([^'])\b([B-HJ-Zb-hj-z])\b([\n\s.,?!:'])/, to: "[[0]]$[[1]]$[[2]]", in: "tA"},
 
     // Automatically convert Greek letters in text to math.
-    { from: /(${GREEK})([\\n\\s.,?!:'])/, to: "$\\[[0]]$[[1]]", in: "rtAw" },
+    // { from: /(${GREEK})([\\n\\s.,?!:'])/, to: "$\\[[0]]$[[1]]", in: "rtAw" },
 
     // Snippet replacements can have placeholders.
     { from: "tayl", to: "${0:f}(${1:x} + ${2:h}) = ${0:f}(${1:x}) + ${0:f}'(${1:x})${2:h} + ${0:f}''(${1:x}) \\frac{${2:h}^{2}}{2!} + \\dots${3}", in: "mA", description: "Taylor expansion" },

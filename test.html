@@ -1,157 +1,217 @@
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test vim</title>
+    <title>Session Test</title>
+
+
+    <style>
+        html,
+        body {
+            background-color: #222;
+            color: #ddd;
+        }
+
+        input,
+        button {
+            background-color: #555;
+            color: #ddd;
+            border: 1px solid #ddd;
+            display: block;
+            margin: 0.3rem;
+        }
+    </style>
 </head>
 
 <body>
-    <input type="text">
+    <h1>Backend Test</h1>
+
+    <form id="loginForm">
+        <input type="email" class="email" placeholder="email" value="admin@tetimiki.hu">
+        <input type="password" class="password" placeholder="Password" value="Sorelle">
+        <button type="submit">Login</button>
+    </form>
+
+    <br>
+    <button id="user">Check user info</button>
+
+    <br />
+
+    <form id="newUserForm">
+        <input type="email" class="email" placeholder="email" value="admin@tetimiki.hu">
+        <input type="name" class="name" placeholder="name" value="admin">
+        <input type="password" class="password" placeholder="Password" value="Sorelle">
+        <button type="submit">Add new user</button>
+    </form>
+
+    <br />
+
+    <button id="getNotes">Get notes</button>
+
+    <br />
+
+    <form id="newNoteForm">
+        <input type="name" class="name" placeholder="name" value="Welcome">
+        <button type="submit">Add new note</button>
+    </form>
+
+    <br />
+
+    <form id="getNoteForm">
+        <input type="number" class="id" placeholder="1..." value="1">
+        <button type="submit">Get note</button>
+    </form>
+
+    <br />
+
+    <form id="updateNoteForm">
+        <input type="number" class="id" placeholder="1..." value="1">
+        <input type="text" class="content" placeholder="Some JSON here" value="">
+        <input type="text" class="name" placeholder="Welcome..." value="">
+        <input type="misc" class="misc" placeholder="Some misc JSON here" value="">
+        <button type="submit">Update note</button>
+    </form>
+
+
+    <pre id="output"></pre>
 
     <script>
-        const abc = "ABCDEFGHIJKLMNOPQRSTUVWXYZáéíóöőúüűzabcdefghijklmnopqrstuvwxyzÁÉÍÓÖŐÚÜŰ 1234567890!@#$%^&*()-=_+[]\\{}|;':.";
-        const digits = "0123456789";
+        import Environment from "./state/environment.js";
+        const output = document.getElementById('output');
+        const URL = Environment.url;
 
-        let MODE = "n"; // MODE = "n"|"v"|"i"
-        let currentCommand = "";
-        const moves = {
-            "iden": (pos) => pos.index,
+        const sendRequest = async (url, body) => {
+            let res = await fetch(URL + url, {...body, credentials: 'include'});
 
-            // motions
-            "h": (pos, count = 1) => pos.index - count,
-            "l": (pos, count = 1) => pos.index + count,
-            "b": (pos, count = 1) => pos.index - count * 5, // TODO: obviously
-            "w": (pos, count = 1) => pos.index + count * 5, // TODO: obviously
-            "e": (pos, count = 1) => pos.index + count * 5 - 2, // TODO: obviously
-            "B": (pos, count = 1) => pos.index - count * 10, // TODO: obviously
-            "W": (pos, count = 1) => pos.index + count * 10, // TODO: obviously
-            "E": (pos, count = 1) => pos.index + count * 10 - 2, // TODO: obviously
-            // ...
+            if (res.status === 401 || res.status === 403) {
+                console.log("must log in first...");
+                res = await fetch(URL + "login", {
+                    method: 'POST',
+                    body: JSON.stringify({email: document.querySelector('#loginForm .email').value, password: document.querySelector('#loginForm .password').value}),
+                    headers: {'Content-Type': 'application/json'},
+                    credentials: 'include'
+                });
 
-            // text objects
-            "iw": (pos) => [this["b"](pos), this["e"](pos)],
-            "iW": (pos) => [this["B"](pos), this["E"](pos)],
-            // ...
-
-            // helpers
-            "fixedEnd": (pos) => pos.caret?.fixedEnd?.index,
-            "position": (pos) => pos.index,
-            // ...
-        }
-
-        const functions = {
-            mode: (m) => {MODE = m; currentCommand = ""; console.log(`setting MODE to ${m}`)},
-            insert: (text) => {console.log(`inserting ${text} at caret position(s)`)},
-            delete: (getFrom, getTo) => {console.log(`deleting from ${getFrom} to ${getTo}`)},
-            move: (getNewPos) => {console.log(`moving carets with the rule ${getNewPos}`)}, // if getNewPos returns one int, don't keep fixed end, if it returns [int], keep it, if it returns [int, int] set first int to fixedEnd, second to position
-            removeCarets: () => {console.log("removing unnecessary carets");},
-        };
-
-        const parseCommand = (command) => { // command ~ "viW"
-            console.log(`Parsing current command`);
-            let headCommand;
-            let headCommands = {"c": "change", "d": "delete"};
-            if (MODE === "n" && headCommands[command[0]]) { // so that "d2e" and "diw" work
-                headCommand = headCommands[command[0]];
-                console.log("We have a headcommand!")
-                command = command.slice(1);
-            }
-
-            let count = 0;
-            while (!Number.isNaN(parseInt(command[0]))) {
-                count = count * 10 + parseInt(command[0]);
-                command = command.slice(1);
-            }
-            if (count === 0) count = 1;
-
-            const iMotions = {
-                "ArrowLeft": [["move", moves["h"]]],
-                "ArrowRight": [["move", moves["l"]]],
-                // ...
-
-                "\\ABackspace": [["delete", moves["b"], moves["iden"]]],
-            }
-
-            if (MODE === "i") {
-                // in insert mode, we can 
-                // switch modes, 
-                // insert some char from the abc, 
-                // or move the caret like a regular keyboard
-                if (command === "Escape" || command === "\\Cc") return [["mode", "n"]];
-                if (abc.includes(command)) return [["insert", command]];
-                if (iMotions[command]) return iMotions[command];
-                return [];
-            }
-
-            const nModeChanges = {
-                "i": [["mode", "i"]],
-                "a": [["mode", "i"], ["move", moves["l"]]],
-                "I": [["mode", "i"], ["move", moves["_"]]],
-                "A": [["mode", "i"], ["move", moves["$"]]],
-                "v": [["mode", "v"]],
-                "Escape": [["removeCarets"]],
-            }
-
-            const nMoves = {
-                // motions
-                "h": [["move", moves["h"]]],
-                "l": [["move", moves["l"]]],
-                // ...
-
-                // text objects
-                "iw": [["move", moves["iw"]]],
-                "aw": [["move", moves["aw"]]],
-                "iW": [["move", moves["iW"]]],
-                "aW": [["move", moves["aW"]]],
-                "ip": [["move", moves["ip"]]],
-                "ap": [["move", moves["ap"]]],
-                "i(": [["move", moves["i("]]],
-                "i)": [["move", moves["i("]]],
-                // ...
-            }
-
-            if (MODE === "n") {
-                // Mode changes
-                if (headCommand == undefined && nModeChanges[command]) return nModeChanges[command];
-
-                // Caret movements
-                if (!headCommand) {
-                    if (nMoves[command]) return nMoves[command];
-                } else {
-                    if (nMoves[command]) return [...nMoves[command], ["delete", moves["fixedEnd"], moves["position"]]]
+                if (res.status === 401 || res.status === 403) {
+                    output.textContent = await res.text();
+                    console.log("Login failed");
+                    return -1;
                 }
 
-                return [];
+                res = await fetch(URL + url, {...body, credentials: 'include'});
+            } else if (res.status === 400) {
+                let text = await res.text();
+                console.log(text);
+                output.textContent = text;
+                return -1;
             }
+
+            return res;
         }
 
-        const runCurrentCommand = () => {
-            console.log(`Running currentCommand in MODE ${MODE}`);
-            let commandsToRun = parseCommand(currentCommand);
-            console.log(`Commands to run: ${commandsToRun}`);
-            for (let c of commandsToRun) functions[c[0]](...c.slice(1));
-            console.log(`Commands ran`);
-            return commandsToRun.length > 0;
-        }
+        // Login
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.querySelector('#loginForm .email').value;
+            const password = document.querySelector('#loginForm .password').value;
 
-        const appendCurrentCommand = (letter) => { // letter ~ \\Co, i, \\M\\AArrowLeft
-            console.log(`Appending ${letter} to currentCommand`);
-            currentCommand += letter;
-            console.log(`CurrentCommand: ${currentCommand}`);
-            if (runCurrentCommand()) currentCommand = "";
-        }
+            const res = await sendRequest("login", {
+                method: 'POST',
+                body: JSON.stringify({email, password}),
+                headers: {'Content-Type': 'application/json'},
+            });
 
-        document.addEventListener("keydown", e => {
-            console.log(e);
-            if (["Meta", "Alt", "Control"].includes(e.key)) return;
+            const text = await res.text();
+            output.textContent = text;
+        });
 
-            let letter = e.key;
-            if (e.ctrlKey) letter = "\\C" + letter;
-            if (e.altKey) letter = "\\A" + letter;
-            if (e.metaKey) letter = "\\M" + letter;
+        // Get user info (only logged in)
+        document.getElementById('user').addEventListener('click', async () => {
+            const res = await sendRequest('user', {});
+            const text = await res.text();
+            output.textContent = text;
+        });
 
-            appendCurrentCommand(letter);
+        // Add user
+        document.getElementById('newUserForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.querySelector('#newUserForm .email').value;
+            const name = document.querySelector('#newUserForm .name').value;
+            const password = document.querySelector('#newUserForm .password').value;
+
+            const res = await sendRequest('new_user', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({email, name, password}),
+            });
+
+            const text = await res.text();
+            output.textContent = text;
+        });
+
+
+        // Get notes
+        document.getElementById("getNotes").addEventListener("click", async (e) => {
+            e.preventDefault();
+
+            const res = await sendRequest('notes', {});
+
+            const text = await res.text();
+            output.textContent = text;
+        })
+
+        // Add note
+        document.getElementById("newNoteForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const name = document.querySelector("#newNoteForm .name").value;
+
+            const res = await sendRequest('new_note', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name})
+            });
+
+            const text = await res.text();
+            output.textContent = text;
+        });
+
+        // Get note
+        document.getElementById("getNoteForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const id = document.querySelector("#getNoteForm .id").value;
+
+            const res = await sendRequest('note', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({id}),
+            });
+
+            const text = await res.text();
+            output.textContent = text;
+        });
+
+        // Update a note
+        document.getElementById("updateNoteForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const id = document.querySelector("#updateNoteForm .id").value;
+            const content = document.querySelector("#updateNoteForm .content").value;
+            const name = document.querySelector("#updateNoteForm .name").value;
+            const misc = document.querySelector("#updateNoteForm .misc").value;
+
+            let changes = {};
+            if (content) changes.content = content;
+            if (name) changes.name = name;
+            if (misc) changes.misc = misc;
+
+            const res = await sendRequest('update_note', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({id, ...changes}),
+            });
+
+            const text = await res.text();
+            output.textContent = text;
         });
     </script>
 </body>

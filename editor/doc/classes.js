@@ -57,6 +57,7 @@ const defineSmartProperties = (Class, properties) => {
 
 class Node {
     constructor({ editor, parent, children = [] } = {}) { // changed, chars, text, lines, parent, children
+        this.isNode = true;
         this._updates = 1;
 
         this.editor = editor;
@@ -150,6 +151,7 @@ export { Node }
 class Leaf extends Node {
     constructor(...args) {
         super(...args);
+        this.isLeaf = true;
 
         this.size = nodeSizes.leaf;
     }
@@ -159,6 +161,7 @@ export { Leaf }
 class Doc extends Node {
     constructor(...args) {
         super(...args)
+        this.isDoc = true;
 
         this.change = newChange({ editor: this.editor });
         this.size = { min: 0, max: Infinity };
@@ -236,6 +239,7 @@ export { Doc }
 
 class Line {
     constructor({ editor, parent, text = "", tabs = { full: 0 }, decos = [], marks = [] } = {}) {
+        this.isLine = true;
         this.editor = editor;
         this.text = text;
         this.parent = parent;
@@ -243,7 +247,6 @@ class Line {
         this.decos = new Set(decos);
         this.marks = marks; // for now, while doc is not ready
         this.lines = 1;
-        this.isLine = true;
 
         this.unrenderedChanges = new Set(["text", "tabs", "decos", "marks"]);
         this.positions = [];
@@ -274,6 +277,7 @@ class Line {
 
     delete() {
         this.deleted = true;
+        for (let mark of this.marks) this.deleteMark(mark);
         this.parent.children.splice(this.parent.children.indexOf(this), 1);
         this.update();
     }
@@ -348,13 +352,24 @@ class Line {
         this.tabs[type] = Math.max(number, 0);
     }
 
-    addMark(mark) {
+    addMark(Mark) {
+        this.marks.push(Mark);
+        this.unrenderedChanges.add("marks");
+    }
+
+    addNewMark(mark) {
         let marks = Array.isArray(mark) ? mark : [mark];
         for (let mark of marks) this.marks.push(new Mark(this.editor, mark));
         this.unrenderedChanges.add("marks");
     }
 
-    removeMark(mark) {
+    removeMark(Mark) {
+        let index = this.marks.indexOf(Mark);
+        if (index === -1) return;
+        this.marks = [...this.marks.slice(0, index), ...this.marks.slice(index + 1)];
+    }
+
+    deleteMark(mark) {
         let marks = Array.isArray(mark) ? mark : [mark];
         for (let mark of marks) {
             if (!this.marks.includes(mark)) continue;
@@ -420,6 +435,7 @@ window.positionCount = 0;
 window.positions = new Set();
 class Position {
     constructor(pos, doc = window.doc, { stickWhenDeleted = true, stickLeftOnInsert = false, caret, track = true } = {}) {
+        this.isPosition = true;
         if (track) {
             window.positionCount++;
             window.positions.add(this);
@@ -495,13 +511,78 @@ class Position {
         return this.Line.number;
     }
 
-    reassign(pos) {
+    handleMarkReassignment(pos, { justDoIt = false } = {}) { // TODO
+        if (!this.range || !this.range.isMark) return;
+        let newLine = this.doc.lineAt(pos);
+        if (newLine === this.Line) return;
+        if (justDoIt) {
+            this.Line.removeMark(this.range);
+            this.doc.lineAt(pos).addMark(this.range);
+            return;
+        }
+        if (pos > this.index) { // one of the ends shifted down
+            let line1 = this.pair.Line.number, line2 = this.doc.lineAt(pos).number;
+            // check if everything up to pos has this mark -- then delete up to pos, otherwise expand
+            let deletion = false;
+            if (this.index < this.pair.index && this.pair.index >= this.pair.Line.to) {
+                deletion = true;
+                for (let i = line1 + 1; i < line2; i++) {
+                    let line = this.doc.line(i);
+                    if (line.marks.filter(
+                        e => e.role === this.range.role && e.start.index === line.from && e.end.index === line.to
+                    ).length === 0) {
+                        deletion = false;
+                        break;
+                    }
+                }
+                if (deletion) {
+                    let line = this.doc.line(line2);
+                    if (line.marks.filter(
+                        e => e.role === this.range.role && e.start.index === line.from && e.end.index >= pos
+                    ).length === 0) deletion = false;
+                }
+            }
+            if (deletion) {
+                this.Line.deleteMark(this.range);
+                for (let i = line1 + 1; i < line2; i++) {
+                    let line = this.doc.line(i);
+                    for (let mark of line.marks.filter(e => e.role === this.range.role)) line.deleteMark(mark);
+                }
+                let line = this.doc.line(line2);
+                let markAlreadyThere = line.marks.filter(e => e.role === this.range.role && e.start.index === line.from)[0], end = markAlreadyThere?.end.index;
+                if (markAlreadyThere) {
+                    line.deleteMark(markAlreadyThere);
+                    line.addNewMark({ from: pos, to: end, role: this.range.role });
+                }
+            } else {
+                for (let i = line1 + 1; i < line2; i++) { // remove similar marks from intermediate lines and mark them from from to to
+                    let line = this.doc.line(i);
+                    for (let mark of line.marks.filter(e => e.role === this.range.role)) line.deleteMark(mark);
+                    line.addNewMark({ from: line.from, to: line.to, role: this.range.role });
+                }
+                let line = this.doc.line(line2); // remove similar marks from last line up to pos, then add a mark encompassing all
+                let marksAlreadyThere = line.marks.filter(e => e.role === this.range.role && e.start.index < pos);
+                if (marksAlreadyThere.length === 0) line.addNewMark({ from: line.from, to: pos, role: this.range.role });
+                else {
+                    let end = Math.max(pos, ...marksAlreadyThere.map(e => e.end.index));
+                    for (let mark of marksAlreadyThere) line.deleteMark(mark);
+                    line.addNewMark({ from: line.from, to: end, role: this.range.role });
+                }
+                for (let mark of this.Line.marks.filter(e => e.role === this.range.role && e.start.index > this.index))
+                    this.Line.deleteMark(mark);
+                return this.Line.to;
+            }
+        } else {
+            return -1;
+        }
+    }
+
+    reassign(pos, { justDoIt = false } = {}) {
         if (pos === this.index) return this;
         if (this.Line) this.Line.removePosition(this);
-        if (this.range && this.range.inline) { // TODO: break into multiple marks
-            let newLine = this.doc.lineAt(pos);
-            if (newLine !== this.Line) return;
-        }
+        let newPos = this.handleMarkReassignment(pos, { justDoIt });
+        if (newPos === -1) return;
+        if (newPos !== undefined) pos = newPos;
         this.assign(pos);
 
         if (this.range && !this.range.deleted) this.range.reassignCallback();
@@ -530,6 +611,7 @@ export { Position }
 
 class Range {
     constructor(editor, from, to, { role = "selection" } = {}) {
+        this.isRange = true;
         // console.log("range created from", from, "to", to);
         this.editor = editor;
         this.doc = editor.doc;
@@ -590,15 +672,15 @@ class Mark extends Range {
             new Position(to, editor.doc),
             { role },
         )
-        this.inline = true;
+        this.isMark = true;
     }
 
     delete() {
+        this.deleted = true;
         this.from.delete();
         this.to.delete();
         this.from = undefined;
         this.to = undefined;
-        this.deleted = true;
     }
 
     reassignCallback() {

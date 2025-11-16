@@ -9,27 +9,27 @@ const renderCarets = (editor) => {
 }
 
 class Render {
-    constructor(editor, textarea) {
+    constructor(editor) {
         this.editor = editor;
-        this.textarea = textarea;
+        this.textarea = this.editor.elements.textarea;
 
         editor.doc.change.addCallback(renderChangedLines);
         queueMicrotask(() => { editor.doc.change.addCallback(renderCarets); });
 
-        this.decos = ["underline", "bold", "Bold", "accent", "math", "middle", "small", "large", "capital", "spin_border"];
-        this.selection = new Selection(editor, textarea);
+        this.decos = ["underline", "bold", "Bold", "accent", "math", "middle", "small", "large", "capital", "spin_border", "h1", "h2", "h3", "h4", "h5", "h6"];
+        this.selection = new Selection(editor);
     }
 
     renderInfo() {
         if (!this.editor.interactive) return;
         const doc = this.editor.doc;
-        document.getElementById("rightInfo").innerHTML = `L${doc.lines} W${doc.words} C${doc.chars} P${window.positionCount}`;
+        this.editor.elements.rightInfo.innerHTML = `L${doc.lines} W${doc.words} C${doc.chars} P${window.positionCount}`;
 
         if (this.editor.input?.keyboard?.layout === "vim" && this.editor.input.keyboard.mode) {
             let mode = this.editor.input.keyboard.mode?.mode;
             mode = { "n": "Normal", "i": "Insert", "v": "Visual", "vLine": "V-Line", "vBlock": "V-Block", "c": "Command" }[mode];
 
-            document.getElementById("leftInfo").innerHTML = `${mode}: ${this.editor.input.keyboard.curCommand.command}`;
+            this.editor.elements.leftInfo.innerHTML = `${mode}: ${this.editor.input.keyboard.curCommand.command}`;
         }
     }
 
@@ -165,6 +165,8 @@ class Render {
                 promise.then(node => {
                     IM.replaceChildren(node);
                     math.after(IM);
+                    let currentColor = getComputedStyle(node).getPropertyValue("color");
+                    if (!node.matches(".wrapper.editingSource *")) for (let e of node.querySelectorAll("[fill]")) e.setAttribute("fill", currentColor);
                 });
                 index = mark.end.index - line.from;
             }
@@ -232,8 +234,8 @@ class Render {
     }
 }
 
-const newRender = ({ editor, textarea = document.getElementById("editor") } = {}) => {
-    const render = new Render(editor, textarea);
+const newRender = ({ editor } = {}) => {
+    const render = new Render(editor);
 
     return render;
 }

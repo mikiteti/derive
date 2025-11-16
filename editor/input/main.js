@@ -5,15 +5,15 @@ import Caret from "./caret.js"
 import { getColumnAt } from "../assets.js";
 
 class Input {
-    constructor(editor, textarea, layout = "regular") {
+    constructor(editor, layout = "regular") {
         this.editor = editor;
-        this.textarea = textarea;
+        this.textarea = editor.elements.textarea;
         this.snippets = newSnippets({ editor, snippets: defaultSnippets, snippetVariables: defaultSnippetVariables });
         this.keyboard = newKeyboard({ editor, layout });
         this.caret = new Caret(this.editor, { autoRender: false });
 
-        textarea.addEventListener("mousedown", (e) => {
-            if (!this.editor.interactive) return;
+        this.textarea.addEventListener("mousedown", (e) => {
+            if (window.state.focus !== this.editor || !this.editor.interactive) return;
             e.preventDefault(); // no selections
 
             if (!e.target.Line && !e.target.mark) {
@@ -30,7 +30,7 @@ class Input {
         });
 
         document.addEventListener("mousemove", (e) => {
-            if (!this.editor.interactive) return;
+            if (window.state.focus !== this.editor || !this.editor.interactive) return;
             if (!e.buttons || e.target.Line == undefined) return;
             e.preventDefault();
 
@@ -45,9 +45,8 @@ class Input {
         });
 
         document.addEventListener("keydown", (e) => {
-            if (!this.editor.interactive) return;
+            if (window.state.focus !== this.editor || !this.editor.interactive) return;
             let command = this.keyboard.command(e);
-            // console.log({ command });
 
             if (command) e.preventDefault();
             else return;
@@ -57,8 +56,8 @@ class Input {
     }
 }
 
-const newInput = ({ editor, textarea, layout } = {}) => {
-    return new Input(editor, textarea, layout);
+const newInput = ({ editor, layout } = {}) => {
+    return new Input(editor, layout);
 }
 
 export default newInput;

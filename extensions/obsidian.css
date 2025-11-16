@@ -1,0 +1,69 @@
+:root {
+    --color-bg: rgb(40, 42, 54);
+    --color-text: rgb(248, 248, 243);
+    --color-yellow: rgb(221, 155, 81);
+    --color-purple: rgb(187, 175, 244);
+    --color-accent: var(--color-purple);
+    --color-math: var(--color-accent);
+    --color-highlight-bg: rgba(255, 255, 255, 0.2);
+    --color-highlight: unset;
+    --font-size: 22px;
+    --font-face: 'author';
+    --font-weight: 300;
+
+    /* --bold-weight: 900; */
+    /* --Bold-weight: 600; */
+    --math-font-size: 1;
+    --small-font-size: 0.67;
+    --large-font-size: 1.17;
+    --DM-font-size: 1;
+    --IM-font-size: 0.92;
+    --line-height: 1.25;
+}
+
+* {
+    text-decoration-thickness: initial;
+    text-shadow: none;
+}
+
+/* @font-face { */
+/*     font-family: 'avenir'; */
+/*     src: url("../fonts/Avenir/Avenir\ Regular/Avenir Regular.ttf"); */
+/*     src: url("../fonts/avenir-lt-pro/AvenirLTProMedium.otf"); */
+/* } */
+
+.DM mjx-container[display] {
+    margin-top: 0.5em;
+}
+
+#editor .DM:not(:has(+ p + p)) mjx-container[display] {
+    /* not last display math */
+    margin-bottom: 0;
+}
+
+#editor .DM:has(+ p + p) mjx-container[display] {
+    margin-bottom: 1.5em;
+}
+
+.h1 {
+    font-size: calc(var(--font-size) * 1.46) !important;
+    line-height: calc(var(--font-size) * 1.75) !important;
+}
+
+.h2 {
+    font-size: calc(var(--font-size) * 0.75) !important;
+    line-height: calc(var(--font-size) * 0.83) !important;
+}
+
+.h3 {
+    font-size: calc(var(--font-size) * 1.25) !important;
+    line-height: calc(var(--font-size) * 1.5) !important;
+}
+
+.noisy::before {
+    content: unset;
+}
+
+.IM {
+    font-size: 1em !important;
+}

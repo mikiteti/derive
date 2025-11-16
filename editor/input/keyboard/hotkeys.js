@@ -129,31 +129,34 @@ const createCommandSet = (editor) => {
         },
         "M+i": () => {
             for (let sc of caret.carets) {
+                console.log(sc);
                 if (sc.fixedEnd) continue;
                 if (sc.fixedEnd && sc.fixedEnd.Line !== sc.position.Line) continue;
-                let line = sc.position.Line;
+                let line = sc.position.Line, handled = false;
 
                 for (let mark of line.marks.filter(e => e.role === "math")) {
                     if (mark.to.index === sc.from) {
+                        console.log({ mark, sc });
                         mark.to.stickLeftOnInsert = !mark.to.stickLeftOnInsert;
                         line.unrenderedChanges.add("marks");
-                        caret.placeAllAt();
-                        return;
+                        handled = true;
+                        break;
                     }
                     if (mark.from.index === sc.from) {
                         mark.from.stickLeftOnInsert = !mark.from.stickLeftOnInsert;
                         line.unrenderedChanges.add("marks");
-                        caret.placeAllAt();
-                        return;
+                        handled = true;
+                        break;
                     }
                     if (mark.from.index < sc.from && mark.to.index > sc.from) { // TODO
-                        return;
+                        handled = true;
+                        break;
                     }
                 }
 
-                line.addMark({ from: sc.from, to: sc.to, role: "math" });
-                caret.placeAllAt();
+                if (!handled) line.addNewMark({ from: sc.from, to: sc.to, role: "math" });
             }
+            caret.placeAllAt();
         },
         "M+0": () => {
             caret.forAll(pos => {
@@ -163,47 +166,56 @@ const createCommandSet = (editor) => {
             caret.placeAllAt();
         },
         "M+1": () => {
+            let applyClasses = getComputedStyle(document.body).getPropertyValue("--h1-classes").slice(1, -1).split(" ");
             caret.forAll(pos => {
-                pos.Line.addDeco(["middle", "Bold", "accent", "capital", "underline"]);
+                pos.Line.addDeco([...applyClasses, "h1"]);
                 render.renderLine(pos.Line);
             });
             caret.placeAllAt();
         },
         "M+2": () => {
+            let applyClasses = getComputedStyle(document.body).getPropertyValue("--h2-classes").slice(1, -1).split(" ");
             caret.forAll(pos => {
-                pos.Line.addDeco(["middle", "bold", "accent", "small"]);
+                pos.Line.addDeco([...applyClasses, "h2"]);
                 render.renderLine(pos.Line);
             });
             caret.placeAllAt();
         },
         "M+3": () => {
+            let applyClasses = getComputedStyle(document.body).getPropertyValue("--h3-classes").slice(1, -1).split(" ");
             caret.forAll(pos => {
-                pos.Line.addDeco(["underline", "bold", "accent"]);
+                pos.Line.addDeco([...applyClasses, "h3"]);
                 render.renderLine(pos.Line);
             });
             caret.placeAllAt();
         },
         "M+S+a": () => {
+            let applyClasses = getComputedStyle(document.body).getPropertyValue("--h1-classes").slice(1, -1).split(" ");
             caret.forAll(pos => {
-                pos.Line.addDeco(["middle", "Bold", "accent", "capital", "underline"]);
+                pos.Line.addDeco([...applyClasses, "h1"]);
                 render.renderLine(pos.Line);
             });
             caret.placeAllAt();
         },
         "M+S+s": () => {
+            let applyClasses = getComputedStyle(document.body).getPropertyValue("--h2-classes").slice(1, -1).split(" ");
             caret.forAll(pos => {
-                pos.Line.addDeco(["middle", "bold", "accent", "small"]);
+                pos.Line.addDeco([...applyClasses, "h2"]);
                 render.renderLine(pos.Line);
             });
             caret.placeAllAt();
         },
         "M+S+d": () => {
+            let applyClasses = getComputedStyle(document.body).getPropertyValue("--h3-classes").slice(1, -1).split(" ");
             caret.forAll(pos => {
-                pos.Line.addDeco(["underline", "bold", "accent"]);
+                pos.Line.addDeco([...applyClasses, "h3"]);
                 render.renderLine(pos.Line);
             });
             caret.placeAllAt();
         },
+        "M+o": () => {
+            window.state.openModal(window.state.filePicker);
+        }
     };
 
     const command = (e) => {

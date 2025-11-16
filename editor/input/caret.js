@@ -35,7 +35,7 @@ import { Position, Range } from "../doc/classes.js";
 // }
 
 class SingleCaret {
-    constructor(editor, position = 0, { element = this.createElement(), autoRender = true } = {}) {
+    constructor(editor, position = 0, { element = this.createElement(editor), autoRender = true } = {}) {
         this.editor = editor;
         this.doc = editor.doc;
         this.position = new Position(position, editor.doc, { caret: this });
@@ -45,10 +45,10 @@ class SingleCaret {
         if (autoRender) queueMicrotask(() => this.placeAt(undefined, { keepFixedEnd: -1 }));
     }
 
-    createElement() {
+    createElement(editor = this.editor) {
         const caretElement = document.createElement("div");
         caretElement.classList.add("caret");
-        document.body.appendChild(caretElement);
+        editor.elements.editor.appendChild(caretElement);
         this.element = caretElement;
 
         return caretElement;
@@ -98,7 +98,7 @@ class SingleCaret {
                     let rect = rects[0];
                     if (rects.length > 1 && rect.width == 0) rect = rects[1];
                     // Position the cursor
-                    if (updateScreenX) {
+                    if (updateScreenX || true) { // TODO: updateScreenX -- if inline math expands (unknown prior to jumping), X positions shift
                         // this.screenPosition.x = (rect.left + rect.right) / 2 + window.scrollX;
                         this.screenPosition.x = rect.left + window.scrollX;
                     }
@@ -107,6 +107,7 @@ class SingleCaret {
                     this.fixedEnd ? this.element.classList.remove("smooth") : this.element.classList.add("smooth");
                     switch (this.editor.input.caret.style) {
                         case "bar":
+                            // this.element.innerHTML = "";
                             this.element.style.borderWidth = "0px";
                             this.element.style.backgroundColor = "currentColor";
                             this.element.style.top = rect.top + window.scrollY + "px";
@@ -115,6 +116,12 @@ class SingleCaret {
                             this.element.style.width = "1px";
                             break;
                         case "wide":
+                            // this.element.innerHTML = this.editor.doc.charAt(this.position.index);
+                            // let styles = getComputedStyle(line.element);
+                            // this.element.style.lineHeight = styles.getPropertyValue("line-height");
+                            // this.element.style.fontSize = styles.getPropertyValue("font-size");
+                            // this.element.style.fontWeight = styles.getPropertyValue("font-weight");
+                            // this.element.style.textTransform = styles.getPropertyValue("text-transform");
                             this.element.style.borderWidth = "0px";
                             this.element.style.backgroundColor = "currentColor";
                             this.element.style.top = rect.top + window.scrollY + "px";
