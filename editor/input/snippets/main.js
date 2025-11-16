@@ -1,14 +1,13 @@
-import { defaultSnippets, defaultSnippetVariables } from "./default.js";
 import { Position } from "../../doc/classes.js";
 import getFeatures from "./features.js";
 
 class Snippets {
-    constructor(editor = window.editor, snippets = defaultSnippets, snippetVariables = defaultSnippetVariables) {
+    constructor(editor = window.editor, snippets, snippetVariables) {
         this.editor = editor;
         this.tabstops = [];
         this.features = getFeatures(editor);
 
-        const snips = [...snippets];
+        const snips = snippets;
         for (let snip of snips) {
             if (typeof snip.from !== "object") continue;
 
@@ -164,7 +163,7 @@ class Snippets {
     }
 }
 
-const newSnippets = ({ editor = window.editor, snippets = defaultSnippets, snippetVariables = defaultSnippetVariables } = {}) => {
+const newSnippets = ({ editor = window.editor, snippets, snippetVariables } = {}) => {
     return new Snippets(editor, snippets, snippetVariables);
 }
 

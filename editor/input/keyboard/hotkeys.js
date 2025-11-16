@@ -72,12 +72,15 @@ const createCommandSet = (editor) => {
                 render.renderLine(pos.Line);
             });
         },
+        // "M+s": () => {
+        //     caret.forAll(pos => {
+        //         pos.Line.toggleDeco("small");
+        //         render.renderLine(pos.Line);
+        //     });
+        //     caret.placeAllAt();
+        // },
         "M+s": () => {
-            caret.forAll(pos => {
-                pos.Line.toggleDeco("small");
-                render.renderLine(pos.Line);
-            });
-            caret.placeAllAt();
+            window.state.saveFile(editor);
         },
         "M+l": () => {
             caret.forAll(pos => {

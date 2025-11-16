@@ -335,7 +335,7 @@ const getVisualLineAt = (position, editor) => {
 }
 
 const exportFile = (editor = window.editor) => {
-    let file = { content: [] };
+    let content = [];
     for (let i = 0; i < editor.doc.lines; i++) {
         let line = editor.doc.line(i);
         let decos = [];
@@ -347,11 +347,11 @@ const exportFile = (editor = window.editor) => {
         if (decos.length) myLine.decos = decos;
         if (marks.length) myLine.marks = marks;
 
-        file.content.push(myLine);
+        content.push(myLine);
     }
 
-    console.log(file);
-    return file;
+    console.log(content);
+    return content;
 }
 window.exportFile = exportFile;
 

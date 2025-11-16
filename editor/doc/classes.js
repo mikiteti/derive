@@ -127,7 +127,7 @@ const nodeProperties = {
     },
 
     lines: function(obj) {
-        if (obj.children[0].isLine) return obj.children.length;
+        if (obj.children[0]?.isLine) return obj.children.length;
 
         let lines = 0;
         for (let child of obj.children) lines += child.lines;

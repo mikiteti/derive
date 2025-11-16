@@ -1,4 +1,4 @@
-import { defaultSnippets, defaultSnippetVariables } from "./snippets/default.js";
+import { DefaultSnippets, DefaultSnippetVariables } from "./snippets/default.js";
 import newSnippets from "./snippets/main.js";
 import newKeyboard from "./keyboard/main.js";
 import Caret from "./caret.js"
@@ -8,7 +8,7 @@ class Input {
     constructor(editor, layout = "regular") {
         this.editor = editor;
         this.textarea = editor.elements.textarea;
-        this.snippets = newSnippets({ editor, snippets: defaultSnippets, snippetVariables: defaultSnippetVariables });
+        this.snippets = newSnippets({ editor, snippets: (new DefaultSnippets()).snippets, snippetVariables: (new DefaultSnippetVariables()).snippetVariables });
         this.keyboard = newKeyboard({ editor, layout });
         this.caret = new Caret(this.editor, { autoRender: false });
 

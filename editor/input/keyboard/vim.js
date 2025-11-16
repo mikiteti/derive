@@ -291,7 +291,6 @@ const createCommandSet = (editor) => {
             snippets.deleteTabStops();
         },
         runSnippets: () => {
-            // console.log("running snippets");
             let jump;
             // if (doc.change.callbackList.changedLines.size === 1) jump = snippets.multiHandle(caret.carets.map(e => e.position));
             jump = snippets.multiHandle(caret.carets.map(e => e.position));

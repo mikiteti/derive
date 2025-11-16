@@ -1,17 +1,17 @@
 import Welcome from "./welcome.js";
 import Rezgesek from "./welcome2.js";
 import newEditor from "../editor/main.js";
+import Environment from "./environment.js";
+import { exportFile } from "../editor/assets.js";
 
 class State {
     constructor() {
         window.state = this;
         this.editors = [];
         this.commandPalette = document.querySelector("#commandPalette");
-        this.files = this.getFiles();
         this.filePicker = document.querySelector("#filePicker");
-        this.filePicker.querySelector(".list").innerHTML = this.files.map(e => `<div file-id="${e.id}">${e.name}</div>`).join("");
-        this.filePicker.entries = this.files;
         this.modalBg = document.querySelector("#modalBg");
+        this.initFilePicker();
 
         Object.defineProperty(window, "editor", { get() { return this.state.editor; }, });
         Object.defineProperty(window, "doc", { get() { return this.state.editor?.doc; }, });
@@ -31,6 +31,12 @@ class State {
         window.addEventListener("resize", _ => {
             this.editor.caret?.placeAllAt();
         });
+    }
+
+    async initFilePicker() {
+        this.files = await this.getFiles();
+        this.filePicker.querySelector(".list").innerHTML = this.files.map(e => `<div file-id="${e.id}">${e.name}</div>`).join("");
+        this.filePicker.entries = this.files;
 
         window.addEventListener("keydown", (e) => {
             if ([this.filePicker, this.commandPalette].includes(this.focus) && e.key === "Escape") {
@@ -44,12 +50,26 @@ class State {
 
         this.filePicker.addEventListener("click", async e => {
             if (!e.target.matches(".list div")) return;
-            await this.openFile({ id: e.target.getAttribute("file-id") });
+            await this.openFile({ id: parseInt(e.target.getAttribute("file-id")) });
             this.closeModal();
         });
 
-        this.filePicker.querySelector("input").addEventListener("keydown", (e) => {
-            if (e.key === "Enter") this.filePicker.querySelector(".list div.active").click();
+        this.filePicker.querySelector("input").addEventListener("keydown", async (e) => {
+            if (e.key === "Escape") {
+                this.closeModal();
+                document.getElementById("focus").focus();
+                return;
+            }
+
+            if (e.key === "Enter") {
+                if (!e.metaKey) this.filePicker.querySelector(".list div.active").click();
+                else {
+                    await this.openFile(await this.createFile({ name: this.filePicker.querySelector("input").value }));
+                    this.closeModal();
+                }
+
+                return;
+            }
 
             if (!e.metaKey) return;
             if (e.key === "j") {
@@ -73,7 +93,44 @@ class State {
                     }
                 }
             }
-        })
+        });
+    }
+
+    async sendRequest(url, body) {
+        const URL = Environment.url;
+        let res = await fetch(URL + url, { ...body, credentials: 'include' });
+
+        if (res.status === 401 || res.status === 403) {
+            console.log("must log in first...");
+            let email = localStorage.getItem("email"), password = localStorage.getItem("password");
+            if (email == undefined || password == undefined) {
+                console.log("Login failed, no credentials in localStorage");
+                alert("no credentials");
+                return -1;
+            }
+
+            res = await fetch(URL + "login", {
+                method: 'POST',
+                body: JSON.stringify({ email, password }),
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include'
+            });
+
+            if (res.status === 401 || res.status === 403) {
+                console.log("Login failed");
+                let text = await res.text();
+                alert(text);
+                return -1;
+            }
+
+            res = await fetch(URL + url, { ...body, credentials: 'include' });
+        } else if (res.status === 400) {
+            let text = await res.text();
+            console.log(text);
+            return -1;
+        }
+
+        return res;
     }
 
     async newEditor(file, { main = true } = {}) {
@@ -101,20 +158,36 @@ class State {
         });
     }
 
-    createFile(file) { // TODO
+    async createFile(file) {
         console.log("creating file");
-        this.files.push(file);
-        this.files.at(-1).id = Math.max(...this.files.map(e => e.id)) + 1; // Very much TODO
+        let res = await this.sendRequest("new_note", {
+            method: 'POST',
+            body: JSON.stringify({ name: file.name }),
+            headers: { "Content-Type": "application/json" }
+        });
+        let id = (await res.json()).id;
+
+        let newFile = await this.getFile({ id });
+
+        this.files.push(newFile);
         return this.files.at(-1);
     }
 
-    getFile(file) { // TODO
-        switch (file.id) {
-            case "0":
-                return { ...file, ...Welcome };
-            case "2":
-                return { ...file, ...Rezgesek };
-        }
+    async getFile(file) {
+        if (file.id === 0) return { ...file, ...Welcome };
+
+        let res = await this.sendRequest("note", {
+            method: 'POST',
+            body: JSON.stringify({ id: file.id }),
+            headers: { "Content-Type": "application/json" }
+        });
+
+        let note = await res.json();
+        console.log(note);
+        note.content = JSON.parse(note.content);
+        if (note.content == undefined || note.content.length === 0) note.content = [{ text: "" }];
+
+        return note;
     }
 
     async openFile(file) {
@@ -123,13 +196,27 @@ class State {
         file = this.files.find(e => e.id === file.id);
         let editor = this.editors.filter(e => e.fileId != undefined).find(e => e.fileId === file.id);
         if (editor == undefined) {
-            file = this.getFile(file);
+            file = await this.getFile(file);
+            console.log(file);
             editor = await this.newEditor(file, { main: false });
             console.log(editor);
         }
         for (let e of this.editors) e.elements.editor.style.display = (e === editor) ? "unset" : "none";
         this.editor = editor;
         document.title = file.name;
+    }
+
+    async saveFile(editor) {
+        let content = JSON.stringify(exportFile(editor));
+
+        let res = await this.sendRequest("update_note", {
+            method: 'POST',
+            body: JSON.stringify({ id: editor.fileId, content }),
+            headers: { "Content-Type": "application/json" }
+        });
+        let text = await res.text();
+        console.log(text);
+        return text;
     }
 
     openModal(modal) {
@@ -166,13 +253,10 @@ class State {
         requestAnimationFrame(() => { this.focus = this.editor; });
     }
 
-    getFiles() {
-        return [
-            { name: "Welcome", id: "0" },
-            { name: "Rezgesek", id: "2" },
-            { name: "subi", id: "3" },
-            { name: "sek", id: "4" },
-        ];
+    async getFiles() {
+        let res = await this.sendRequest("notes");
+        let json = await res.json();
+        return json;
     }
 
     fuzzyFind(string, array) {
@@ -192,8 +276,8 @@ class State {
         let entries = modal.querySelector(".list").children;
         let activeDone = false;
         for (let el of entries) {
-            matches.includes(el.getAttribute("file-id")) ? el.classList.remove("nodisplay") : el.classList.add("nodisplay");
-            if (!activeDone && matches.includes(el.getAttribute("file-id"))) {
+            matches.includes(parseInt(el.getAttribute("file-id"))) ? el.classList.remove("nodisplay") : el.classList.add("nodisplay");
+            if (!activeDone && matches.includes(parseInt(el.getAttribute("file-id")))) {
                 el.classList.add("active");
                 activeDone = true;
             } else el.classList.remove("active");

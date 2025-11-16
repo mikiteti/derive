@@ -1,5 +1,4 @@
 const Welcome = {
-    "id": "0",
     "name": "Handbook",
     "content": [
         { "text": "Welcome", "tabs": { "full": 0 }, "decos": ["h1", "middle", "Bold", "accent", "capital", "underline"] },
