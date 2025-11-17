@@ -1,4 +1,4 @@
-import Environment from "./state/environment.js";
+import Environment from "./environment.js";
 
 const output = document.getElementById('output');
 const URL = Environment.url;

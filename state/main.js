@@ -1,7 +1,7 @@
 import Welcome from "./welcome.js";
 import Rezgesek from "./welcome2.js";
 import newEditor from "../editor/main.js";
-import Environment from "./environment.js";
+import Environment from "../environment.js";
 import { exportFile } from "../editor/assets.js";
 
 class State {
