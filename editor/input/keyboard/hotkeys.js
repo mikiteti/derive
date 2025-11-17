@@ -142,12 +142,20 @@ const createCommandSet = (editor) => {
                         console.log({ mark, sc });
                         mark.to.stickLeftOnInsert = !mark.to.stickLeftOnInsert;
                         line.unrenderedChanges.add("marks");
+                        if (mark.to.index - (mark.to.stickLeftOnInsert ? 1 : 0) <= mark.from.index - (mark.from.stickLeftOnInsert ? 1 : 0)) {
+                            console.log("deleting mark");
+                            line.deleteMark(mark);
+                        }
                         handled = true;
                         break;
                     }
                     if (mark.from.index === sc.from) {
                         mark.from.stickLeftOnInsert = !mark.from.stickLeftOnInsert;
                         line.unrenderedChanges.add("marks");
+                        if (mark.to.index - (mark.to.stickLeftOnInsert ? 1 : 0) <= mark.from.index - (mark.from.stickLeftOnInsert ? 1 : 0)) {
+                            console.log("deleting mark");
+                            line.deleteMark(mark);
+                        }
                         handled = true;
                         break;
                     }
@@ -192,6 +200,14 @@ const createCommandSet = (editor) => {
             });
             caret.placeAllAt();
         },
+        "M+4": () => {
+            let applyClasses = getComputedStyle(document.body).getPropertyValue("--h4-classes").slice(1, -1).split(" ");
+            caret.forAll(pos => {
+                pos.Line.addDeco([...applyClasses, "h4"]);
+                render.renderLine(pos.Line);
+            });
+            caret.placeAllAt();
+        },
         "M+S+a": () => {
             let applyClasses = getComputedStyle(document.body).getPropertyValue("--h1-classes").slice(1, -1).split(" ");
             caret.forAll(pos => {
@@ -212,6 +228,14 @@ const createCommandSet = (editor) => {
             let applyClasses = getComputedStyle(document.body).getPropertyValue("--h3-classes").slice(1, -1).split(" ");
             caret.forAll(pos => {
                 pos.Line.addDeco([...applyClasses, "h3"]);
+                render.renderLine(pos.Line);
+            });
+            caret.placeAllAt();
+        },
+        "M+S+f": () => {
+            let applyClasses = getComputedStyle(document.body).getPropertyValue("--h4-classes").slice(1, -1).split(" ");
+            caret.forAll(pos => {
+                pos.Line.addDeco([...applyClasses, "h4"]);
                 render.renderLine(pos.Line);
             });
             caret.placeAllAt();

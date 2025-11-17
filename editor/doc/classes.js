@@ -685,5 +685,9 @@ class Mark extends Range {
 
     reassignCallback() {
         this.from.Line.unrenderedChanges.add("marks");
+        if (this.to.index - (this.to.stickLeftOnInsert ? 1 : 0) <= this.from.index - (this.from.stickLeftOnInsert ? 1 : 0)) {
+            console.log("deleting mark");
+            this.from.Line.deleteMark(this);
+        }
     }
 }

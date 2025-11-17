@@ -60,6 +60,11 @@
     line-height: calc(var(--font-size) * 1.5) !important;
 }
 
+.h4 {
+    font-size: calc(var(--font-size) * 1.25) !important;
+    line-height: calc(var(--font-size) * 1.5) !important;
+}
+
 .noisy::before {
     content: unset;
 }
