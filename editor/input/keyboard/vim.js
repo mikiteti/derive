@@ -295,10 +295,12 @@ const createCommandSet = (editor) => {
             // if (doc.change.callbackList.changedLines.size === 1) jump = snippets.multiHandle(caret.carets.map(e => e.position));
             jump = snippets.multiHandle(caret.carets.map(e => e.position));
             doc.change.runCallbacks();
-            if (jump) snippets.jumpToNextTabStops();
+            // if (jump) snippets.jumpToNextTabStops();
 
             let lines = new Set(caret.carets.map(e => e.position.Line));
             for (let line of lines) snippets.features.autoEnlarge(line);
+
+            if (jump) snippets.jumpToNextTabStops(); // experimental (was above autoEnlarge)
         },
         backspace: () => {
             caret.changeForAll(sc => {

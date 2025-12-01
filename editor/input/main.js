@@ -24,7 +24,7 @@ class Input {
             let index;
             if (e.target.classList.contains("DM")) index = e.target.Line.to;
             else if (e.target.classList.contains("IM")) index = e.target.mark.to.index - 1;
-            else index = e.target.Line.from + getColumnAt(e.target, e.clientX, e.clientY, { style: this.caret.style });
+            else index = e.target.Line.from + getColumnAt(e.target, e.clientX, e.clientY, { style: this.caret.style }); // TODO: empty lines
             e.altKey ? this.caret.addCaret(index) : this.caret.updateCarets([index]);
             this.snippets.deleteTabStops();
         });

@@ -4,7 +4,8 @@ const renderChangedLines = (editor, changedLines) => {
     for (let line of changedLines) editor.render.renderLine(line);
 }
 
-const renderCarets = (editor) => {
+const renderCarets = (editor) => { // TODO: with the first, when autoEnlarge runs, fixedEnds get lost. with the second, it's even worse.
+    // for (let caret of editor.input.caret.carets) caret.placeAt(caret.position.index, { keepFixedEnd: -1 });
     for (let caret of editor.input.caret.carets) caret.placeAt();
 }
 
@@ -135,7 +136,18 @@ class Render {
             let content = document.createElement("span");
             content.classList.add("content");
             let text = line.text;
-            let index = 0;
+            let index = 0, afterBullet;
+            if (["• ", "– ", "∘ "].includes(text.slice(0, 2))) {
+                index = 2;
+                let bullet = document.createElement("span");
+                bullet.classList.add("bullet");
+                bullet.innerHTML = text.slice(0, 2);
+                line.element.replaceChildren(bullet);
+                let wrap = document.createElement("div");
+                wrap.classList.add("wrapper");
+                line.element.appendChild(wrap);
+                afterBullet = wrap;
+            }
             for (let mark of line.marks.filter(e => e.role === "math").sort((a, b) => a.start.index - b.start.index)) {
                 let wrapper = document.createElement("span");
                 wrapper.classList.add("wrapper");
@@ -171,11 +183,11 @@ class Render {
                 index = mark.end.index - line.from;
             }
             content.appendChild(document.createTextNode(text.slice(index)));
-            line.element.replaceChildren(content);
+            (afterBullet || line.element).replaceChildren(content);
             let endChar = document.createElement("span");
             endChar.classList.add("endChar");
             endChar.innerHTML = " ";
-            line.element.appendChild(endChar);
+            (afterBullet || line.element).appendChild(endChar);
             if (line.decos.has("math")) {
                 this.handleDM(line);
             }

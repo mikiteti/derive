@@ -147,6 +147,14 @@ html {
     line-height: calc(var(--line-height) * var(--font-size));
 }
 
+.textarea p:has(> .bullet) {
+    display: flex;
+}
+
+.textarea p .bullet {
+    flex: 0 0 auto;
+}
+
 .placeholder {
     width: 100vw;
     height: 90vh;
@@ -265,7 +273,7 @@ html {
 }
 
 .textarea .DM:has(+ p + p) mjx-container[display] {
-    margin-bottom: 1.5em;
+    /* margin-bottom: 1.5em; */
 }
 
 @property --border-offset-angle {

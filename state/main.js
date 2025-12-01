@@ -29,7 +29,7 @@ class State {
         });
 
         window.addEventListener("resize", _ => {
-            this.editor.caret?.placeAllAt();
+            this.editor.input.caret?.placeAllAt();
         });
     }
 
