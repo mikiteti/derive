@@ -206,7 +206,7 @@ const getLineBreaks = (line, nodes) => {
         let Rects = range.getClientRects();
         if (Rects.length > 1 && nodeAt1[0] === nodeAt2[0]) { // TODO: what if new node starts right at the beggining of a new line
             lineBreaks.push(i - 1);
-        } else if (Rects.length > 1 && Rects[0].left > Rects[1].left) lineBreaks.push(i);
+        } else if (Rects.length > 1 && Rects[0].left > Rects[1].left && Rects[0].bottom < Rects[1].top) lineBreaks.push(i);
     }
 
     // let counter = 0, prevRects = 1;
@@ -291,7 +291,6 @@ const findXInVisualLine = (x, nodes, from, to) => {
 const findXIndecesInLine = (x, line) => { // works even when height: 0; transform: scaleY(0)
     if (line.chars === 1) return [line.from];
 
-    // console.log({ x, line });
     const indeces = [];
 
     const walker = document.createTreeWalker(line.element, NodeFilter.SHOW_TEXT);
@@ -303,17 +302,15 @@ const findXIndecesInLine = (x, line) => { // works even when height: 0; transfor
     }
 
     let linebreaks = getLineBreaks(line, nodes);
-    // console.log({ linebreaks });
     linebreaks.unshift(0);
     linebreaks.push(line.chars);
-    // console.log({ linebreaks });
 
     for (let i = 0; i < linebreaks.length - 1; i++) {
         let from = linebreaks[i], to = linebreaks[i + 1];
         indeces.push(findXInVisualLine(x, nodes, from, to) + line.from);
     }
 
-    // console.log({ indeces, lineFrom: line.from, lineTo: line.to });
+    // console.log({ indeces });
     return indeces;
 }
 

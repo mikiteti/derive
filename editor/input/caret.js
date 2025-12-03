@@ -192,7 +192,7 @@ class SingleCaret {
         let pos = this.position;
         this.position = this.fixedEnd;
         this.fixedEnd = pos;
-        this.placeAt();
+        this.placeAt(this.position.index, { keepFixedEnd: true });
     }
 
     // placeAtCoordinates(lineElement, x, y, updateScreenX = true, alternativeLineElement) {

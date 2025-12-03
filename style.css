@@ -408,3 +408,17 @@ html {
     background-color: #fff1;
     box-shadow: var(--shadow-lg);
 }
+
+#curMode,
+#curCommand {
+    position: fixed;
+    bottom: 0;
+}
+
+#curMode {
+    left: 0;
+}
+
+#curCommand {
+    right: 0;
+}

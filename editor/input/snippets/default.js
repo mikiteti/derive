@@ -213,9 +213,9 @@ class DefaultSnippets {
             // You can edit snippet variables under the Advanced snippet settings section.
 
             // Insert space after Greek letters and symbols
-            { from: /([^\\])(${AUTOGREEK}|${SYMBOL}|${TRIG}|${FUNC})/, to: "[[0]]\\[[1]]", in: "rmA", description: "Add backslash before what needs one", priority: 1 },
-            { from: /^(${AUTOGREEK}|${SYMBOL}|${TRIG}|${FUNC})/, to: "\\[[0]]", in: "rmA", description: "Add backslash before what needs one" },
-            { from: /\\(${GREEK}|${SYMBOL}|${MORE_SYMBOLS}|${TRIGH})([A-Za-z])/, to: "\\[[0]] [[1]]", in: "rmA", description: "Add space after what needs one", priority: 1 },
+            { from: /([^\\])(${AUTOGREEK}|${SYMBOL}|${TRIG}|${FUNC})/, to: "[[0]]\\[[1]]", in: "rmA", description: "Add backslash before what needs one", priority: 2 },
+            { from: /^(${AUTOGREEK}|${SYMBOL}|${TRIG}|${FUNC})/, to: "\\[[0]]", in: "rmA", description: "Add backslash before what needs one", priority: 1 },
+            { from: /\\(${GREEK}|${SYMBOL}|${MORE_SYMBOLS}|${TRIGH})([A-Za-z])/, to: "\\[[0]] [[1]]", in: "rmA", description: "Add space after what needs one", priority: 2 },
             { from: /\\(${TRIG})([A-Za-gi-z])/, to: "\\[[0]] [[1]]", in: "rmA", description: "Add space after trig funcs. Skips letter h to allow sinh, cosh, etc." },
             { from: /\\(${SYMBOL}|${MORE_SYMBOLS}|${TRIG}|${TRIGH}|${FUNC})([0-9])/, to: "\\[[0]] [[1]]", in: "rmA", priority: 10 },
 

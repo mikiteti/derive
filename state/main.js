@@ -31,6 +31,14 @@ class State {
         window.addEventListener("resize", _ => {
             this.editor.input.caret?.placeAllAt();
         });
+
+        window.addEventListener("blur", () => {
+            document.body.classList.add("dim");
+        });
+
+        window.addEventListener("focus", () => {
+            document.body.classList.remove("dim");
+        });
     }
 
     async initFilePicker() {

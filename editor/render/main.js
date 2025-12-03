@@ -24,14 +24,12 @@ class Render {
     renderInfo() {
         if (!this.editor.interactive) return;
         const doc = this.editor.doc;
-        this.editor.elements.rightInfo.innerHTML = `L${doc.lines} W${doc.words} C${doc.chars} P${window.positionCount}`;
+        let curCommand = this.editor.input?.keyboard?.curCommand || "";
+        if (curCommand) curCommand = " " + curCommand;
+        this.editor.elements.rightInfo.innerHTML = `L${doc.lines} W${doc.words} C${doc.chars} P${window.positionCount}` + curCommand;
 
-        if (this.editor.input?.keyboard?.layout === "vim" && this.editor.input.keyboard.mode) {
-            let mode = this.editor.input.keyboard.mode?.mode;
-            mode = { "n": "Normal", "i": "Insert", "v": "Visual", "vLine": "V-Line", "vBlock": "V-Block", "c": "Command" }[mode];
-
-            this.editor.elements.leftInfo.innerHTML = `${mode}: ${this.editor.input.keyboard.curCommand.command}`;
-        }
+        let mode = { "n": "Normal", "i": "Insert", "v": "Visual", "vLine": "V-Line", "vBlock": "V-Block", "c": "Command" };
+        this.editor.elements.leftInfo.innerHTML = mode[this.editor.input?.keyboard?.curMode] || "";
     }
 
     createLineElement(line) {

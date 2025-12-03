@@ -21,6 +21,10 @@
     --line-height: 1.25;
 }
 
+.dim {
+    --color-text: rgb(200, 200, 200);
+}
+
 * {
     text-decoration-thickness: initial;
     text-shadow: none;
