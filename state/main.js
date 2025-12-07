@@ -113,7 +113,7 @@ class State {
             let email = localStorage.getItem("email"), password = localStorage.getItem("password");
             if (email == undefined || password == undefined) {
                 console.log("Login failed, no credentials in localStorage");
-                alert("no credentials");
+                // alert("no credentials");
                 return -1;
             }
 
@@ -144,7 +144,8 @@ class State {
     async newEditor(file, { main = true } = {}) {
         console.log("creating new editor", file);
         return window.MathJax.startup.promise.then(_ => {
-            const editor = newEditor({ file: file, layout: "vim", interactive: !matchMedia('(pointer: coarse)').matches });
+            // const editor = newEditor({ file: file, layout: "vim", interactive: !matchMedia('(pointer: coarse)').matches });
+            const editor = newEditor({ file: file, layout: "vim", interactive: true });
             this.editors.push(editor);
             if (main) {
                 this.editor = editor;

@@ -133,8 +133,14 @@ const createCommandSet = (editor) => {
         "M+i": () => {
             for (let sc of caret.carets) {
                 console.log(sc);
-                if (sc.fixedEnd) continue;
                 if (sc.fixedEnd && sc.fixedEnd.Line !== sc.position.Line) continue;
+                if (sc.fixedEnd) { // TODO: check if there are marks already
+                    let index1 = sc.position.index, index2 = sc.fixedEnd.index;
+                    // if (caret.style !== "bar" && index2 < index1) index1++;
+                    index1 > index2 ? index1++ : index2++;
+                    sc.position.Line.addNewMark({ from: Math.min(index1, index2), to: Math.max(index1, index2), role: "math" });
+                    continue;
+                }
                 let line = sc.position.Line, handled = false;
 
                 for (let mark of line.marks.filter(e => e.role === "math")) {

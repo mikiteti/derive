@@ -575,6 +575,37 @@ const createCommandSet = (editor) => {
                     })[keys[0]] || (() => 0))();
                 },
             },
+            {
+                name: "remove carets",
+                keys: ["Escape"],
+                run: (keys) => {
+                    functions.removeCarets();
+                }
+            },
+            {
+                count: true,
+                name: "add carets",
+                keys: ["ArrowDown", "ArrowUp"],
+                run: (keys, { count = 1 } = {}) => {
+                    let indeces;
+                    switch (keys[0]) {
+                        case "ArrowDown":
+                            for (let i = 0; i < count; i++) {
+                                indeces = caret.carets.map(e => e.position.index + e.position.Line.chars).filter(e => e <= doc.chars);
+                                caret.addCaret(Math.max(...indeces));
+                            }
+                            break;
+                        case "ArrowUp":
+                            for (let i = 0; i < count; i++) {
+                                indeces = caret.carets
+                                    .filter(e => e.position.Line.number > 0)
+                                    .map(e => doc.line(e.position.Line.number - 1).from + e.position.column)
+                                caret.addCaret(Math.min(...indeces));
+                            }
+                            break;
+                    }
+                }
+            },
             ...motions,
             { // repeat last command
                 name: "repeat last command",

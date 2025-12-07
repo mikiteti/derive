@@ -72,7 +72,7 @@ class Render {
 
         for (let i = 0; i < doc.lines; i++) this.renderLine(doc.line(i));
 
-        this.renderInfo();
+        requestAnimationFrame(() => this.renderInfo());
     }
 
     async handleDM(line) {
@@ -120,7 +120,7 @@ class Render {
         if (line.deleted) {
             line.element.remove();
             if (line.element.DM) line.element.DM.remove();
-            this.renderInfo();
+            requestAnimationFrame(() => this.renderInfo());
             return;
         } else if (!line.element) {
             this.createLineElement(line);
@@ -141,10 +141,10 @@ class Render {
                 bullet.classList.add("bullet");
                 bullet.innerHTML = text.slice(0, 2);
                 line.element.replaceChildren(bullet);
-                let wrap = document.createElement("div");
-                wrap.classList.add("wrapper");
-                line.element.appendChild(wrap);
-                afterBullet = wrap;
+                let lineWrapper = document.createElement("div");
+                lineWrapper.classList.add("lineWrapper");
+                line.element.appendChild(lineWrapper);
+                afterBullet = lineWrapper;
             }
             for (let mark of line.marks.filter(e => e.role === "math").sort((a, b) => a.start.index - b.start.index)) {
                 let wrapper = document.createElement("span");
@@ -226,7 +226,7 @@ class Render {
             this.handleDM(line);
         }
 
-        this.renderInfo();
+        requestAnimationFrame(() => this.renderInfo());
 
         return new Promise((res, rej) => {
             Promise.all(promises).then(_ => {

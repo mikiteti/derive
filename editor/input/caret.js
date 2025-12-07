@@ -173,6 +173,7 @@ class SingleCaret {
         if (this.fixedEnd !== undefined) return;
 
         this.fixedEnd = new Position(index, this.editor.doc);
+        this.fixedEnd.caret = this;
         this.range = new Range(this.editor, this.position, this.fixedEnd);
         this.editor.render.selection.addRange(this.range);
     }

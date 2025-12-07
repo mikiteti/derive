@@ -267,13 +267,14 @@ html {
     margin-top: 0.5em;
 }
 
-.textarea .DM:not(:has(+ p + p)) mjx-container[display] {
+.textarea .DM mjx-container[display] {
     /* not last display math */
-    margin-bottom: 0;
+    margin-bottom: 1em;
 }
 
-.textarea .DM:has(+ p + p) mjx-container[display] {
-    /* margin-bottom: 1.5em; */
+.textarea .DM:has(+ p + .DM) mjx-container[display] {
+    /* not last display math */
+    margin-bottom: 0;
 }
 
 @property --border-offset-angle {
@@ -421,4 +422,8 @@ html {
 
 #curCommand {
     right: 0;
+}
+
+.lineWrapper {
+    display: inline;
 }

@@ -26,7 +26,7 @@
                     addMenu: [],
                     assistiveMml: [],
                     explorer: []
-                },
+                }
             }
         };
     </script>
@@ -53,8 +53,7 @@
     </div>
 
     <button
-        onclick="let creds = prompt('dafuck').split(' '); localStorage.setItem('email', creds[0]); localStorage.setItem('password', creds[1]);">Login</button>
-    <button onclick="alert(localStorage.getItem('email')); alert(localStorage.getItem('password'))">Dafuck</button>
+        onclick="let creds = prompt('Input you email and password separated by a space to login.').split(' '); localStorage.setItem('email', creds[0]); localStorage.setItem('password', creds[1]);">Login</button>
 
     <script>
         window.MathJax = MathJax;
