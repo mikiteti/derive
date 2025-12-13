@@ -192,7 +192,7 @@ class Render {
         }
 
         if (caretChanged && !marksChanged && !textChanged) {
-            for (let mark of line.marks.filter(e => e.wrapper)) {
+            for (let mark of line.marks.filter(e => e.wrapper && !e.deleted)) {
                 let wrapper = mark.wrapper;
                 wrapper.classList.remove("editingSource");
                 for (let sc of this.editor?.input?.caret?.carets || [])

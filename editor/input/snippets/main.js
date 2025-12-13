@@ -144,6 +144,14 @@ class Snippets {
     }
 
     jumpToNextTabStops() {
+        let caretLines = new Set(this.editor.input.caret.carets.map(e => e.position.Line));
+        for (let ts of this.tabstops) if (!caretLines.has(ts.positions[0].Line)) ts.deleted = true;
+        for (let ts of this.tabstops.filter(e => e.deleted)) for (let pos of ts.positions) {
+            console.log("deleting tabstop position for", ts);
+            pos.delete();
+        }
+        this.tabstops = this.tabstops.filter(e => !e.deleted);
+
         while (this.tabstops[0] && this.tabstops[0].positions.filter(e => !e.deleted).length === 0) this.tabstops.shift();
         if (this.tabstops.length === 0) return;
         this.tabstops[0].positions = this.tabstops[0].positions.filter(e => !e.deleted);

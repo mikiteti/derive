@@ -36,6 +36,11 @@
 /*     src: url("../fonts/avenir-lt-pro/AvenirLTProMedium.otf"); */
 /* } */
 
+/* @font-face { */
+/*     font-family: 'feijoa'; */
+/*     src: url("../fonts/Feijoa-Font/Feijoa\ Medium.otf"); */
+/* } */
+
 .DM mjx-container[display] {
     margin-top: 0.5em;
 }

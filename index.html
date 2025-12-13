@@ -19,7 +19,14 @@
     <script>
         window.MathJax = {
             loader: {load: ['input/tex', 'output/svg']},
-            tex: {packages: ['base', 'ams'], inlineMath: [["$", "$"]]},
+            tex: {
+                packages: ['base', 'ams'],
+                inlineMath: [["$", "$"]],
+                macros: {
+                    si: ["\\,\\mathrm{#1}", 1],
+                    SI: ["#1 \\, \\mathrm{#2}", 2],
+                },
+            },
             svg: {fontCache: 'global'},
             options: {
                 renderActions: {

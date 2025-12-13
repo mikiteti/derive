@@ -226,7 +226,7 @@ class DefaultSnippets {
             { from: "der", to: "\\frac{\\mathrm{d} ${0:y}}{\\mathrm{d} ${1:x}} ${2}", in: "mA" },
             { from: /\\mathrm{d}(\d)/, to: "\\frac{\\mathrm{d}^{[[0]]} ${0:y}}{\\mathrm{d} ${1:x}^{[[0]]}} ${2}", in: "mA" },
             { from: "\\mathrm{d}n", to: "\\frac{\\mathrm{d}^{${0:n}} ${1:y}}{\\mathrm{d} ${2:x}^{${0:n}}} ${3}", in: "mA" },
-            { from: "\\mathrm{d}t", to: "\\frac{\\mathrm{d}}{\\mathrm{d}t} ", in: "mA" },
+            // { from: "\\mathrm{d}t", to: "\\frac{\\mathrm{d}}{\\mathrm{d}t} ", in: "mA" },
 
             { from: /([^\\])int/, to: "[[0]]\\int${0} \\, \\mathrm{d}${1:x} ${2}", in: "mA", priority: -1 },
             { from: /^int/, to: "\\int${0} \\, \\mathrm{d}${1:x} ${2}", in: "mA", priority: -1 },
@@ -251,6 +251,7 @@ class DefaultSnippets {
             { from: "dag", to: "^{\\dagger}", in: "mA" },
             { from: "o+", to: "\\oplus ", in: "mA" },
             { from: "ox", to: "\\otimes ", in: "mA" },
+            { from: "Box", to: "\\Box", in: "mA", priority: 1 },
             { from: "bra", to: "\\bra{${0}}${1}", in: "mA" },
             { from: "ket", to: "\\ket{${0}}${1}", in: "mA" },
             { from: "brk", to: "\\braket{${0}|${1}}${2}", in: "mA" },
@@ -264,17 +265,17 @@ class DefaultSnippets {
             { from: "Vmat", to: "\\begin{Vmatrix}${0}\\end{Vmatrix}${1}", in: "mA" },
             { from: "matrix", to: "\\begin{matrix}${0}\\end{matrix}${1}", in: "mA" },
 
-            { from: "cases", to: "\\begin{cases}\n${0}\n\\end{cases}", in: "mA" },
-            { from: "align", to: "\\begin{align}\n${0}\n\\end{align}${1}", in: "mA" },
-            { from: "array", to: "\\begin{array}\n${0}\n\\end{array}${1}", in: "mA" },
+            { from: "cases", to: "\\begin{cases} ${0} \\end{cases}", in: "mA" },
+            { from: "align", to: "\\begin{align} ${0} \\end{align}${1}", in: "mA" },
+            { from: "array", to: "\\begin{array} ${0} \\end{array}${1}", in: "mA" },
 
             // Brackets
             { from: "avg", to: "\\langle ${0} \\rangle ${1}", in: "mA" },
             { from: "norm", to: "\\lvert ${0} \\rvert ${1}", in: "mA", priority: 1 },
             { from: "Norm", to: "\\lVert ${0} \\rVert ${1}", in: "mA", priority: 1 },
             { from: "ceil", to: "\\lceil ${0} \\rceil ${1}", in: "mA" },
-            { from: "fl\\inftyr", to: "\\lfloor ${0} \\rfloor ${1}", in: "mA", priority: 2 },
-            { from: "mod", to: "|${0}|${1}", in: "mA" },
+            { from: "fl\\inftyr", to: "\\lfloor ${0} \\rfloor ${1}", in: "mA", priority: 3 },
+            // { from: "mod", to: "|${0}|${1}", in: "mA" },
             // { from: "(", to: "(${VISUAL})", in: "mA" },
             // { from: "[", to: "[${VISUAL}]", in: "mA" },
             // { from: "{", to: "{${VISUAL}}", in: "mA" },
@@ -282,11 +283,11 @@ class DefaultSnippets {
             { from: "{", to: "{${0}}${1}", in: "mA" },
             { from: "[", to: "[${0}]${1}", in: "mA" },
             { from: " {", to: "\\{${0}\\}${1}", in: "mA", priority: 1 }, // test
-            { from: "lr(", to: "\\left( ${0} \\right) ${1}", in: "mA" },
-            { from: "lr{", to: "\\left\\{ ${0} \\right\\} ${1}", in: "mA" },
-            { from: "lr[", to: "\\left[ ${0} \\right] ${1}", in: "mA" },
-            { from: "lr|", to: "\\left| ${0} \\right| ${1}", in: "mA" },
-            { from: "lr<", to: "\\left< ${0} \\right> ${1}", in: "mA" },
+            // { from: "lr(", to: "\\left( ${0} \\right) ${1}", in: "mA" },
+            // { from: "lr{", to: "\\left\\{ ${0} \\right\\} ${1}", in: "mA" },
+            // { from: "lr[", to: "\\left[ ${0} \\right] ${1}", in: "mA" },
+            // { from: "lr|", to: "\\left| ${0} \\right| ${1}", in: "mA" },
+            // { from: "lr<", to: "\\left< ${0} \\right> ${1}", in: "mA" },
 
 
             // Misc
@@ -380,7 +381,7 @@ class DefaultSnippetVariables {
         this.snippetVariables = {
             "${GREEK}": "alpha|Alpha|beta|Beta|gamma|Gamma|delta|Delta|epsilon|varepsilon|zeta|eta|theta|vartheta|Theta|iota|kappa|lambda|Lambda|mu|nu|xi|omicron|pi|rho|varrho|sigma|Sigma|tau|upsilon|Upsilon|phi|varphi|Phi|chi|psi|Psi|omega|Omega",
             "${AUTOGREEK}": "alpha|Alpha|beta|Beta|gamma|Gamma|delta|Delta|epsilon|varepsilon|zeta|eta|theta|vartheta|Theta|iota|kappa|lambda|Lambda|omicron|pi|rho|varrho|sigma|Sigma|tau|upsilon|Upsilon|phi|varphi|Phi|chi|psi|Psi|omega|Omega",
-            "${SYMBOL}": "parallel|perp|partial|nabla|hbar|ell|infty|oplus|ominus|otimes|oslash|square|star|dagger|vee|wedge|subseteq|subset|supseteq|supset|emptyset|exists|nexists|forall|implies|impliedby|iff|setminus|neg|lor|land|bigcup|bigcap|cdot|times|simeq|approx|uparrow|downarrow|circ",
+            "${SYMBOL}": "parallel|perp|partial|nabla|hbar|ell|infty|oplus|ominus|otimes|oslash|square|star|dagger|vee|wedge|subseteq|subset|supseteq|supset|emptyset|exists|nexists|forall|implies|impliedby|iff|setminus|neg|lor|land|bigcup|bigcap|cdot|times|simeq|approx|uparrow|downarrow|circ|not",
             "${MORE_SYMBOLS}": "leq|geq|neq|gg|ll|equiv|sim|propto|rightarrow|leftarrow|Rightarrow|Leftarrow|leftrightarrow|to|mapsto|cap|cup|in|sum|prod|exp|ln|log|det|dots|vdots|ddots|pm|mp|int|iint|iiint|oint|min|max",
             "${SUBSCRIPTABLE}": "vec|dot|ddot|mathbb|mathcal|mathscr|hat|bar|tilde|underline|mathbf",
             "${TRIG}": "arcsin|sin|arccos|cos|arctan|tan|csc|sec|cot",
