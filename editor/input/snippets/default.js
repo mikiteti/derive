@@ -109,7 +109,7 @@ class DefaultSnippets {
             { from: /\\(${GREEK}|${SYMBOL}) \\mathrm{d}ot/, to: "\\ddot{\\[[0]]}", in: "rmA" },
             { from: /\\(${GREEK}|${SYMBOL}) tilde/, to: "\\tilde{\\[[0]]}", in: "rmA" },
             { from: /\\(${GREEK}|${SYMBOL}) und/, to: "\\underline{\\[[0]]}", in: "rmA" },
-            // {from: /\\(${GREEK}|${SYMBOL}) vec/, to: "\\vec{\\[[0]]}", in: "rmA"},
+            { from: /\\(${GREEK}|${SYMBOL}) vec/, to: "\\vec{\\[[0]]}", in: "rmA" },
             { from: /\\(${GREEK}|${SYMBOL}),\./, to: "\\vec{\\[[0]]}", in: "rmA", priority: 1 },
             { from: /\\(${GREEK}|${SYMBOL})\.,/, to: "\\vec{\\[[0]]}", in: "rmA" },
 
@@ -123,7 +123,7 @@ class DefaultSnippets {
             { from: /([A-Z])cal/, to: "\\mathcal{[[0]]}", in: "rmA" },
             { from: /([a-zA-Z])bb/, to: "\\mathbb{[[0]]}", in: "rmA" },
             { from: /([a-zA-Z])scr/, to: "\\mathscr{[[0]]}", in: "rmA" },
-            // {from: /([a-zA-Z])vec/, to: "\\vec{[[0]]}", in: "rmA"},
+            { from: /([a-zA-Z])vec/, to: "\\vec{[[0]]}", in: "rmA" },
             { from: /([a-zA-Z]),\./, to: "\\mathbf{[[0]]}", in: "rmA", priority: 1 },
             { from: /([a-zA-Z])\.,/, to: "\\mathbf{[[0]]}", in: "rmA" },
 
@@ -138,7 +138,7 @@ class DefaultSnippets {
             { from: "cal", to: "\\mathcal{${0}}${1}", in: "mA" },
             { from: "bb", to: "\\mathbb{${0}}${1}", in: "mA" },
             { from: "scr", to: "\\mathscr{${0}}${1}", in: "mA" },
-            // {from: "vec", to: "\\vec{${0}}${1}", in: "mA"},
+            { from: "vec", to: "\\vec{${0}}${1}", in: "mA" },
 
             { from: "bf", to: "\\mathbf{${0}}${1}", in: "mA" },
             { from: "rm", to: "\\mathrm{${0}}${1}", in: "mA" },
@@ -194,6 +194,7 @@ class DefaultSnippets {
             { from: "LL", to: "\\mathcal{L}", in: "mA" },
             { from: "HH", to: "\\mathcal{H}", in: "mA" },
             { from: "PP", to: "\\mathcal{P}", in: "mA" },
+            { from: "OO", to: "\\mathcal{O}", in: "mA" },
             { from: "SS", to: "\\mathcal{S}", in: "mA" },
             { from: "VV", to: "\\mathcal{V}", in: "mA" },
             { from: "NN", to: "\\mathbb{N}", in: "mA" },
@@ -381,7 +382,7 @@ class DefaultSnippetVariables {
         this.snippetVariables = {
             "${GREEK}": "alpha|Alpha|beta|Beta|gamma|Gamma|delta|Delta|epsilon|varepsilon|zeta|eta|theta|vartheta|Theta|iota|kappa|lambda|Lambda|mu|nu|xi|omicron|pi|rho|varrho|sigma|Sigma|tau|upsilon|Upsilon|phi|varphi|Phi|chi|psi|Psi|omega|Omega",
             "${AUTOGREEK}": "alpha|Alpha|beta|Beta|gamma|Gamma|delta|Delta|epsilon|varepsilon|zeta|eta|theta|vartheta|Theta|iota|kappa|lambda|Lambda|omicron|pi|rho|varrho|sigma|Sigma|tau|upsilon|Upsilon|phi|varphi|Phi|chi|psi|Psi|omega|Omega",
-            "${SYMBOL}": "parallel|perp|partial|nabla|hbar|ell|infty|oplus|ominus|otimes|oslash|square|star|dagger|vee|wedge|subseteq|subset|supseteq|supset|emptyset|exists|nexists|forall|implies|impliedby|iff|setminus|neg|lor|land|bigcup|bigcap|cdot|times|simeq|approx|uparrow|downarrow|circ|not",
+            "${SYMBOL}": "parallel|perp|partial|nabla|hbar|ell|infty|oplus|ominus|otimes|oslash|square|star|dagger|vee|wedge|subseteq|subset|supseteq|supset|emptyset|exists|nexists|forall|implies|impliedby|iff|setminus|neg|lor|land|bigcup|bigcap|cdot|times|simeq|approx|uparrow|downarrow|circ|not|neq",
             "${MORE_SYMBOLS}": "leq|geq|neq|gg|ll|equiv|sim|propto|rightarrow|leftarrow|Rightarrow|Leftarrow|leftrightarrow|to|mapsto|cap|cup|in|sum|prod|exp|ln|log|det|dots|vdots|ddots|pm|mp|int|iint|iiint|oint|min|max",
             "${SUBSCRIPTABLE}": "vec|dot|ddot|mathbb|mathcal|mathscr|hat|bar|tilde|underline|mathbf",
             "${TRIG}": "arcsin|sin|arccos|cos|arctan|tan|csc|sec|cot",

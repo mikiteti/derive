@@ -11,6 +11,9 @@ class State {
         this.commandPalette = document.querySelector("#commandPalette");
         this.filePicker = document.querySelector("#filePicker");
         this.modalBg = document.querySelector("#modalBg");
+        this.modalBg.addEventListener("click", () => {
+            this.closeModal();
+        })
         this.initFilePicker();
 
         Object.defineProperty(window, "editor", { get() { return this.state.editor; }, });
@@ -143,6 +146,7 @@ class State {
 
     async newEditor(file, { main = true } = {}) {
         console.log("creating new editor", file);
+
         return window.MathJax.startup.promise.then(_ => {
             // const editor = newEditor({ file: file, layout: "vim", interactive: !matchMedia('(pointer: coarse)').matches });
             const editor = newEditor({ file: file, layout: "vim", interactive: true });

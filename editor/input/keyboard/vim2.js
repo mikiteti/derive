@@ -566,7 +566,7 @@ const createCommandSet = (editor) => {
                 run: (keys) => {
                     (({
                         "i": () => { dispatch([["mode", "i"]]) },
-                        "a": () => { dispatch([["mode", "i"], ["move", (pos) => (pos.Line.chars === 1 ? pos.index : pos.index + 1)]]) },
+                        "a": () => { dispatch([["mode", "i"], ["move", (pos) => (pos.Line.chars - pos.column === 1 ? pos.index : pos.index + 1)]]) },
                         "I": () => { dispatch([["mode", "i"], ["move", moves["_"]]]) },
                         "A": () => { dispatch([["mode", "i"], ["move", moves["$"]], ["move", moves["l!"](1)]]) },
                         "v": () => { dispatch([["mode", "v"]]) },

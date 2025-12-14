@@ -360,7 +360,7 @@ html {
     box-shadow: var(--shadow-lg);
     display: none;
     position: fixed;
-    min-width: 40vw;
+    min-width: max(40vw, 300px);
     border-radius: 20px;
     left: 50vw;
     top: 10vw;
