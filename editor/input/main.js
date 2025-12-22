@@ -8,7 +8,7 @@ class Input {
     constructor(editor, layout = "regular") {
         this.editor = editor;
         this.textarea = editor.elements.textarea;
-        this.snippets = newSnippets({ editor, snippets: (new DefaultSnippets()).snippets, snippetVariables: (new DefaultSnippetVariables()).snippetVariables });
+        this.snippets = newSnippets({ editor, snippets: (new DefaultSnippets(editor)).snippets, snippetVariables: (new DefaultSnippetVariables()).snippetVariables });
         this.keyboard = newKeyboard({ editor, layout });
         this.caret = new Caret(this.editor, { autoRender: false });
 

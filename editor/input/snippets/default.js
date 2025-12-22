@@ -1,5 +1,7 @@
 class DefaultSnippets {
-    constructor() {
+    constructor(editor) {
+        this.editor = editor;
+
         this.snippets = [
             // { from: /^(?:.*[+\-= ,])?([^+\-= ,]+)\/$/, to: "\\frac{[[0]]}{${0}}${1}", in: "m" },
             { from: ";a", to: "• ", in: "tA" },
@@ -101,6 +103,7 @@ class DefaultSnippets {
 
             // Aftercare
             { from: /([A-Za-z])(\d)/, to: "[[0]]_{[[1]]}", in: "rmA", description: "Auto letter subscript", priority: -1 },
+            { from: /(\d)deg/, to: "[[0]]^\\circ", in: "rmA", description: "Degrees" },
 
             { from: /\\(${GREEK}|${SYMBOL}) hat/, to: "\\hat{\\[[0]]}", in: "rmA" },
             { from: /\\(${GREEK}|${SYMBOL}) bar/, to: "\\bar{\\[[0]]}", in: "rmA" },
@@ -189,7 +192,6 @@ class DefaultSnippets {
             { from: "sup=", to: "\\supseteq", in: "mA" },
             { from: "eset", to: "\\emptyset", in: "mA" },
             { from: "set", to: "\\{ ${0} \\}${1}", in: "mA" },
-            { from: "e\\xi sts", to: "\\exists", in: "mA", priority: 1 },
 
             { from: "LL", to: "\\mathcal{L}", in: "mA" },
             { from: "HH", to: "\\mathcal{H}", in: "mA" },
@@ -268,7 +270,7 @@ class DefaultSnippets {
 
             { from: "cases", to: "\\begin{cases} ${0} \\end{cases}", in: "mA" },
             { from: "align", to: "\\begin{align} ${0} \\end{align}${1}", in: "mA" },
-            { from: "array", to: "\\begin{array} ${0} \\end{array}${1}", in: "mA" },
+            // { from: "array", to: "\\begin{array} ${0} \\end{array}${1}", in: "mA" },
 
             // Brackets
             { from: "avg", to: "\\langle ${0} \\rangle ${1}", in: "mA" },
@@ -284,11 +286,11 @@ class DefaultSnippets {
             { from: "{", to: "{${0}}${1}", in: "mA" },
             { from: "[", to: "[${0}]${1}", in: "mA" },
             { from: " {", to: "\\{${0}\\}${1}", in: "mA", priority: 1 }, // test
-            // { from: "lr(", to: "\\left( ${0} \\right) ${1}", in: "mA" },
-            // { from: "lr{", to: "\\left\\{ ${0} \\right\\} ${1}", in: "mA" },
-            // { from: "lr[", to: "\\left[ ${0} \\right] ${1}", in: "mA" },
-            // { from: "lr|", to: "\\left| ${0} \\right| ${1}", in: "mA" },
-            // { from: "lr<", to: "\\left< ${0} \\right> ${1}", in: "mA" },
+            { from: "lr(", to: "\\left( ${0} \\right) ${1}", in: "mA", priority: 2 },
+            { from: "lr{", to: "\\left\\{ ${0} \\right\\} ${1}", in: "mA", priority: 2 },
+            { from: "lr[", to: "\\left[ ${0} \\right] ${1}", in: "mA", priority: 2 },
+            { from: "lr|", to: "\\left| ${0} \\right| ${1}", in: "mA", priority: 2 },
+            { from: "lr<", to: "\\left< ${0} \\right> ${1}", in: "mA", priority: 2 },
 
 
             // Misc
@@ -317,8 +319,8 @@ class DefaultSnippets {
                         }
                     }
 
-                    let output = arr.map(el => el.join(" & ")).join(" \\\\\n");
-                    output = `\\begin{pmatrix}\n${output}\n\\end{pmatrix}`;
+                    let output = arr.map(el => el.join(" & ")).join(" \\\\");
+                    output = `\\begin{pmatrix}${output}\\end{pmatrix}`;
                     return output;
                 }, in: "mA", description: "N x N identity matrix"
             },
@@ -332,12 +334,12 @@ class DefaultSnippets {
                     for (let j = 0; j < n; j++) {
                         arr[j] = [];
                         for (let i = 0; i < n; i++) {
-                            arr[j][i] = "$" + counter;
+                            arr[j][i] = "${" + counter + ":0}";
                             counter++;
                         }
                     }
 
-                    return `\\begin{bmatrix} ${arr.map(el => el.join(" & ")).join(" \\\\ ")} \\end{bmatrix} \$${counter}`;
+                    return `\\begin{bmatrix} ${arr.map(el => el.join(" & ")).join(" \\\\ ")} \\end{bmatrix} \${${counter}}`;
                 }, in: "mA", description: "square matrices"
             },
 
@@ -350,12 +352,12 @@ class DefaultSnippets {
                     for (let j = 0; j < k; j++) {
                         arr[j] = [];
                         for (let i = 0; i < n; i++) {
-                            arr[j][i] = "$" + counter;
+                            arr[j][i] = "${" + counter + ":0}";
                             counter++;
                         }
                     }
 
-                    return `\\begin{bmatrix} ${arr.map(el => el.join(" & ")).join(" \\\\ ")} \\end{bmatrix} \$${counter}`;
+                    return `\\begin{bmatrix} ${arr.map(el => el.join(" & ")).join(" \\\\ ")} \\end{bmatrix} \${${counter}}`;
                 }, in: "mA", description: "matrices", priority: 1
             },
 
@@ -370,8 +372,34 @@ class DefaultSnippets {
                         counter++;
                     }
 
-                    return `\\begin{bmatrix} \$${arr.join(" \\\\ $")} \\end{bmatrix} \$${counter}`;
-                }, in: "mA", description: "vectors"
+                    return `\\begin{bmatrix} \${${arr.join(":0} \\\\ ${")}:0} \\end{bmatrix} \${${counter}}`;
+                }, in: "mA", description: "vectors", priority: 1,
+            },
+
+            {
+                from: /h([0-6])/, to: (match) => {
+                    const n = parseInt(match[1]);
+                    console.log("running h", n);
+
+                    if (n === 0) {
+                        this.editor.input.caret.forAll(pos => {
+                            pos.Line.removeDeco(this.editor.render.decos);
+                            this.editor.render.renderLine(pos.Line);
+                        });
+                        this.editor.input.caret.placeAllAt();
+
+                        return;
+                    }
+
+                    let applyClasses = getComputedStyle(document.body).getPropertyValue(`--h${n}-classes`).slice(1, -1).split(" ");
+                    this.editor.input.caret.forAll(pos => {
+                        pos.Line.addDeco([...applyClasses, `h${n}`]);
+                        this.editor.render.renderLine(pos.Line);
+                    });
+                    this.editor.input.caret.placeAllAt();
+
+                    return;
+                }, in: "At", description: "Headings", priority: 1,
             },
         ]
     }

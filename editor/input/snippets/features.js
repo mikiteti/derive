@@ -2,7 +2,7 @@ import { Position } from "../../doc/classes.js";
 
 const getFeatures = (editor, {
     autoFractionExcludedEnvs = [["^{", "}"], ["\\text{", "}"]],
-    autoFractionBrakingChars = "=,	+-",
+    autoFractionBrakingChars = "=,	+-|",
     autoEnlargeTriggers = "sum, int, frac, prod, bigcup, bigcap",
     // wordDelimiters = "., +-\n	:;!?\/{}[]()=~$",
     closeBracket = { "(": ")", "{": "}", "[": "]" },

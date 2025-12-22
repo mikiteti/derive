@@ -20,24 +20,28 @@ class Snippets {
         }
 
         for (let snip of snips) {
-            let to = snip.to;
-            let tabstops = [];
-            while (true) {
-                let m = /\$\{(?<index>\d)+(?::(?<text>[^}]*?))?\}/.exec(to);
-                if (!m) break;
-
-                to = to.replace(m[0], m[2] || "");
-                if (tabstops[m.groups.index] === undefined) tabstops[m.groups.index] = { placeholder: m[2] || "", positions: [] };
-                tabstops[m.groups.index].positions.push(m.index);
-                if (tabstops[m.groups.index] === "" && m.groups.text) tabstops[m.groups.index] = m.groups.text;
-            }
-            if (tabstops.length === 0) tabstops.push({ placeholder: "", positions: [to.length] });
-
+            let { to, tabstops } = this.parseTabstops(snip.to);
             snip.to = to;
             snip.tabstops = tabstops;
         }
 
         this.snippets = snips.slice().sort((a, b) => ((b.priority || 0) - (a.priority || 0)));
+    }
+
+    parseTabstops(to = "") {
+        let tabstops = [];
+        while (true) {
+            let m = /\$\{(?<index>\d+)+(?::(?<text>[^}]*?))?\}/.exec(to);
+            if (!m) break;
+
+            to = to.replace(m[0], m[2] || "");
+            if (tabstops[m.groups.index] === undefined) tabstops[m.groups.index] = { placeholder: m[2] || "", positions: [] };
+            tabstops[m.groups.index].positions.push(m.index);
+            if (tabstops[m.groups.index] === "" && m.groups.text) tabstops[m.groups.index] = m.groups.text;
+        }
+        if (tabstops.length === 0) tabstops.push({ placeholder: "", positions: [to.length] });
+
+        return { to, tabstops };
     }
 
     checkEnvironment(pos, wanted) {
@@ -74,7 +78,7 @@ class Snippets {
             for (let env of [["text{", "}"], ["mathrf{", "}"]]) if (this.features.isInEnv(pos, env)) return;
 
             let to = snippet.to, index, match, tabstops = JSON.parse(JSON.stringify(snippet.tabstops));
-            if (typeof snippet.from == "object") { // regexp
+            if (typeof snippet.from == "object") { // regexpdef
                 match = text.match(snippet.from)
                 index = match?.index;
                 if (index != undefined) {
@@ -82,10 +86,14 @@ class Snippets {
                     index += line.from;
                     for (let i = 1; i < match.length; i++) {
                         let from = `[[${i - 1}]]`;
-                        while (true) {
+                        for (let safety = 0; safety < 100; safety++) {
+                            if (typeof to === "function") {
+                                let parsed = this.parseTabstops(to(match))
+                                to = parsed.to;
+                                tabstops = parsed.tabstops;
+                            }
                             let ind = to.indexOf(from);
                             if (ind === -1) break;
-                            // if (typeof to === "function") to = to(match);
                             to = to.replace(from, match[i]);
                             for (let ts of tabstops) {
                                 for (let j in ts.positions) {
