@@ -15,6 +15,7 @@
     --color-highlight: black;
 
     --tab-full-width: 3rem;
+    --buffer-width: 30px;
     --editor-width: min(700px, 90vw);
     --font-size: calc(var(--editor-width) / 25);
     --font-face: 'author';
@@ -122,6 +123,7 @@ html {
     min-height: 100vh;
     overflow-x: hidden;
     scrollbar-width: thin;
+    counter-reset: lineNumber;
 }
 
 .noisy::before {
@@ -145,6 +147,25 @@ html {
 .textarea p {
     margin: 0;
     line-height: calc(var(--line-height) * var(--font-size));
+}
+
+html.lineNumbers .textarea p {
+    position: relative;
+    margin-left: var(--buffer-width);
+}
+
+html.lineNumbers .textarea p::before {
+    counter-increment: lineNumber;
+    content: counter(lineNumber);
+    color: var(--color-text);
+    /* filter: brightness(80%); */
+    /* color: var(--color-accent); */
+    opacity: 0.8;
+    font-size: var(--font-size);
+    position: absolute;
+    left: -30px;
+    transform: translate(-100%, 0);
+    font-weight: var(--font-weight);
 }
 
 .textarea p:has(> .bullet) {
@@ -298,6 +319,7 @@ html {
     /* --background-color: var(--color-background-secondary); */
     animation: 3s spin-border-offset linear infinite;
     border: 1px solid transparent;
+    border-radius: 6px;
     background-image: linear-gradient(var(--color-bg), var(--color-bg)),
         conic-gradient(from var(--border-offset-angle), transparent, transparent, var(--color-accent), transparent, transparent, var(--color-accent), transparent);
     background-origin: border-box;
@@ -351,7 +373,7 @@ html {
     display: none;
     position: fixed;
     inset: 0;
-    backdrop-filter: brightness(60%);
+    backdrop-filter: brightness(60%) blur(3px);
 }
 
 .modal {

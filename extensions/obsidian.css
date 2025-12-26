@@ -19,6 +19,17 @@
     --DM-font-size: 1;
     --IM-font-size: 0.92;
     --line-height: 1.25;
+
+    /* CSS HEX */
+    --baby-blue-ice: #94b1ffff;
+    --shadow-grey: #272838ff;
+    --light-gold: #f3de8aff;
+    --muted-olive: #a2be8aff;
+    --sea-green: #5c946eff;
+
+    --color-accent: var(--baby-blue-ice);
+    --color-bg: var(--shadow-grey);
+    --color-math: var(--light-gold);
 }
 
 .dim {

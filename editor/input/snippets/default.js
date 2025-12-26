@@ -113,6 +113,8 @@ class DefaultSnippets {
             { from: /\\(${GREEK}|${SYMBOL}) tilde/, to: "\\tilde{\\[[0]]}", in: "rmA" },
             { from: /\\(${GREEK}|${SYMBOL}) und/, to: "\\underline{\\[[0]]}", in: "rmA" },
             { from: /\\(${GREEK}|${SYMBOL}) vec/, to: "\\vec{\\[[0]]}", in: "rmA" },
+            { from: /\\(${SUBSCRIPTABLE}){\\(${GREEK})},\./, to: "\\vec{\\[[0]]{\\[[1]]}}", in: "rmA" },
+            { from: /\\(${SUBSCRIPTABLE}){\\(${GREEK})}\.,/, to: "\\vec{\\[[0]]{\\[[1]]}}", in: "rmA" },
             { from: /\\(${GREEK}|${SYMBOL}),\./, to: "\\vec{\\[[0]]}", in: "rmA", priority: 1 },
             { from: /\\(${GREEK}|${SYMBOL})\.,/, to: "\\vec{\\[[0]]}", in: "rmA" },
 
@@ -127,6 +129,8 @@ class DefaultSnippets {
             { from: /([a-zA-Z])bb/, to: "\\mathbb{[[0]]}", in: "rmA" },
             { from: /([a-zA-Z])scr/, to: "\\mathscr{[[0]]}", in: "rmA" },
             { from: /([a-zA-Z])vec/, to: "\\vec{[[0]]}", in: "rmA" },
+            { from: /\\(${SUBSCRIPTABLE}){([a-zA-z])},\./, to: "\\mathbf{\\[[0]]{[[1]]}}", in: "rmA" },
+            { from: /\\(${SUBSCRIPTABLE}){([a-zA-z])}\.,/, to: "\\mathbf{\\[[0]]{[[1]]}}", in: "rmA" },
             { from: /([a-zA-Z]),\./, to: "\\mathbf{[[0]]}", in: "rmA", priority: 1 },
             { from: /([a-zA-Z])\.,/, to: "\\mathbf{[[0]]}", in: "rmA" },
 
@@ -142,9 +146,9 @@ class DefaultSnippets {
             { from: "bb", to: "\\mathbb{${0}}${1}", in: "mA" },
             { from: "scr", to: "\\mathscr{${0}}${1}", in: "mA" },
             { from: "vec", to: "\\vec{${0}}${1}", in: "mA" },
-
             { from: "bf", to: "\\mathbf{${0}}${1}", in: "mA" },
             { from: "rm", to: "\\mathrm{${0}}${1}", in: "mA" },
+
             // {from: "pu", to: "\\pu{${0}}\\,${1}", in: "mA"},
             { from: "unit", to: "\\,\\si{${0}}\\,${1}", in: "mA" },
             { from: "pu", to: "\\SI{${0}}{${1}}\\,${2}", in: "mA" },
@@ -209,12 +213,8 @@ class DefaultSnippets {
             { from: "ii", to: "\\mathrm{i}", in: "mA" },
             { from: "dd", to: "\\mathrm{d}", in: "mA" },
 
+
             // Handle spaces and backslashes
-
-            // Snippet variables can be used as shortcuts when writing snippets.
-            // For example, ${GREEK} below is shorthand for "alpha|beta|gamma|Gamma|delta|..."
-            // You can edit snippet variables under the Advanced snippet settings section.
-
             // Insert space after Greek letters and symbols
             { from: /([^\\])(${AUTOGREEK}|${SYMBOL}|${TRIG}|${FUNC})/, to: "[[0]]\\[[1]]", in: "rmA", description: "Add backslash before what needs one", priority: 2 },
             { from: /^(${AUTOGREEK}|${SYMBOL}|${TRIG}|${FUNC})/, to: "\\[[0]]", in: "rmA", description: "Add backslash before what needs one", priority: 1 },
@@ -372,7 +372,7 @@ class DefaultSnippets {
                         counter++;
                     }
 
-                    return `\\begin{bmatrix} \${${arr.join(":0} \\\\ ${")}:0} \\end{bmatrix} \${${counter}}`;
+                    return `\\begin{pmatrix} \${${arr.join(":0} \\\\ ${")}:0} \\end{pmatrix} \${${counter}}`;
                 }, in: "mA", description: "vectors", priority: 1,
             },
 
@@ -392,14 +392,30 @@ class DefaultSnippets {
                     }
 
                     let applyClasses = getComputedStyle(document.body).getPropertyValue(`--h${n}-classes`).slice(1, -1).split(" ");
+                    this.editor.doc.history.newChangeGroup();
                     this.editor.input.caret.forAll(pos => {
                         pos.Line.addDeco([...applyClasses, `h${n}`]);
                         this.editor.render.renderLine(pos.Line);
                     });
                     this.editor.input.caret.placeAllAt();
+                    this.editor.doc.history.newChangeGroup();
 
                     return;
                 }, in: "At", description: "Headings", priority: 1,
+            },
+
+            {
+                from: "dm", to: (match) => {
+                    this.editor.doc.history.newChangeGroup();
+                    this.editor.input.caret.forAll(pos => {
+                        pos.Line.toggleDeco("math");
+                        this.editor.render.renderLine(pos.Line);
+                    });
+                    this.editor.input.caret.placeAllAt();
+                    this.editor.doc.history.newChangeGroup();
+
+                    return;
+                }, in: "At", description: "Display math", priority: 1,
             },
         ]
     }

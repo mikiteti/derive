@@ -1,7 +1,7 @@
 const abc = "ABCDEFGHIJKLMNOPQRSTUVWXYZáéíóöőúüűzabcdefghijklmnopqrstuvwxyzÁÉÍÓÖŐÚÜŰ 1234567890!@#$%^&*()-=_+[]\\{}|;':\",./<>?`~".split("");
 
 const createCommandSet = (editor) => {
-    const doc = editor.doc, render = editor.render, caret = editor.input.caret;
+    const doc = editor.doc, render = editor.render, caret = editor.input.caret, history = editor.doc.history;
 
     const commands = {
         "M+c": () => {
@@ -60,17 +60,21 @@ const createCommandSet = (editor) => {
             })
         },
         "M+d": () => {
+            history.newChangeGroup();
             caret.forAll(pos => {
                 pos.Line.toggleDeco("math");
                 render.renderLine(pos.Line);
             });
             caret.placeAllAt();
+            history.newChangeGroup();
         },
         "M+u": () => {
+            history.newChangeGroup();
             caret.forAll(pos => {
                 pos.Line.toggleDeco("underline");
                 render.renderLine(pos.Line);
             });
+            history.newChangeGroup();
         },
         // "M+s": () => {
         //     caret.forAll(pos => {
@@ -82,42 +86,59 @@ const createCommandSet = (editor) => {
         "M+s": () => {
             window.state.saveFile(editor);
         },
+        // "M+l": () => {
+        //     history.newChangeGroup();
+        //     caret.forAll(pos => {
+        //         pos.Line.toggleDeco("large");
+        //         render.renderLine(pos.Line);
+        //     });
+        //     caret.placeAllAt();
+        //     history.newChangeGroup();
+        // },
         "M+l": () => {
-            caret.forAll(pos => {
-                pos.Line.toggleDeco("large");
-                render.renderLine(pos.Line);
-            });
-            caret.placeAllAt();
+            document.documentElement.classList.toggle("lineNumbers")
+            queueMicrotask(() => {
+                caret.placeAllAt();
+            })
         },
         "M+a": () => {
+            history.newChangeGroup();
             caret.forAll(pos => {
                 pos.Line.toggleDeco("accent");
                 render.renderLine(pos.Line);
             });
             caret.placeAllAt();
+            history.newChangeGroup();
         },
         "M+k": () => {
+            history.newChangeGroup();
             caret.forAll(pos => {
                 pos.Line.toggleDeco("capital");
                 render.renderLine(pos.Line);
             });
             caret.placeAllAt();
+            history.newChangeGroup();
         },
         "M+w": () => {
+            history.newChangeGroup();
             caret.forAll(pos => {
                 pos.Line.toggleDeco("spin_border");
                 render.renderLine(pos.Line);
             });
             caret.placeAllAt();
+            history.newChangeGroup();
         },
         "M+m": () => {
+            history.newChangeGroup();
             caret.forAll(pos => {
                 pos.Line.toggleDeco("middle");
                 render.renderLine(pos.Line);
             });
             caret.placeAllAt();
+            history.newChangeGroup();
         },
         "M+b": () => {
+            history.newChangeGroup();
             caret.forAll(pos => {
                 if (!pos.Line.decos.has("bold") && !pos.Line.decos.has("Bold")) pos.Line.addDeco("bold");
                 else if (pos.Line.decos.has("bold")) {
@@ -129,43 +150,44 @@ const createCommandSet = (editor) => {
                 render.renderLine(pos.Line);
             });
             caret.placeAllAt();
+            history.newChangeGroup();
         },
         "M+i": () => {
             for (let sc of caret.carets) {
-                console.log(sc);
+                let from = sc.from, to = sc.to, handled = false,
+                    line = sc.position.Line, marks = line.marks.filter(e => e.role === "math");
+
                 if (sc.fixedEnd && sc.fixedEnd.Line !== sc.position.Line) continue;
-                if (sc.fixedEnd) { // TODO: check if there are marks already
-                    let index1 = sc.position.index, index2 = sc.fixedEnd.index;
-                    // if (caret.style !== "bar" && index2 < index1) index1++;
-                    index1 > index2 ? index1++ : index2++;
-                    sc.position.Line.addNewMark({ from: Math.min(index1, index2), to: Math.max(index1, index2), role: "math" });
+                if (sc.fixedEnd) {
+                    for (let mark of marks) if (mark.start.index < to && mark.end.index > from) {
+                        handled = true;
+                        break;
+                    }
+                    if (!handled) sc.position.Line.addNewMark({ from, to, role: "math" });
                     continue;
                 }
-                let line = sc.position.Line, handled = false;
 
-                for (let mark of line.marks.filter(e => e.role === "math")) {
-                    if (mark.to.index === sc.from) {
-                        console.log({ mark, sc });
+                for (let mark of marks) {
+                    if (mark.to.index === from) {
                         mark.to.stickLeftOnInsert = !mark.to.stickLeftOnInsert;
                         line.unrenderedChanges.add("marks");
                         if (mark.to.index - (mark.to.stickLeftOnInsert ? 1 : 0) <= mark.from.index - (mark.from.stickLeftOnInsert ? 1 : 0)) {
-                            console.log("deleting mark");
                             line.deleteMark(mark);
                         }
                         handled = true;
                         break;
                     }
-                    if (mark.from.index === sc.from) {
+                    if (mark.from.index === from) {
                         mark.from.stickLeftOnInsert = !mark.from.stickLeftOnInsert;
                         line.unrenderedChanges.add("marks");
                         if (mark.to.index - (mark.to.stickLeftOnInsert ? 1 : 0) <= mark.from.index - (mark.from.stickLeftOnInsert ? 1 : 0)) {
-                            console.log("deleting mark");
                             line.deleteMark(mark);
                         }
                         handled = true;
                         break;
                     }
-                    if (mark.from.index < sc.from && mark.to.index > sc.from) { // TODO
+                    if (mark.from.index < sc.from && mark.to.index > sc.from) {
+                        line.deleteMark(mark);
                         handled = true;
                         break;
                     }
@@ -176,11 +198,13 @@ const createCommandSet = (editor) => {
             caret.placeAllAt();
         },
         "M+0": () => {
+            history.newChangeGroup();
             caret.forAll(pos => {
                 pos.Line.removeDeco(render.decos);
                 render.renderLine(pos.Line);
             });
             caret.placeAllAt();
+            history.newChangeGroup();
         },
         // "M+1": () => {
         //     let applyClasses = getComputedStyle(document.body).getPropertyValue("--h1-classes").slice(1, -1).split(" ");
@@ -215,36 +239,44 @@ const createCommandSet = (editor) => {
         //     caret.placeAllAt();
         // },
         "M+S+a": () => {
+            history.newChangeGroup();
             let applyClasses = getComputedStyle(document.body).getPropertyValue("--h1-classes").slice(1, -1).split(" ");
             caret.forAll(pos => {
                 pos.Line.addDeco([...applyClasses, "h1"]);
                 render.renderLine(pos.Line);
             });
             caret.placeAllAt();
+            history.newChangeGroup();
         },
         "M+S+s": () => {
+            history.newChangeGroup();
             let applyClasses = getComputedStyle(document.body).getPropertyValue("--h2-classes").slice(1, -1).split(" ");
             caret.forAll(pos => {
                 pos.Line.addDeco([...applyClasses, "h2"]);
                 render.renderLine(pos.Line);
             });
             caret.placeAllAt();
+            history.newChangeGroup();
         },
         "M+S+d": () => {
+            history.newChangeGroup();
             let applyClasses = getComputedStyle(document.body).getPropertyValue("--h3-classes").slice(1, -1).split(" ");
             caret.forAll(pos => {
                 pos.Line.addDeco([...applyClasses, "h3"]);
                 render.renderLine(pos.Line);
             });
             caret.placeAllAt();
+            history.newChangeGroup();
         },
         "M+S+f": () => {
+            history.newChangeGroup();
             let applyClasses = getComputedStyle(document.body).getPropertyValue("--h4-classes").slice(1, -1).split(" ");
             caret.forAll(pos => {
                 pos.Line.addDeco([...applyClasses, "h4"]);
                 render.renderLine(pos.Line);
             });
             caret.placeAllAt();
+            history.newChangeGroup();
         },
         "M+o": () => {
             window.state.openModal(window.state.filePicker);

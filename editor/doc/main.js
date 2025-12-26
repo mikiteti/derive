@@ -2,9 +2,6 @@ import { Line, Leaf, Node, Doc } from "./classes.js";
 import { nodeSizes, checkTreeStructure, showTreeStructure } from "../assets.js";
 
 const newDoc = ({ editor, file } = {}) => {
-    window.checkTreeStructure = () => { checkTreeStructure(editor.doc) };
-    window.showTreeStructure = () => { showTreeStructure(editor.doc) };
-    // let lines = text.split("\n").map(val => new Line({ text: val }));
     let lines = file.content.map(line => new Line({
         editor,
         text: line.text || "",

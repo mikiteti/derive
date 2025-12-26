@@ -278,7 +278,9 @@ class State {
             for (let char of string) {
                 let found = text.indexOf(char.toLowerCase(), index), Found = text.indexOf(char.toUpperCase(), index);
                 if (found === -1 && Found === -1) return false;
-                index += Math.min(found, Found);
+                if (found === -1) index += Found;
+                else if (Found === -1) index += found;
+                else index += Math.min(found, Found);
             }
             return true;
         });

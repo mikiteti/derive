@@ -3,7 +3,7 @@ import { Position } from "../../doc/classes.js";
 
 const createCommandSet = (editor) => {
     let parsePosition = (pos) => { return new Position(pos, editor.doc, { track: false }) };
-    const doc = editor.doc, render = editor.render, caret = editor.input.caret, snippets = editor.input.snippets;
+    const doc = editor.doc, render = editor.render, caret = editor.input.caret, snippets = editor.input.snippets, history = editor.doc.history;
     const keyChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZáéíóöőúüűzabcdefghijklmnopqrstuvwxyzÁÉÍÓÖŐÚÜŰ1234567890_";
     const blank = " ";
     let lastInlineFind;
@@ -316,7 +316,13 @@ const createCommandSet = (editor) => {
                 if (sc.fixedEnd) return { from: sc.position.index, to: sc.fixedEnd.index };
                 return { from: sc.position.index - 1, to: sc.position.index };
             });
-        }
+        },
+        undo: () => {
+            doc.history.undo();
+        },
+        redo: () => {
+            doc.history.redo();
+        },
     };
 
     const insert = {
@@ -359,7 +365,7 @@ const createCommandSet = (editor) => {
                 name: "insert Enter",
                 keys: ["Enter"],
                 run: (keys) => {
-                    console.log("inserting Enter");
+                    // console.log("inserting Enter");
                     functions.insert("\n");
                 }
             },
@@ -367,7 +373,7 @@ const createCommandSet = (editor) => {
                 name: "insert char",
                 keys: "any",
                 run: (keys) => {
-                    console.log("inserting ", keys[0]);
+                    // console.log("inserting ", keys[0]);
                     dispatch([["insert", keys[0]], ["runSnippets"]]);
                 },
             },
@@ -385,10 +391,19 @@ const createCommandSet = (editor) => {
         },
         { // uncountable basic movements
             name: "uncountable basic movements",
-            keys: ["0", "$", "_", "^", "%", "G"], // not here
+            keys: ["0", "$", "_", "^", "%"], // not here
             run: (keys) => {
                 dispatch([["move", moves[keys[0]]]]);
             },
+        },
+        {
+            count: true,
+            name: "G",
+            keys: ["G"],
+            run: (keys, { count } = {}) => {
+                if (count == undefined) dispatch([["move", moves["G"]]]);
+                else dispatch([["move", pos => doc.line(count - 1).from]]);
+            }
         },
         { // g moves
             name: "g moves",
@@ -406,9 +421,13 @@ const createCommandSet = (editor) => {
                     },
                 },
                 {
+                    count: true,
                     name: "gJ",
                     keys: ["J"],
-                    run: (keys) => 0,
+                    run: (keys, { count = 1 } = {}) => {
+                        console.log("running J");
+                        dispatch([["replace", pos => pos.Line.to, pos => pos.Line.to + 1, ""]]);
+                    },
                 },
             ],
             run: (keys, { nexts, count = 1 } = {}) => {
@@ -503,9 +522,13 @@ const createCommandSet = (editor) => {
                     run: (keys) => 0,
                 },
                 {
+                    count: true,
                     name: "gJ",
                     keys: ["J"],
-                    run: (keys) => 0,
+                    run: (keys, { count = 1 } = {}) => {
+                        console.log("running J");
+                        dispatch([["replace", pos => pos.Line.to, pos => pos.Line.to + 1, ""]]);
+                    },
                 },
             ]
         },
@@ -580,6 +603,22 @@ const createCommandSet = (editor) => {
                 keys: ["Escape"],
                 run: (keys) => {
                     functions.removeCarets();
+                }
+            },
+            {
+                count: true,
+                name: "undo",
+                keys: ["u"],
+                run: (keys, { count = 1 } = {}) => {
+                    for (let i = 0; i < count; i++) functions.undo();
+                }
+            },
+            {
+                count: true,
+                name: "redo",
+                keys: ["\\Cr"],
+                run: (keys, { count = 1 } = {}) => {
+                    for (let i = 0; i < count; i++) functions.redo();
                 }
             },
             {
@@ -730,7 +769,9 @@ const createCommandSet = (editor) => {
                 name: "join lines",
                 count: true,
                 keys: ["J"],
-                run: (keys) => 0,
+                run: (keys, { count = 1 } = {}) => {
+                    dispatch(new Array(count).fill(["replace", pos => pos.Line.to, pos => pos.Line.to, " "]));
+                },
             },
             {
                 name: "replace",
@@ -757,6 +798,22 @@ const createCommandSet = (editor) => {
                 keys: ["Escape", "\\Cc"],
                 run: (keys) => {
                     functions.mode("n");
+                }
+            },
+            {
+                count: true,
+                name: "undo",
+                keys: ["u"],
+                run: (keys, { count = 1 } = {}) => {
+                    for (let i = 0; i < count; i++) functions.undo();
+                }
+            },
+            {
+                count: true,
+                name: "redo",
+                keys: ["\\Cr", "U"],
+                run: (keys, { count = 1 } = {}) => {
+                    for (let i = 0; i < count; i++) functions.redo();
                 }
             },
             ...motions,
@@ -822,14 +879,14 @@ const createCommandSet = (editor) => {
             for (let branch of nextBranches) {
                 // console.log("checking if branch", (branch.node.name || "no name"), "has a command to run");
                 if (branch.node.next == undefined && branch.node.run !== undefined && (branch.node.keys.includes(key) || key.length === 1 && branch.node.keys == "any")) {
-                    console.log(branch);
+                    // console.log(branch);
                     let outerMostRun = branch.trace.find(e => e.run);
                     if (outerMostRun == undefined) {
                         console.error("compromised command tree: no outermost run found for", command);
                         return 1;
                     }
                     let index = branch.trace.indexOf(outerMostRun);
-                    console.log("will run", outerMostRun, "with", command.slice(0, keyCount).slice(index), branch.trace.slice(index + 1).map(e => e.run));
+                    // console.log("will run", outerMostRun, "with", command.slice(0, keyCount).slice(index), branch.trace.slice(index + 1).map(e => e.run));
                     let count;
                     if (outerMostRun.count && !Number.isNaN(parseInt(command[index]))) {
                         count = parseInt(command[index]);
@@ -837,6 +894,7 @@ const createCommandSet = (editor) => {
                     }
 
                     return () => {
+                        if (curMode === "n") history.newChangeGroup();
                         if (count) outerMostRun.run(command.slice(0, keyCount).slice(index), { nexts: branch.trace.slice(index), count });
                         else outerMostRun.run(command.slice(0, keyCount).slice(index), { nexts: branch.trace.slice(index + 1) });
                         if (curMode === "n") dispatch([["move", moves["safety"]]]);
@@ -859,7 +917,7 @@ const createCommandSet = (editor) => {
     });
 
 
-    let groupLevel = 0;
+    // let groupLevel = 0;
     return (e) => {
         if (e.key.length !== 1 && !["Tab", "Escape", "Backspace", "Enter", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)) {
             return;
@@ -870,8 +928,8 @@ const createCommandSet = (editor) => {
             + (e.ctrlKey ? "\\C" : "")
             + (e.shiftKey && (e.key.length !== 1 || e.metaKey || e.altKey || e.ctrlKey) ? "\\S" : "")
             + e.key;
-        console.group(key);
-        groupLevel++;
+        // console.group(key);
+        // groupLevel++;
         if (!Number.isNaN(parseInt(curCommand.at(-1))) && parseInt(curCommand.at(-1)) !== 0 && !Number.isNaN(parseInt(key))) curCommand[curCommand.length - 1] = curCommand.at(-1) + key;
         else curCommand.push(key);
 
@@ -879,26 +937,26 @@ const createCommandSet = (editor) => {
         let parsed = parse();
         switch (parsed) {
             case undefined:
-                console.log("no command found for", curCommand);
+                // console.log("no command found for", curCommand);
                 break;
             case 0:
-                console.log("%caborting command for", "color: red; font-weight: bold", curCommand);
+                // console.log("%caborting command for", "color: red; font-weight: bold", curCommand);
                 curCommand = [];
-                while (groupLevel > 0) {
-                    console.groupEnd();
-                    groupLevel--;
-                }
+                // while (groupLevel > 0) {
+                //     console.groupEnd();
+                //     groupLevel--;
+                // }
                 break;
             default:
-                console.log("%ccommand found for", "color: green; font-weight: bold", curCommand);
+                // console.log("%ccommand found for", "color: green; font-weight: bold", curCommand);
                 curCommand = [];
                 render.renderInfo();
                 return () => {
                     parsed();
-                    while (groupLevel > 0) {
-                        console.groupEnd();
-                        groupLevel--;
-                    }
+                    // while (groupLevel > 0) {
+                    //     console.groupEnd();
+                    //     groupLevel--;
+                    // }
                 };
         }
         render.renderInfo();

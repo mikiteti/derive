@@ -90,7 +90,13 @@ class Change {
         for (let line of callbackList.changedLines) this.callbackList.changedLines.add(line);
     }
 
-    delete(from, to = from + 1, { noCallback = false, markStickLeft = false } = {}) {
+    delete(from, to = from + 1, { noCallback = false, markStickLeft = false, addToHistory = true } = {}) {
+        const startState = {
+            carets: this.editor.input.caret.carets.map(e => e.fixedEnd != undefined ? [e.position.index, e.fixedEnd.index] : e.position.index),
+            text: this.editor.doc.textBetween(from, to),
+            at: from,
+        };
+
         // console.log(`deleting from ${from} to ${to}`);
         if (from === to) return [];
         if (from > to) [from, to] = [to, from];
@@ -112,6 +118,12 @@ class Change {
             let changedLines = [line1];
             if (!noCallback) this.runCallbacks({ changedLines });
             else this.completeCallbackList({ changedLines });
+            const endState = {
+                carets: this.editor.input.caret.carets.map(e => e.fixedEnd != undefined ? [e.position.index, e.fixedEnd.index] : e.position.index),
+                text: "",
+                at: from,
+            };
+            if (addToHistory) this.editor.doc.history.addChange({ from: startState, to: endState });
             return changedLines;
         }
 
@@ -123,13 +135,22 @@ class Change {
             line1.removeDeco(line1decos);
             line1.addDeco(line2decos);
         }
+
+        line1.update(newText);
+
+        for (let pos of positionsToShift) {
+            let justDoIt = !!pos[0].range?.isMark && positionsToShift.map(e => e[0]).indexOf(pos[0].pair) !== -1;
+            pos[0].reassign(pos[1], { justDoIt });
+        }
+        for (let pos of positionsToMaybeDelete) pos.stickWhenDeleted ? pos.reassign(from) : pos.delete();
+
         let linesToRemove = this.editor.doc.linesBetween(line1.number, line2.number).concat([line2]);
         // console.log({ linesToRemove: linesToRemove.map(line => line.text) });
         for (let line of linesToRemove) {
+            line.setDecos([], { addToHistory });
             line.delete();
             // console.log(line.text, line.parent.children, line.parent);
         }
-        line1.update(newText);
 
         let removedChildren = linesToRemove;
         while (removedChildren[0]?.parent?.parent) { // deleting empty ancestors
@@ -162,19 +183,25 @@ class Change {
             }
         }
 
-        for (let pos of positionsToShift) {
-            let justDoIt = !!pos[0].range?.isMark && positionsToShift.map(e => e[0]).indexOf(pos[0].pair) !== -1;
-            pos[0].reassign(pos[1], { justDoIt });
-        }
-        for (let pos of positionsToMaybeDelete) pos.stickWhenDeleted ? pos.reassign(from) : pos.delete();
-
         let changedLines = [line1, ...linesToRemove];
         if (!noCallback) this.runCallbacks({ changedLines });
         else this.completeCallbackList({ changedLines });
+        const endState = {
+            carets: this.editor.input.caret.carets.map(e => e.fixedEnd != undefined ? [e.position.index, e.fixedEnd.index] : e.position.index),
+            text: "",
+            at: from,
+        };
+        if (addToHistory) this.editor.doc.history.addChange({ from: startState, to: endState });
         return changedLines;
     }
 
-    insert(string, at, { noCallback = false, stickLeft = false, preserveDM = true } = {}) {
+    insert(string, at, { noCallback = false, stickLeft = false, preserveDM = true, addToHistory = true } = {}) {
+        const startState = {
+            carets: this.editor.input.caret.carets.map(e => e.fixedEnd != undefined ? [e.position.index, e.fixedEnd.index] : e.position.index),
+            text: "",
+            at: at,
+        };
+
         if (string === "") return [];
         if (at.index) at = at.index;
 
@@ -198,6 +225,12 @@ class Change {
             let changedLines = [line]
             if (!noCallback) this.runCallbacks({ changedLines });
             else this.completeCallbackList({ changedLines });
+            const endState = {
+                carets: this.editor.input.caret.carets.map(e => e.fixedEnd != undefined ? [e.position.index, e.fixedEnd.index] : e.position.index),
+                text: string,
+                at: at,
+            };
+            if (addToHistory) this.editor.doc.history.addChange({ from: startState, to: endState });
             return changedLines;
         }
 
@@ -242,12 +275,18 @@ class Change {
         if (preserveDM && string === "\n" && firstLine.decos.has("math")) changedLines[1].addDeco("math");
         if (!noCallback) this.runCallbacks({ changedLines });
         else this.completeCallbackList({ changedLines });
+        const endState = {
+            carets: this.editor.input.caret.carets.map(e => e.fixedEnd != undefined ? [e.position.index, e.fixedEnd.index] : e.position.index),
+            text: string,
+            at: at,
+        };
+        if (addToHistory) this.editor.doc.history.addChange({ from: startState, to: endState });
         return changedLines;
     }
 
-    replace(text, from, to = from, { noCallback = false, preserveDM = true } = {}) {
+    replace(text, from, to = from, { noCallback = false, preserveDM = true, addToHistory = true } = {}) {
         if (from > to) [from, to] = [to, from];
-        let changedLines = [...this.delete(from, to, { noCallback, markStickLeft: text.length > 0 }), ...this.insert(text, from, { noCallback, preserveDM })];
+        let changedLines = [...this.delete(from, to, { noCallback, markStickLeft: text.length > 0, addToHistory }), ...this.insert(text, from, { noCallback, preserveDM, addToHistory })];
         return changedLines;
     }
 

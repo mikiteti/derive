@@ -1,6 +1,7 @@
 import newChange from "./changes.js";
 import { nodeSizes } from "../assets.js";
 import { nodeAt } from "../assets.js";
+import newHistory from "./history.js";
 
 const previousSibling = (obj) => {
     if (obj.deleted) return null;
@@ -162,6 +163,7 @@ class Doc extends Node {
     constructor(...args) {
         super(...args)
         this.isDoc = true;
+        this.history = newHistory(this.editor);
 
         this.change = newChange({ editor: this.editor });
         this.size = { min: 0, max: Infinity };
@@ -233,6 +235,19 @@ class Doc extends Node {
     charAt(index) {
         let line = this.lineAt(index);
         return line.text.slice(index - line.from, index - line.from + 1) || " ";
+    }
+
+    textBetween(from, to) {
+        if (from >= to) return "";
+
+        let line1 = this.lineAt(from), line2 = this.lineAt(to);
+        if (line1 === line2) return line1.text.slice(from - line1.from, to - line1.from);
+
+        let text = line1.text.slice(from - line1.from);
+        for (let i = line1.number + 1; i < line2.number; i++) text += "\n" + this.line(i).text;
+        text += "\n" + line2.text.slice(0, to - line2.from);
+
+        return text;
     }
 }
 
@@ -324,28 +339,46 @@ class Line {
         this.element = element;
     }
 
-    addDeco(deco) {
+    addDeco(deco, { addToHistory = true } = {}) {
+        let startState = { line: this.number, decos: Array.from(this.decos) };
         let decos = Array.isArray(deco) ? deco : [deco];
         for (let deco of decos) {
             this.unrenderedChanges.add("deco");
             this.decos.add(deco)
         }
+        let endState = { line: this.number, decos: Array.from(this.decos) };
+        if (addToHistory) this.editor.doc.history.addChange({ from: startState, to: endState });
     }
 
-    removeDeco(deco) {
+    removeDeco(deco, { addToHistory = true } = {}) {
+        let startState = { line: this.number, decos: Array.from(this.decos) };
         let decos = Array.isArray(deco) ? deco : [deco];
         for (let deco of decos) {
             this.unrenderedChanges.add("deco");
             this.decos.delete(deco);
         }
+        let endState = { line: this.number, decos: Array.from(this.decos) };
+        if (addToHistory) this.editor.doc.history.addChange({ from: startState, to: endState });
     }
 
-    toggleDeco(deco) {
+    toggleDeco(deco, { addToHistory = true } = {}) {
+        let startState = { line: this.number, decos: Array.from(this.decos) };
         let decos = Array.isArray(deco) ? deco : [deco];
         for (let deco of decos) {
             this.unrenderedChanges.add("deco");
             this.decos.has(deco) ? this.decos.delete(deco) : this.decos.add(deco);
         }
+        let endState = { line: this.number, decos: Array.from(this.decos) };
+        if (addToHistory) this.editor.doc.history.addChange({ from: startState, to: endState });
+    }
+
+    setDecos(decos, { addToHistory = true } = {}) {
+        let startState = { line: this.number, decos: Array.from(this.decos) };
+        this.unrenderedChanges.add("deco");
+        for (let deco of this.decos) if (!decos.includes(deco)) this.decos.delete(deco);
+        for (let deco of decos) this.decos.add(deco);
+        let endState = { line: this.number, decos: Array.from(this.decos) };
+        if (addToHistory) this.editor.doc.history.addChange({ from: startState, to: endState });
     }
 
     setTabs(type, number) {
