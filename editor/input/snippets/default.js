@@ -392,10 +392,9 @@ class DefaultSnippets {
                         return;
                     }
 
-                    let applyClasses = getComputedStyle(document.body).getPropertyValue(`--h${n}-classes`).slice(1, -1).split(" ");
                     this.editor.doc.history.newChangeGroup();
                     this.editor.input.caret.forAll(pos => {
-                        pos.Line.addDeco([...applyClasses, `h${n}`]);
+                        pos.Line.addDeco(`h${n}`);
                         this.editor.render.renderLine(pos.Line);
                     });
                     this.editor.input.caret.placeAllAt();

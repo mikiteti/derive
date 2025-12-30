@@ -24,13 +24,6 @@
     --shadow: 2px 4px 3px rgba(0, 0, 0, 0.3);
     --shadow-lg: 0px 1.8px 7.3px rgba(0, 0, 0, 0.071), 0px 6.3px 24.7px rgba(0, 0, 0, 0.112), 0px 30px 90px rgba(0, 0, 0, 0.2);
 
-    --h1-classes: "middle Bold accent capital underline";
-    --h2-classes: "middle bold accent small";
-    --h3-classes: "underline bold accent";
-    --h4-classes: "bold accent";
-    --h5-classes: "";
-    --h6-classes: "";
-
     --bold-weight: 400;
     --Bold-weight: 600;
     --math-font-size: 0.8;

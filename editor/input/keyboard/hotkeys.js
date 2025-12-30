@@ -207,33 +207,29 @@ const createCommandSet = (editor) => {
             history.newChangeGroup();
         },
         // "M+1": () => {
-        //     let applyClasses = getComputedStyle(document.body).getPropertyValue("--h1-classes").slice(1, -1).split(" ");
         //     caret.forAll(pos => {
-        //         pos.Line.addDeco([...applyClasses, "h1"]);
+        //         pos.Line.addDeco(["h1"]);
         //         render.renderLine(pos.Line);
         //     });
         //     caret.placeAllAt();
         // },
         // "M+2": () => {
-        //     let applyClasses = getComputedStyle(document.body).getPropertyValue("--h2-classes").slice(1, -1).split(" ");
         //     caret.forAll(pos => {
-        //         pos.Line.addDeco([...applyClasses, "h2"]);
+        //         pos.Line.addDeco(["h2"]);
         //         render.renderLine(pos.Line);
         //     });
         //     caret.placeAllAt();
         // },
         // "M+3": () => {
-        //     let applyClasses = getComputedStyle(document.body).getPropertyValue("--h3-classes").slice(1, -1).split(" ");
         //     caret.forAll(pos => {
-        //         pos.Line.addDeco([...applyClasses, "h3"]);
+        //         pos.Line.addDeco(["h3"]);
         //         render.renderLine(pos.Line);
         //     });
         //     caret.placeAllAt();
         // },
         // "M+4": () => {
-        //     let applyClasses = getComputedStyle(document.body).getPropertyValue("--h4-classes").slice(1, -1).split(" ");
         //     caret.forAll(pos => {
-        //         pos.Line.addDeco([...applyClasses, "h4"]);
+        //         pos.Line.addDeco(["h4"]);
         //         render.renderLine(pos.Line);
         //     });
         //     caret.placeAllAt();

@@ -68,21 +68,41 @@
 .h1 {
     font-size: calc(var(--font-size) * 1.46) !important;
     line-height: calc(var(--font-size) * 1.75) !important;
+    text-transform: uppercase;
+    font-weight: var(--Bold-weight);
+    color: var(--color-accent);
+    text-align: center;
+}
+
+.h1 .content {
+    text-decoration: underline;
+}
+
+.subtitle {
+    font-size: calc(var(--font-size) * 0.75) !important;
+    line-height: calc(var(--font-size) * 0.83) !important;
+    font-size: calc(var(--font-size) * var(--small-font-size));
+    text-align: center;
+    font-weight: var(--bold-weight);
+    color: var(--color-accent);
 }
 
 .h2 {
-    font-size: calc(var(--font-size) * 0.75) !important;
-    line-height: calc(var(--font-size) * 0.83) !important;
+    font-size: calc(var(--font-size) * 1.25) !important;
+    line-height: calc(var(--font-size) * 1.5) !important;
+    font-weight: var(--bold-weight);
+    color: var(--color-accent);
+}
+
+.h2 .content {
+    text-decoration: underline;
 }
 
 .h3 {
     font-size: calc(var(--font-size) * 1.25) !important;
     line-height: calc(var(--font-size) * 1.5) !important;
-}
-
-.h4 {
-    font-size: calc(var(--font-size) * 1.25) !important;
-    line-height: calc(var(--font-size) * 1.5) !important;
+    font-weight: var(--bold-weight);
+    color: var(--color-accent);
 }
 
 .noisy::before {
