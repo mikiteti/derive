@@ -1,7 +1,7 @@
 const Welcome = {
     "name": "Welcome",
     "content": [
-        { "text": "Welcome to Derive", "tabs": { "full": 0 }, "decos": ["middle", "Bold", "accent", "capital", "underline", "h1"] },
+        { "text": "Welcome to BlueBook", "tabs": { "full": 0 }, "decos": ["middle", "Bold", "accent", "capital", "underline", "h1"] },
         { "text": "Your fast, minimal, keyboard-first note system.", "tabs": { "full": 0 }, "decos": ["middle", "bold", "accent", "small", "h2"] },
         { "tabs": { "full": 0 } },
         { "text": "This document is always here when you log in – your built-in help page and reference sheet.", "tabs": { "full": 0 } },
@@ -15,10 +15,10 @@ const Welcome = {
         { "text": "Try selecting this line and applying Bold or H2 using your hotkeys.", "tabs": { "full": 0 } },
         { "tabs": { "full": 0 } },
         { "text": "Math Support (MathJax)", "tabs": { "full": 0 }, "decos": ["underline", "bold", "accent", "h3"] },
-        { "text": "Inline math looks like this: E=mc^2.", "tabs": { "full": 0 }, "marks": [{ "role": "math", "from": 620, "to": 626 }] },
+        { "text": "Inline math looks like this: E^2=m^2c^4-p^2c^2.", "tabs": { "full": 0 }, "marks": [{ "role": "math", "from": 622, "to": 639 }] },
         { "tabs": { "full": 0 } },
         { "text": "Display math looks like this:", "tabs": { "full": 0 } },
-        { "text": "\\int_0^\\infty e^{-x^2}\\,dx = \\frac{\\sqrt{\\pi}}{2}", "tabs": { "full": 0 }, "decos": ["math"] },
+        { "text": "i\\gamma^{\\mu}\\partial_{\\mu}\\psi-\\left(\\frac{mc}{\\hbar}\\right)\\psi=0", "tabs": { "full": 0 }, "decos": ["math"] },
         { "text": "Snippets make typing LaTeX fast: try typing \"tayl\" → expands to… well, whatever you configure it to.", "tabs": { "full": 0 } },
         { "tabs": { "full": 0 } },
         { "text": "Math snippets also work outside math – e.g. expanding \";i\" to \"=\".", "tabs": { "full": 0 } },
@@ -61,18 +61,20 @@ const Welcome = {
         { "text": "You can edit them freely.", "tabs": { "full": 0 } },
         { "text": "If you break something, open the corresponding file in .default and copy it back.", "tabs": { "full": 0 } },
         { "tabs": { "full": 0 } },
-        { "text": "Useful Hotkeys", "tabs": { "full": 0 }, "decos": ["underline", "bold", "accent", "h3"] },
+        { "text": "Useful Hotkeys and Snippets", "tabs": { "full": 0 }, "decos": ["underline", "bold", "accent", "h3"] },
         { "text": "Replace these with your actual bindings:", "tabs": { "full": 0 } },
         { "text": "• Search notes: <Meta+o>", "tabs": { "full": 0 } },
         { "text": "• Command palette: <Meta+p>", "tabs": { "full": 0 } },
         { "text": "• Save file: <Meta+s>", "tabs": { "full": 0 } },
         { "text": "• Toggle Bold: <Meta+B>", "tabs": { "full": 0 } },
-        { "text": "• Heading 1: <Meta+1> or <Meta+Shift+a>", "tabs": { "full": 0 } },
-        { "text": "• Heading 2: <Meta+2> or <Meta+Shift+s>", "tabs": { "full": 0 } },
-        { "text": "• Heading 3: <Meta+3> or <Meta+Shift+d>", "tabs": { "full": 0 } },
-        { "text": "• Heading 4: <Meta+4> or <Meta+Shift+f>", "tabs": { "full": 0 } },
-        { "text": "• Toggle inline math: <Meta+i>", "tabs": { "full": 0 } },
+        { "text": "• Heading 1: <Meta+Shift+a> or h1", "tabs": { "full": 0 } },
+        { "text": "• Heading 2: <Meta+Shift+s> or h2", "tabs": { "full": 0 } },
+        { "text": "• Heading 3: <Meta+Shift+d> or h3", "tabs": { "full": 0 } },
+        { "text": "• Heading 4: <Meta+Shift+f> or h4", "tabs": { "full": 0 } },
+        { "text": "• No line decos: h0", "tabs": { "full": 0 } },
         { "text": "• Toggle display math: <Meta+d>", "tabs": { "full": 0 } },
+        { "text": "• Toggle inline math: <Meta+i>", "tabs": { "full": 0 } },
+        { "text": "• New note: <Meta+Enter> in the File Picker", "tabs": { "full": 0 } },
         { "tabs": { "full": 0 } },
         { "text": "Quick Demo Area", "tabs": { "full": 0 }, "decos": ["underline", "bold", "accent", "h3"] },
         { "text": "Try things out here:", "tabs": { "full": 0 } },
@@ -86,7 +88,7 @@ const Welcome = {
         { "tabs": { "full": 0 } },
         { "text": "Have Fun", "tabs": { "full": 0 }, "decos": ["underline", "bold", "accent", "h3"] },
         { "text": "This app is built to be fast, predictable, and delightful with the keyboard.", "tabs": { "full": 0 } },
-        { "text": "Customize everything. Experiment. Break things, fix them. Make it yours.", "tabs": { "full": 0 } }
+        { "text": "Customize everything. Experiment. Break things, fix them. Make it yours", "tabs": { "full": 0 } }
     ]
 };
 

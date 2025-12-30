@@ -17,6 +17,7 @@ class DefaultSnippets {
             { from: "<!", to: "↤ ", in: "tA" },
             { from: "--", to: "\–", in: "tA" },
             { from: ", ", to: ",\\enspace ${0}", in: "mA" },
+            { from: ",,", to: "\\, ", in: "mA" },
             { from: "  ", to: "\\enspace ${0}", in: "mA" },
             { from: "text", to: "\\text{${0}}${1}", in: "mA" },
             { from: "b\\otimes ed", to: "\\boxed{${0}} ${1}", in: "mA" },

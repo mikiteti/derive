@@ -14,7 +14,7 @@ class History {
     constructor(editor) {
         this.editor = editor;
 
-        this.changes = [];
+        this.changes = [[]];
         this.position = 0;
     }
 
@@ -49,7 +49,7 @@ class History {
             for (let step of steps) step();
             this.editor.doc.change.runCallbacks();
             setTimeout(() => { // TODO: find out why caret behaves badly on startup
-                this.editor.input.caret.placeAllAt();
+                this.editor.input.caret.placeAllAt(undefined, { keepFixedEnd: -1 });
             }, 200);
         }
     }

@@ -228,11 +228,13 @@ class Render {
 
         requestAnimationFrame(() => this.renderInfo());
 
-        return new Promise((res, rej) => {
-            Promise.all(promises).then(_ => {
-                requestAnimationFrame(() => { res() });
+        if (promises.length > 0) {
+            return new Promise((res, rej) => {
+                Promise.all(promises).then(_ => {
+                    requestAnimationFrame(() => { res() });
+                });
             });
-        });
+        }
     }
 
     hideLine(line) {

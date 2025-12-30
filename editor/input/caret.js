@@ -211,9 +211,13 @@ class SingleCaret {
     // }
 
     delete() {
-        console.log("deleting caret");
+        let line = this.position.Line;
+        line.unrenderedChanges.add("caret");
         this.position.delete();
         this.element.remove();
+        queueMicrotask(() => {
+            this.editor.render.renderLine(line);
+        });
     }
 
     get from() {

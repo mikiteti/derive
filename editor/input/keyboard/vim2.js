@@ -10,6 +10,7 @@ const createCommandSet = (editor) => {
     const caretStyles = {
         "n": "wide",
         "v": "wide",
+        "vLine": "wide",
         "i": "bar",
         "R": "underline",
     };
@@ -213,8 +214,8 @@ const createCommandSet = (editor) => {
         //     return Math.min(line.from + pos.index - pos.Line.from, line.to - 1);
         // }),
         // "k": (count = 1) => moves["j"](-count),
-        "j": (count = 1) => (pos => { return findNextVisualLine(pos, count) }),
-        "k": (count = 1) => (pos => { return findPreviousVisualLine(pos, count) }),
+        "j": (count = 1) => (pos => { return curMode === "vLine" ? doc.line(pos.Line.number + count).to : findNextVisualLine(pos, count) }),
+        "k": (count = 1) => (pos => { return curMode === "vLine" ? doc.line(pos.Line.number - count).from : findPreviousVisualLine(pos, count) }),
         "$": (pos) => pos.Line.to - 1,
         "0": (pos) => pos.Line.from,
         "_": (pos) => pos.Line.from,
@@ -230,6 +231,12 @@ const createCommandSet = (editor) => {
         // helpers
         "fixedEnd": (pos) => pos.caret?.fixedEnd?.index,
         "position": (pos) => pos.index,
+        "vLine": (pos) => {
+            let pair = pos.caret.fixedEnd;
+            if (pair == undefined) return [pos.Line.from, pos.Line.to];
+            if (pair.index < pos.index) return [pair.Line.from, pos.Line.to];
+            return [pair.Line.to, pos.Line.from];
+        }
         // ...
     }
 
@@ -275,7 +282,7 @@ const createCommandSet = (editor) => {
                 let newPos = getNewPos(sc.position);
                 // if (caret.style !== "bar" && doc.lineAt(newPos).to === newPos) newPos--;
 
-                if (!Array.isArray(newPos)) sc.placeAt(newPos, { keepFixedEnd: (curMode === "v"), updateScreenX }); // curMode check is experimental
+                if (!Array.isArray(newPos)) sc.placeAt(newPos, { keepFixedEnd: (["v", "vLine"].includes(curMode)), updateScreenX }); // curMode check is experimental
                 else if (newPos.length === 1) sc.placeAt(newPos[0], { keepFixedEnd: true, updateScreenX });
                 else {
                     sc.removeFixedEnd();
@@ -402,7 +409,10 @@ const createCommandSet = (editor) => {
             keys: ["G"],
             run: (keys, { count } = {}) => {
                 if (count == undefined) dispatch([["move", moves["G"]]]);
-                else dispatch([["move", pos => doc.line(count - 1).from]]);
+                else dispatch([["move", pos => {
+                    let line = doc.line(count - 1);
+                    return line.from + Math.min(pos.column, Math.max(line.chars - 2, 0));
+                }]]);
             }
         },
         { // g moves
@@ -411,12 +421,29 @@ const createCommandSet = (editor) => {
             keys: ["g"],
             next: [
                 {
+                    count: true,
                     name: "certain g move",
                     keys: ["g", "j", "k", "e", "E", "_"],
                     run: (keys, { count = 1 } = {}) => {
-                        if (keys[0] === "g") {
-                            console.log("gg", count);
-                            dispatch([["move", pos => doc.line(count - 1).from + Math.min(doc.line(count - 1).text.length - 1, pos.column)]]);
+                        switch (keys[0]) {
+                            case "g":
+                                dispatch([["move", pos => {
+                                    let line = doc.line(count - 1);
+                                    return line.from + Math.min(pos.column, Math.max(line.chars - 2, 0));
+                                }]]);
+                                break;
+                            case "j":
+                                dispatch([["move", pos => {
+                                    let line = doc.line(pos.Line.number + count);
+                                    return line.from + Math.min(pos.column, Math.max(line.chars - 2, 0));
+                                }]]);
+                                break;
+                            case "k":
+                                dispatch([["move", pos => {
+                                    let line = doc.line(pos.Line.number - count);
+                                    return line.from + Math.min(pos.column, Math.max(line.chars - 2, 0));
+                                }]]);
+                                break;
                         }
                     },
                 },
@@ -426,7 +453,7 @@ const createCommandSet = (editor) => {
                     keys: ["J"],
                     run: (keys, { count = 1 } = {}) => {
                         console.log("running J");
-                        dispatch([["replace", pos => pos.Line.to, pos => pos.Line.to + 1, ""]]);
+                        dispatch([["replace", pos => pos.Line.to, pos => pos.Line.to, ""]]);
                     },
                 },
             ],
@@ -481,7 +508,7 @@ const createCommandSet = (editor) => {
                     name: "full text objects",
                     keys: ["w", "W", "s", "p", "b", "B", "t", "'", "\"", "`", "{", "}", "(", ")", "[", "]", "<", ">"],
                     run: (keys, { method } = {}) => {
-                        console.log(`running text object ${method}${keys[0]}`);
+                        // console.log(`running text object ${method}${keys[0]}`);
                         dispatch([["move", {
                             "iw": (pos) => [findStartOfWord(pos), findEndOfWord(pos)],
                             "iW": (pos) => [findStartOfWORD(pos), findEndOfWORD(pos)],
@@ -593,6 +620,7 @@ const createCommandSet = (editor) => {
                         "I": () => { dispatch([["mode", "i"], ["move", moves["_"]]]) },
                         "A": () => { dispatch([["mode", "i"], ["move", moves["$"]], ["move", moves["l!"](1)]]) },
                         "v": () => { dispatch([["mode", "v"]]) },
+                        "V": () => { dispatch([["mode", "vLine"]]) },
                         "o": () => { dispatch([["move", moves["$"]], ["move", moves["l!"](1)], ["insert", "\n", { preserveDM: false }], ["mode", "i"]]) },
                         "O": () => { dispatch([["move", moves["_"]], ["insert", "\n"], ["move", moves["h!"](1)], ["mode", "i"]]) },
                     })[keys[0]] || (() => 0))();
@@ -720,7 +748,7 @@ const createCommandSet = (editor) => {
                     ...motions, // fallback
                 ],
                 run: (keys, { nexts } = {}) => {
-                    console.log(`running headcommand ${keys[0]}`);
+                    // console.log(`running headcommand ${keys[0]}`);
                     runNext(keys, nexts);
                     dispatch({
                         "d": [["delete", moves["iden"], moves["fixedEnd"]]],
@@ -794,10 +822,21 @@ const createCommandSet = (editor) => {
         name: "root",
         next: [
             {
-                name: "Escape",
-                keys: ["Escape", "\\Cc"],
+                name: "Mode changes",
+                keys: ["Escape", "\\Cc", "v", "V"],
                 run: (keys) => {
-                    functions.mode("n");
+                    switch (keys[0]) {
+                        case "Escape":
+                        case "\\Cc":
+                            dispatch([["mode", "n"]]);
+                            break;
+                        case "V":
+                            dispatch([["mode", "vLine"]]);
+                            break;
+                        case "v":
+                            dispatch([["mode", "v"]]);
+                            break;
+                    }
                 }
             },
             {
@@ -822,11 +861,13 @@ const createCommandSet = (editor) => {
                 name: "visual headcommands",
                 keys: ["d", "x", "c", "y", "~", "u", "U"],
                 run: (keys) => {
-                    console.log(`running ${keys[0]} in visual mode`);
+                    // console.log(`running ${keys[0]} in visual mode`);
                     dispatch({
                         "d": [["delete", moves["iden"], moves["fixedEnd"]], ["mode", "n"]],
                         "x": [["delete", moves["iden"], moves["fixedEnd"]], ["mode", "n"]],
-                        "c": [["change", moves["iden"], moves["fixedEnd"]], ["mode", "i"]],
+                        "c": curMode === "vLine"
+                            ? [["change", pos => Math.min(pos.index, pos.caret.fixedEnd.index), pos => Math.max(pos.index, pos.caret.fixedEnd.index) - 1], ["mode", "i"]] // in vLine mode, c should leave a blank line
+                            : [["change", moves["iden"], moves["fixedEnd"]], ["mode", "i"]],
                     }[keys[0]]);
                 }
             },
@@ -850,7 +891,7 @@ const createCommandSet = (editor) => {
 
     let curCommand = [], curMode = "n";
     const parse = (command = curCommand, mode = curMode) => {
-        let currentBranches = [{ node: { "n": normal, "i": insert, "v": visual }[mode], trace: [] }], nextBranches, keyCount = 0;
+        let currentBranches = [{ node: { "n": normal, "i": insert, "v": visual, "vLine": visual }[mode], trace: [] }], nextBranches, keyCount = 0;
         if (currentBranches[0].node == undefined) {
             console.error("unknown mode");
             return 1;
@@ -898,6 +939,7 @@ const createCommandSet = (editor) => {
                         if (count) outerMostRun.run(command.slice(0, keyCount).slice(index), { nexts: branch.trace.slice(index), count });
                         else outerMostRun.run(command.slice(0, keyCount).slice(index), { nexts: branch.trace.slice(index + 1) });
                         if (curMode === "n") dispatch([["move", moves["safety"]]]);
+                        else if (curMode === "vLine") dispatch([["move", moves["vLine"]]]);
                     };
                 }
             }

@@ -174,8 +174,9 @@ class Doc extends Node {
     }
 
     line(lineNum) {
-        if (lineNum < 0 || lineNum > this.lines - 1) return;
-        // lineNum = (lineNum % this.lines + this.lines) % this.lines;
+        lineNum = Math.max(0, lineNum);
+        lineNum = Math.min(this.lines - 1, lineNum);
+
         let sum = 0, currentNode = this;
         while (!currentNode.children[0].isLine) {
             for (let child of currentNode.children) {

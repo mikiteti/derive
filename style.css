@@ -168,6 +168,10 @@ html.lineNumbers .textarea p::before {
     font-weight: var(--font-weight);
 }
 
+html.lineNumbers .textarea p.math::before {
+    color: var(--color-math);
+}
+
 .textarea p:has(> .bullet) {
     display: flex;
 }

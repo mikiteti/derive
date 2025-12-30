@@ -91,15 +91,17 @@ class Change {
     }
 
     delete(from, to = from + 1, { noCallback = false, markStickLeft = false, addToHistory = true } = {}) {
+        if (from === to) return [];
+        if (from > to) [from, to] = [to, from];
+        from = Math.max(from, 0);
+        to = Math.min(to, this.editor.doc.chars - 1);
+
+
         const startState = {
             carets: this.editor.input.caret.carets.map(e => e.fixedEnd != undefined ? [e.position.index, e.fixedEnd.index] : e.position.index),
             text: this.editor.doc.textBetween(from, to),
             at: from,
         };
-
-        // console.log(`deleting from ${from} to ${to}`);
-        if (from === to) return [];
-        if (from > to) [from, to] = [to, from];
 
         let line1 = this.editor.doc.lineAt(from), line2 = this.editor.doc.lineAt(to);
         let positionsToShift = line2.positions.filter(e => e.index >= to).map(e => [e, e.index - (to - from)]);
@@ -132,8 +134,8 @@ class Change {
             let line1decos = [], line2decos = [];
             for (let deco of line1.decos) line1decos.push(deco);
             for (let deco of line2.decos) line2decos.push(deco);
-            line1.removeDeco(line1decos);
-            line1.addDeco(line2decos);
+            line1.removeDeco(line1decos, { addToHistory });
+            line1.addDeco(line2decos, { addToHistory });
         }
 
         line1.update(newText);
@@ -146,11 +148,8 @@ class Change {
 
         let linesToRemove = this.editor.doc.linesBetween(line1.number, line2.number).concat([line2]);
         // console.log({ linesToRemove: linesToRemove.map(line => line.text) });
-        for (let line of linesToRemove) {
-            line.setDecos([], { addToHistory });
-            line.delete();
-            // console.log(line.text, line.parent.children, line.parent);
-        }
+        for (let line of linesToRemove) line.setDecos([], { addToHistory });
+        for (let line of linesToRemove) line.delete();
 
         let removedChildren = linesToRemove;
         while (removedChildren[0]?.parent?.parent) { // deleting empty ancestors

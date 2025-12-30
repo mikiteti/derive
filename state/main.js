@@ -1,5 +1,4 @@
 import Welcome from "./welcome.js";
-import Rezgesek from "./welcome2.js";
 import newEditor from "../editor/main.js";
 import Environment from "../environment.js";
 import { exportFile } from "../editor/assets.js";
@@ -273,30 +272,56 @@ class State {
     }
 
     fuzzyFind(string, array) {
-        return array.filter(e => {
-            let text = e.name, index = 0;
-            for (let char of string) {
-                let found = text.indexOf(char.toLowerCase(), index), Found = text.indexOf(char.toUpperCase(), index);
-                if (found === -1 && Found === -1) return false;
-                if (found === -1) index += Found;
-                else if (Found === -1) index += found;
-                else index += Math.min(found, Found);
-            }
-            return true;
-        });
+        string = string.toLowerCase();
+
+        return array
+            .map(e => {
+                const name = e.name.toLowerCase();
+                let score = 0;
+                if (name === string) score += 10;
+                else if (name.startsWith(string)) score += 5;
+
+                let index = 0;
+                for (const char of string) {
+                    let lastIndex = index;
+                    index = name.indexOf(char, index);
+                    if (index === -1) {
+                        score = 0;
+                        break;
+                    }
+                    index++;
+                    score += lastIndex === 0 ? 1 : 1 / (index - lastIndex);
+                }
+
+                return { item: e, score };
+            })
+            .filter(r => r.score > 0) // only matches
+            .sort((a, b) => b.score - a.score)
+            .map(e => e.item);
     }
 
     handleFuzzySearch(modal = this.filePicker, array = modal.entries) {
         let matches = this.fuzzyFind(modal.querySelector("input").value, array).map(e => e.id);
         let entries = modal.querySelector(".list").children;
         let activeDone = false;
-        for (let el of entries) {
-            matches.includes(parseInt(el.getAttribute("file-id"))) ? el.classList.remove("nodisplay") : el.classList.add("nodisplay");
+        for (let el of entries) el.classList.add("nodisplay");
+        for (let m of matches) {
+            let el = modal.querySelector(`.list [file-id="${m}"]`);
+            if (el == undefined) continue;
+            el.classList.remove("nodisplay");
+            modal.querySelector(".list").appendChild(el);
             if (!activeDone && matches.includes(parseInt(el.getAttribute("file-id")))) {
                 el.classList.add("active");
                 activeDone = true;
             } else el.classList.remove("active");
         }
+        // for (let el of entries) {
+        //     matches.includes(parseInt(el.getAttribute("file-id"))) ? el.classList.remove("nodisplay") : el.classList.add("nodisplay");
+        //     if (!activeDone && matches.includes(parseInt(el.getAttribute("file-id")))) {
+        //         el.classList.add("active");
+        //         activeDone = true;
+        //     } else el.classList.remove("active");
+        // }
     }
 }
 
