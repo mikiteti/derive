@@ -1,4 +1,5 @@
 const Welcome = {
+    "id": "Welcome",
     "name": "Welcome",
     "content": [
         { "text": "Welcome to BlueBook", "tabs": { "full": 0 }, "decos": ["middle", "Bold", "accent", "capital", "underline", "h1"] },

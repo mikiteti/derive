@@ -466,15 +466,9 @@ defineSmartProperties(Line, lineProperties);
 export { Line }
 
 
-window.positionCount = 0;
-window.positions = new Set();
 class Position {
     constructor(pos, doc = window.doc, { stickWhenDeleted = true, stickLeftOnInsert = false, caret, track = true } = {}) {
         this.isPosition = true;
-        if (track) {
-            window.positionCount++;
-            window.positions.add(this);
-        }
         this.doc = doc;
         this.stickWhenDeleted = stickWhenDeleted;
         this.stickLeftOnInsert = stickLeftOnInsert;
@@ -626,8 +620,6 @@ class Position {
     }
 
     delete() {
-        window.positionCount--;
-        window.positions.delete(this);
         this.Line.removePosition(this);
         this.deleted = true;
         if (this.range && !this.range.deleted) {
@@ -695,7 +687,6 @@ class Range {
         this.deleted = true;
     }
 }
-window.range = Range;
 
 export { Range }
 

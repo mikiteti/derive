@@ -26,7 +26,7 @@ class Render {
         const doc = this.editor.doc;
         let curCommand = this.editor.input?.keyboard?.curCommand || "";
         if (curCommand) curCommand = " " + curCommand;
-        this.editor.elements.rightInfo.innerHTML = `L${doc.lines} W${doc.words} C${doc.chars} P${window.positionCount}` + curCommand;
+        this.editor.elements.rightInfo.innerHTML = `L${doc.lines} W${doc.words} C${doc.chars}` + curCommand;
 
         let mode = { "n": "Normal", "i": "Insert", "v": "Visual", "vLine": "V-Line", "vBlock": "V-Block", "c": "Command" };
         this.editor.elements.leftInfo.innerHTML = mode[this.editor.input?.keyboard?.curMode] || "";

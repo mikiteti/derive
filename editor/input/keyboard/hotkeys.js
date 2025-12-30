@@ -280,6 +280,9 @@ const createCommandSet = (editor) => {
         },
         "M+o": () => {
             window.state.openModal(window.state.filePicker);
+        },
+        "M+p": () => {
+            window.state.openModal(window.state.commandPalette);
         }
     };
 

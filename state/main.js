@@ -2,6 +2,7 @@ import Welcome from "./welcome.js";
 import newEditor from "../editor/main.js";
 import Environment from "../environment.js";
 import { exportFile } from "../editor/assets.js";
+import newCommands from "./commands.js";
 
 class State {
     constructor() {
@@ -13,7 +14,7 @@ class State {
         this.modalBg.addEventListener("click", () => {
             this.closeModal();
         })
-        this.initFilePicker();
+        this.initFuzzyFinders();
 
         Object.defineProperty(window, "editor", { get() { return this.state.editor; }, });
         Object.defineProperty(window, "doc", { get() { return this.state.editor?.doc; }, });
@@ -23,7 +24,8 @@ class State {
         Object.defineProperty(window, "caret", { get() { return this.state.editor?.input?.caret; }, });
         Object.defineProperty(window, "snippets", { get() { return this.state.editor?.input?.snippets; }, });
 
-        this.newEditor(Welcome);
+        this.Welcome = Welcome;
+        this.newEditor(this.Welcome);
 
         document.addEventListener("click", _ => {
             if (!this.editor.interactive) return;
@@ -43,67 +45,88 @@ class State {
         });
     }
 
-    async initFilePicker() {
+    async initFuzzyFinders() {
         this.files = await this.getFiles();
-        this.filePicker.querySelector(".list").innerHTML = this.files.map(e => `<div file-id="${e.id}">${e.name}</div>`).join("");
-        this.filePicker.entries = this.files;
+        this.filePicker.entries = this.files.filter(e => !e.misc?.deleted);
+        this.filePicker.querySelector(".list").innerHTML = this.filePicker.entries.map(e => `<div item-id="${e.id}">${e.name}</div>`).join("");
+        this.commands = newCommands(this).map((e, f) => ({ ...e, id: f }));
+        this.commandPalette.entries = this.commands;
+        this.commandPalette.querySelector(".list").innerHTML = this.commandPalette.entries.map(e => `<div item-id="${e.id}">${e.name}</div>`).join("");
 
         window.addEventListener("keydown", (e) => {
             if ([this.filePicker, this.commandPalette].includes(this.focus) && e.key === "Escape") {
                 this.closeModal();
             }
-        })
+        });
+
+        this.commandPalette.querySelector("input").addEventListener("input", (_) => {
+            this.handleFuzzySearch(this.commandPalette);
+        });
 
         this.filePicker.querySelector("input").addEventListener("input", (_) => {
             this.handleFuzzySearch(this.filePicker);
         });
 
+        this.commandPalette.addEventListener("click", async e => {
+            if (!e.target.matches(".list div")) return;
+            console.log(this.commands, e.target);
+            this.runCommand(this.commands.find(f => f.id == parseInt(e.target.getAttribute("item-id"))));
+            this.closeModal();
+        });
+
         this.filePicker.addEventListener("click", async e => {
             if (!e.target.matches(".list div")) return;
-            await this.openFile({ id: parseInt(e.target.getAttribute("file-id")) });
+            await this.openFile({ id: parseInt(e.target.getAttribute("item-id")) });
             this.closeModal();
         });
 
         this.filePicker.querySelector("input").addEventListener("keydown", async (e) => {
-            if (e.key === "Escape") {
+            if (e.key === "Enter" && e.metaKey) {
+                await this.openFile(await this.createFile({ name: this.filePicker.querySelector("input").value }));
                 this.closeModal();
-                document.getElementById("focus").focus();
-                return;
-            }
-
-            if (e.key === "Enter") {
-                if (!e.metaKey) this.filePicker.querySelector(".list div.active").click();
-                else {
-                    await this.openFile(await this.createFile({ name: this.filePicker.querySelector("input").value }));
-                    this.closeModal();
-                }
-
-                return;
-            }
-
-            if (!e.metaKey) return;
-            if (e.key === "j") {
-                e.preventDefault();
-                let displayed = this.filePicker.querySelectorAll(".list div:not(.nodisplay)");
-                for (let i = 0; i < displayed.length; i++) {
-                    if (i < displayed.length - 1 && displayed[i].classList.contains("active")) {
-                        displayed[i].classList.remove("active");
-                        displayed[i + 1].classList.add("active");
-                        return;
-                    }
-                }
-            } if (e.key === "k") {
-                e.preventDefault();
-                let displayed = this.filePicker.querySelectorAll(".list div:not(.nodisplay)");
-                for (let i = 0; i < displayed.length; i++) {
-                    if (i > 0 && displayed[i].classList.contains("active")) {
-                        displayed[i].classList.remove("active");
-                        displayed[i - 1].classList.add("active");
-                        return;
-                    }
-                }
             }
         });
+
+        let addHotkeys = (element) => {
+            element.querySelector("input").addEventListener("keydown", async (e) => {
+                if (e.key === "Escape") {
+                    this.closeModal();
+                    document.getElementById("focus").focus();
+                    return;
+                }
+
+                if (e.key === "Enter") {
+                    if (!e.metaKey) element.querySelector(".list div.active").click();
+
+                    return;
+                }
+
+                if (!e.metaKey) return;
+                if (e.key === "j") {
+                    e.preventDefault();
+                    let displayed = element.querySelectorAll(".list div:not(.nodisplay)");
+                    for (let i = 0; i < displayed.length; i++) {
+                        if (i < displayed.length - 1 && displayed[i].classList.contains("active")) {
+                            displayed[i].classList.remove("active");
+                            displayed[i + 1].classList.add("active");
+                            return;
+                        }
+                    }
+                } if (e.key === "k") {
+                    e.preventDefault();
+                    let displayed = element.querySelectorAll(".list div:not(.nodisplay)");
+                    for (let i = 0; i < displayed.length; i++) {
+                        if (i > 0 && displayed[i].classList.contains("active")) {
+                            displayed[i].classList.remove("active");
+                            displayed[i - 1].classList.add("active");
+                            return;
+                        }
+                    }
+                }
+            });
+        }
+        addHotkeys(this.commandPalette);
+        addHotkeys(this.filePicker);
     }
 
     async sendRequest(url, body) {
@@ -170,7 +193,19 @@ class State {
         });
     }
 
+    runCommand(command) {
+        if (command == undefined) return;
+        console.log(`running command ${command.name}`);
+        command.run();
+    }
+
     async createFile(file) {
+        // let exitingFile = this.files.find(e => e.name === file.name); // deleted file
+        // if (exitingFile != undefined) {
+        //     this.commands.find(e => e.name == "Restore file").run(exitingFile);
+        //     return exitingFile;
+        // }
+
         console.log("creating file");
         let res = await this.sendRequest("new_note", {
             method: 'POST',
@@ -205,7 +240,7 @@ class State {
     async openFile(file) {
         console.log("opening file", file);
         if (file.id == undefined) file = this.createFile(file);
-        file = this.files.find(e => e.id === file.id);
+        if (file.id !== "Welcome") file = this.files.find(e => e.id === file.id);
         let editor = this.editors.filter(e => e.fileId != undefined).find(e => e.fileId === file.id);
         if (editor == undefined) {
             file = await this.getFile(file);
@@ -268,10 +303,11 @@ class State {
     async getFiles() {
         let res = await this.sendRequest("notes");
         let json = await res.json();
+        for (let file of json) file.misc = JSON.parse(file.misc);
         return json;
     }
 
-    fuzzyFind(string, array) {
+    fuzzyFind(string = "", array) {
         string = string.toLowerCase();
 
         return array
@@ -304,24 +340,20 @@ class State {
         let matches = this.fuzzyFind(modal.querySelector("input").value, array).map(e => e.id);
         let entries = modal.querySelector(".list").children;
         let activeDone = false;
-        for (let el of entries) el.classList.add("nodisplay");
+        for (let el of entries) {
+            el.classList.remove("active");
+            el.classList.add("nodisplay");
+        }
         for (let m of matches) {
-            let el = modal.querySelector(`.list [file-id="${m}"]`);
+            let el = modal.querySelector(`.list [item-id="${m}"]`);
             if (el == undefined) continue;
             el.classList.remove("nodisplay");
             modal.querySelector(".list").appendChild(el);
-            if (!activeDone && matches.includes(parseInt(el.getAttribute("file-id")))) {
+            if (!activeDone && matches.includes(parseInt(el.getAttribute("item-id")))) {
                 el.classList.add("active");
                 activeDone = true;
-            } else el.classList.remove("active");
+            }
         }
-        // for (let el of entries) {
-        //     matches.includes(parseInt(el.getAttribute("file-id"))) ? el.classList.remove("nodisplay") : el.classList.add("nodisplay");
-        //     if (!activeDone && matches.includes(parseInt(el.getAttribute("file-id")))) {
-        //         el.classList.add("active");
-        //         activeDone = true;
-        //     } else el.classList.remove("active");
-        // }
     }
 }
 
