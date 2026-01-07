@@ -5,8 +5,9 @@ const renderChangedLines = (editor, changedLines) => {
 }
 
 const renderCarets = (editor) => { // TODO: with the first, when autoEnlarge runs, fixedEnds get lost. with the second, it's even worse.
-    // for (let caret of editor.input.caret.carets) caret.placeAt(caret.position.index, { keepFixedEnd: -1 });
-    for (let caret of editor.input.caret.carets) caret.placeAt();
+    requestAnimationFrame(() => {
+        editor.input.caret.placeAllAt();
+    });
 }
 
 class Render {
@@ -15,7 +16,9 @@ class Render {
         this.textarea = this.editor.elements.textarea;
 
         editor.doc.change.addCallback(renderChangedLines);
-        queueMicrotask(() => { editor.doc.change.addCallback(renderCarets); });
+        queueMicrotask(() => {
+            editor.doc.change.addCallback(renderCarets);
+        });
 
         this.decos = ["underline", "bold", "Bold", "accent", "math", "middle", "small", "large", "capital", "spin_border", "h1", "h2", "h3", "h4", "h5", "h6", "subtitle"];
         this.selection = new Selection(editor);
@@ -97,10 +100,15 @@ class Render {
                 DM.replaceChildren(window.MathJax.tex2svg(line.text, { display: true })); // render sync on load
             } catch (error) {
                 DM.innerHTML = line.text; // placeholder until async is done
-                // console.log(error.message);
-                window.MathJax.tex2svgPromise(line.text, { display: true }).then(node => { // render async if something needs to be loaded
-                    DM.replaceChildren(node);
-                });
+
+                await window.MathJax.startup.document.outputJax.font.loadDynamicFiles(); // best i got
+                DM.replaceChildren(window.MathJax.tex2svg(line.text, { display: true })); // async still didn't load fonts in time
+
+                // window.MathJax.tex2svgPromise(line.text, { display: true }).then(node => { // render async if something needs to be loaded
+                //     console.log("retried", line, "got");
+                //     console.log(node);
+                //     DM.replaceChildren(node);
+                // });
             }
         } else {
             if (line.text === line.element.DM.source) return;

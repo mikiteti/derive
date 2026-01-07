@@ -1,3 +1,5 @@
+import { exportToMD } from "../editor/assets.js";
+
 const newCommands = (state) => {
     return [
         {
@@ -10,8 +12,10 @@ const newCommands = (state) => {
                     headers: { "Content-Type": "application/json" },
                     credentials: 'include'
                 });
+                if (res === -1) return;
                 let text = await res.text();
                 console.log(text);
+                state.alert(text);
 
                 state.commands.find(e => e.name === "Login").run(data[0], data[2]);
             }
@@ -28,11 +32,11 @@ const newCommands = (state) => {
                     body: JSON.stringify({ email, password }),
                     headers: { 'Content-Type': 'application/json' },
                 });
+                if (res === -1) return;
                 let text = await res.text();
                 console.log(text);
-                queueMicrotask(() => {
-                    window.location.reload();
-                });
+                state.alert("Welcome", `You are now logged in`);
+                state.reload(["user", "files", "currentFile", "editors"]);
             }
         },
         {
@@ -47,9 +51,7 @@ const newCommands = (state) => {
                 let text = await res.text();
                 console.log(text);
 
-                state.openFile(state.Welcome);
-                state.files = state.files.filter(e => e.fileId !== editor.fileId);
-                state.filePicker.querySelector(`.list div[item-id="${editor.fileId}"]`).remove();
+                state.reload(["files", "currentFile"]);
                 return text;
             }
         },
@@ -63,18 +65,31 @@ const newCommands = (state) => {
                     body: JSON.stringify({ id: editor.fileId, name }),
                     headers: { "Content-Type": "application/json" }
                 });
+                if (res === -1) return;
                 let text = await res.text();
                 console.log(text);
+
+                state.reload(["files"]);
 
                 return text;
             }
         },
-        // {
-        //     name: "Export file",
-        //     run: () => {
-        //
-        //     }
-        // },
+        {
+            name: "Export to Markdown",
+            run: () => {
+                let text = exportToMD(state.editor);
+                navigator.clipboard.writeText(text).then(() => {
+                    console.log('Copied!', text);
+                }).catch(console.error);
+                state.alert("Exported", "Your file has been copied to your clipboard");
+            }
+        },
+        {
+            name: "Reload file",
+            run: () => {
+                state.reload(["file", "currentFile"]);
+            }
+        }
 
         // {
         //     name: "Restore file",

@@ -614,7 +614,7 @@ class Position {
         if (newPos !== undefined) pos = newPos;
         this.assign(pos);
 
-        if (this.range && !this.range.deleted) this.range.reassignCallback();
+        if (this.range && !this.range.deleted) this.range.reassignCallback({ justDoIt });
 
         return this;
     }
@@ -709,9 +709,9 @@ class Mark extends Range {
         this.to = undefined;
     }
 
-    reassignCallback() {
+    reassignCallback({ justDoIt = false }) {
         this.from.Line.unrenderedChanges.add("marks");
-        if (this.to.index - (this.to.stickLeftOnInsert ? 1 : 0) <= this.from.index - (this.from.stickLeftOnInsert ? 1 : 0)) {
+        if (!justDoIt && this.to.index >= this.from.index && this.to.index - (this.to.stickLeftOnInsert ? 1 : 0) <= this.from.index - (this.from.stickLeftOnInsert ? 1 : 0)) {
             console.log("deleting mark");
             this.from.Line.deleteMark(this);
         }

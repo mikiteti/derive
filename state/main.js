@@ -1,4 +1,4 @@
-import Welcome from "./welcome.js";
+import systemFiles from "./systemFiles.js";
 import newEditor from "../editor/main.js";
 import Environment from "../environment.js";
 import { exportFile } from "../editor/assets.js";
@@ -7,13 +7,26 @@ import newCommands from "./commands.js";
 class State {
     constructor() {
         window.state = this;
+
         this.editors = [];
+        this.sendRequest("user").then(res => {
+            if (res === -1) {
+                console.log("no credentials");
+                return;
+            }
+
+            res.json().then(user => {
+                console.log("Logged in as:", user);
+                this.user = user;
+            })
+        });
         this.commandPalette = document.querySelector("#commandPalette");
         this.filePicker = document.querySelector("#filePicker");
         this.modalBg = document.querySelector("#modalBg");
+        this.alerts = document.querySelector("#alerts");
         this.modalBg.addEventListener("click", () => {
             this.closeModal();
-        })
+        });
         this.initFuzzyFinders();
 
         Object.defineProperty(window, "editor", { get() { return this.state.editor; }, });
@@ -24,8 +37,8 @@ class State {
         Object.defineProperty(window, "caret", { get() { return this.state.editor?.input?.caret; }, });
         Object.defineProperty(window, "snippets", { get() { return this.state.editor?.input?.snippets; }, });
 
-        this.Welcome = Welcome;
-        this.newEditor(this.Welcome);
+        this.systemFiles = systemFiles;
+        this.newEditor(this.systemFiles.find(e => e.id === "welcome"));
 
         document.addEventListener("click", _ => {
             if (!this.editor.interactive) return;
@@ -48,8 +61,8 @@ class State {
     async initFuzzyFinders() {
         this.files = await this.getFiles();
         this.filePicker.entries = this.files.filter(e => !e.misc?.deleted);
-        this.filePicker.querySelector(".list").innerHTML = this.filePicker.entries.map(e => `<div item-id="${e.id}">${e.name}</div>`).join("");
-        this.commands = newCommands(this).map((e, f) => ({ ...e, id: f }));
+        this.filePicker.querySelector(".list").innerHTML = this.filePicker.entries.concat(this.systemFiles).map(e => `<div item-id="${e.id}">${e.name}</div>`).join("");
+        this.commands = newCommands(this).map((e, f) => ({ ...e, id: f + 1 }));
         this.commandPalette.entries = this.commands;
         this.commandPalette.querySelector(".list").innerHTML = this.commandPalette.entries.map(e => `<div item-id="${e.id}">${e.name}</div>`).join("");
 
@@ -64,7 +77,10 @@ class State {
         });
 
         this.filePicker.querySelector("input").addEventListener("input", (_) => {
-            this.handleFuzzySearch(this.filePicker);
+            if (this.filePicker.querySelector("input").value.startsWith(".")) {
+                this.handleFuzzySearch(this.filePicker, this.systemFiles);
+            }
+            else this.handleFuzzySearch(this.filePicker);
         });
 
         this.commandPalette.addEventListener("click", async e => {
@@ -76,7 +92,7 @@ class State {
 
         this.filePicker.addEventListener("click", async e => {
             if (!e.target.matches(".list div")) return;
-            await this.openFile({ id: parseInt(e.target.getAttribute("item-id")) });
+            await this.openFile({ id: parseInt(e.target.getAttribute("item-id")) || e.target.getAttribute("item-id") });
             this.closeModal();
         });
 
@@ -152,7 +168,7 @@ class State {
             if (res.status === 401 || res.status === 403) {
                 console.log("Login failed");
                 let text = await res.text();
-                alert(text);
+                this.alert("Error", text);
                 return -1;
             }
 
@@ -160,6 +176,7 @@ class State {
         } else if (res.status === 400) {
             let text = await res.text();
             console.log(text);
+            this.alert("Error", text);
             return -1;
         }
 
@@ -169,28 +186,28 @@ class State {
     async newEditor(file, { main = true } = {}) {
         console.log("creating new editor", file);
 
-        return window.MathJax.startup.promise.then(_ => {
-            // const editor = newEditor({ file: file, layout: "vim", interactive: !matchMedia('(pointer: coarse)').matches });
-            const editor = newEditor({ file: file, layout: "vim", interactive: true });
-            this.editors.push(editor);
-            if (main) {
-                this.editor = editor;
-                this.focus = editor;
-            }
-            setTimeout(() => { // TODO: find out why caret behaves badly on startup
-                editor.input.caret?.placeAllAt();
-            }, 200);
-            queueMicrotask(() => {
-                editor.render.textarea.animate([
-                    { opacity: "0" },
-                    { opacity: "1" },
-                ], {
-                    duration: 100,
-                });
-            });
+        await window.MathJax.startup.promise;
 
-            return editor;
+        // const editor = newEditor({ file: file, layout: "vim", interactive: !matchMedia('(pointer: coarse)').matches });
+        const editor = newEditor({ file: file, layout: "vim", interactive: true });
+        this.editors.push(editor);
+        if (main) {
+            this.editor = editor;
+            this.focus = editor;
+        }
+        setTimeout(() => { // TODO: find out why caret behaves badly on startup
+            editor.input.caret?.placeAllAt();
+        }, 200);
+        queueMicrotask(() => {
+            editor.render.textarea.animate([
+                { opacity: "0" },
+                { opacity: "1" },
+            ], {
+                duration: 100,
+            });
         });
+
+        return editor;
     }
 
     runCommand(command) {
@@ -200,29 +217,24 @@ class State {
     }
 
     async createFile(file) {
-        // let exitingFile = this.files.find(e => e.name === file.name); // deleted file
-        // if (exitingFile != undefined) {
-        //     this.commands.find(e => e.name == "Restore file").run(exitingFile);
-        //     return exitingFile;
-        // }
-
         console.log("creating file");
         let res = await this.sendRequest("new_note", {
             method: 'POST',
             body: JSON.stringify({ name: file.name }),
             headers: { "Content-Type": "application/json" }
         });
+        if (res === -1) return;
         let id = (await res.json()).id;
-
         let newFile = await this.getFile({ id });
-
         this.files.push(newFile);
-        return this.files.at(-1);
+
+        this.reload(["files"]);
+
+        console.log(newFile);
+        return newFile;
     }
 
     async getFile(file) {
-        if (file.id === 0) return { ...file, ...Welcome };
-
         let res = await this.sendRequest("note", {
             method: 'POST',
             body: JSON.stringify({ id: file.id }),
@@ -239,17 +251,23 @@ class State {
 
     async openFile(file) {
         console.log("opening file", file);
-        if (file.id == undefined) file = this.createFile(file);
-        if (file.id !== "Welcome") file = this.files.find(e => e.id === file.id);
+        if (this.systemFiles.find(e => e.id == file.id)) {
+            file = this.systemFiles.find(e => e.id == file.id);
+        } else {
+            if (file.id === undefined) file = this.createFile(file);
+            file = this.files.find(e => e.id === file.id)
+        }
+        console.log(file);
+
         let editor = this.editors.filter(e => e.fileId != undefined).find(e => e.fileId === file.id);
         if (editor == undefined) {
-            file = await this.getFile(file);
-            console.log(file);
+            if (!file.systemFile) file = await this.getFile(file);
             editor = await this.newEditor(file, { main: false });
-            console.log(editor);
         }
         for (let e of this.editors) e.elements.editor.style.display = (e === editor) ? "unset" : "none";
         this.editor = editor;
+        let index = this.editors.find(e => e.id === editor.fileId);
+        if (index !== undefined) this.editors = this.editors.slice(0, index).concat(this.editors.slice(index + 1)).concat(editor);
         document.title = file.name;
     }
 
@@ -261,8 +279,10 @@ class State {
             body: JSON.stringify({ id: editor.fileId, content }),
             headers: { "Content-Type": "application/json" }
         });
+        if (res === -1) return;
         let text = await res.text();
         console.log(text);
+        this.alert("Saved", "Your file is now safe and sound");
         return text;
     }
 
@@ -344,15 +364,69 @@ class State {
             el.classList.remove("active");
             el.classList.add("nodisplay");
         }
+        console.log({ matches });
         for (let m of matches) {
             let el = modal.querySelector(`.list [item-id="${m}"]`);
             if (el == undefined) continue;
             el.classList.remove("nodisplay");
             modal.querySelector(".list").appendChild(el);
-            if (!activeDone && matches.includes(parseInt(el.getAttribute("item-id")))) {
+            if (!activeDone && matches.includes(parseInt(el.getAttribute("item-id")) || el.getAttribute("item-id"))) {
                 el.classList.add("active");
                 activeDone = true;
             }
+        }
+    }
+
+    alert(title, text) {
+        let element = document.createElement("div");
+        element.classList.add("alert");
+        let head = document.createElement("div");
+        head.innerText = title;
+        head.classList.add("title");
+        element.innerText = text;
+        element.prepend(head);
+
+        this.alerts.prepend(element);
+        element.animate([
+            { opacity: "0", transform: "translateX(10px)" },
+            { opacity: "1", transform: "translateX(0px)" },
+        ], 200);
+
+        setTimeout(() => {
+            element.animate([
+                { opacity: "1", transform: "translateY(0px)" },
+                { opacity: "0", transform: "translateY(10px)" },
+            ], 200);
+            setTimeout(() => {
+                element.remove();
+            }, 200)
+        }, 3000)
+    }
+
+    async reload(elements = ["files", "user", "currentFile"]) {
+        if (elements.includes("user")) {
+            let res = await this.sendRequest("user");
+            let user = await res.json();
+            console.log("Logged in as:", user);
+            this.user = user;
+        }
+
+        if (elements.includes("editors")) {
+            this.editors = [];
+            document.querySelector("main").innerHTML = "";
+        }
+
+        if (elements.includes("files")) {
+            this.files = await this.getFiles();
+            this.filePicker.entries = this.files.filter(e => !e.misc?.deleted);
+            this.filePicker.querySelector(".list").innerHTML = this.filePicker.entries.concat(this.systemFiles).map(e => `<div item-id="${e.id}">${e.name}</div>`).join("");
+        }
+
+        if (elements.includes("currentFile")) {
+            let files = this.files.concat(this.systemFiles).filter(e => !e.misc?.deleted);
+            let lastEditor = this.editors.toReversed().find(e => files.find(f => e.fileId === f.id));
+            if (lastEditor === undefined) this.openFile(this.systemFiles.find(e => e.id === "welcome"));
+            else this.openFile(files.find(e => e.id === lastEditor.fileId));
         }
     }
 }

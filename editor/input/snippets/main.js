@@ -173,15 +173,17 @@ class Snippets {
         while (this.tabstops[0] && this.tabstops[0].positions.filter(e => !e.deleted).length === 0) this.tabstops.shift();
         if (this.tabstops.length === 0) return;
         this.tabstops[0].positions = this.tabstops[0].positions.filter(e => !e.deleted);
-        this.editor.doc.history.newChangeGroup();
-        this.editor.input.caret.updateCarets(
-            // this.tabstops[0].positions.map(e => e.index)
-            this.tabstops[0].placeholder === "" ?
-                this.tabstops[0].positions.map(e => e.index) :
-                this.tabstops[0].positions.map(e => [e.index + this.tabstops[0].placeholder.length, e.index])
-        );
-        for (let pos of this.tabstops[0].positions) pos.delete();
-        this.tabstops.shift();
+        requestAnimationFrame(() => {
+            this.editor.doc.history.newChangeGroup();
+            this.editor.input.caret.updateCarets(
+                // this.tabstops[0].positions.map(e => e.index)
+                this.tabstops[0].placeholder === "" ?
+                    this.tabstops[0].positions.map(e => e.index) :
+                    this.tabstops[0].positions.map(e => [e.index + this.tabstops[0].placeholder.length, e.index])
+            );
+            for (let pos of this.tabstops[0].positions) pos.delete();
+            this.tabstops.shift();
+        });
     }
 
     deleteTabStops() {

@@ -225,7 +225,9 @@ const createCommandSet = (editor) => {
 
         // text objects
         "iw": (pos) => [findStartOfWord(pos), findEndOfWord(pos)],
+        "aw": (pos) => [findStartOfWord(pos), findStartOfWord(parsePosition(findEndOfWord(pos, 2)))],
         "iW": (pos) => [findStartOfWORD(pos), findEndOfWORD(pos)],
+        "aw": (pos) => [findStartOfWORD(pos), findStartOfWORD(parsePosition(findEndOfWORD(pos, 2)))],
         // ...
 
         // helpers
@@ -233,9 +235,9 @@ const createCommandSet = (editor) => {
         "position": (pos) => pos.index,
         "vLine": (pos) => {
             let pair = pos.caret.fixedEnd;
-            if (pair == undefined) return [pos.Line.from, pos.Line.to];
-            if (pair.index < pos.index) return [pair.Line.from, pos.Line.to];
-            return [pair.Line.to, pos.Line.from];
+            if (pair == undefined) return [pos.Line.from, Math.min(pos.Line.to, doc.chars - 2)];
+            if (pair.index < pos.index) return [pair.Line.from, Math.min(pos.Line.to, doc.chars - 2)];
+            return [Math.min(pair.Line.to, doc.chars - 2), pos.Line.from];
         }
         // ...
     }
@@ -508,11 +510,26 @@ const createCommandSet = (editor) => {
                     name: "full text objects",
                     keys: ["w", "W", "s", "p", "b", "B", "t", "'", "\"", "`", "{", "}", "(", ")", "[", "]", "<", ">"],
                     run: (keys, { method } = {}) => {
-                        // console.log(`running text object ${method}${keys[0]}`);
+                        let modeChanges = keys.at(-1) == "p" ? [["mode", "vLine"]] : [];
+
                         dispatch([["move", {
                             "iw": (pos) => [findStartOfWord(pos), findEndOfWord(pos)],
+                            "aw": (pos) => [findStartOfWord(pos), findStartOfWord(parsePosition(findEndOfWord(pos, 2))) - 1],
                             "iW": (pos) => [findStartOfWORD(pos), findEndOfWORD(pos)],
-                        }[method + keys[0]]]]);
+                            "aW": (pos) => [findStartOfWORD(pos), findStartOfWORD(parsePosition(findEndOfWORD(pos, 2))) - 1],
+                            "ip": (pos) => [
+                                (() => {
+                                    if (pos.Line.text.trim() === "") return pos.index;
+                                    for (let n = pos.Line.number; n >= 0; n--) if (doc.line(n).text.trim() === "") return doc.line(n + 1).from;
+                                    return 0;
+                                })(),
+                                (() => {
+                                    if (pos.Line.text.trim() === "") return pos.index;
+                                    for (let n = pos.Line.number; n < doc.lines; n++) if (doc.line(n).text.trim() === "") return doc.line(n - 1).to - 1;
+                                    return doc.chars - 1;
+                                })()
+                            ]
+                        }[method + keys[0]]], ...modeChanges]);
                     },
                 },
             ],
@@ -866,7 +883,10 @@ const createCommandSet = (editor) => {
                         "d": [["delete", moves["iden"], moves["fixedEnd"]], ["mode", "n"]],
                         "x": [["delete", moves["iden"], moves["fixedEnd"]], ["mode", "n"]],
                         "c": curMode === "vLine"
-                            ? [["change", pos => Math.min(pos.index, pos.caret.fixedEnd.index), pos => Math.max(pos.index, pos.caret.fixedEnd.index) - 1], ["mode", "i"]] // in vLine mode, c should leave a blank line
+                            ? [["change", pos => Math.min(pos.index, pos.caret.fixedEnd.index), pos => {
+                                let eol = [pos.Line.number, pos.caret.fixedEnd.Line.number].includes(doc.lines - 1) ? 0 : -1;
+                                return Math.max(pos.index, pos.caret.fixedEnd.index) + eol;
+                            }], ["mode", "i"]] // in vLine mode, c should leave a blank line
                             : [["change", moves["iden"], moves["fixedEnd"]], ["mode", "i"]],
                     }[keys[0]]);
                 }

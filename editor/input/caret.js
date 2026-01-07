@@ -162,8 +162,8 @@ class SingleCaret {
         }
 
         if (this === this.editor.input.caret.carets[0]) {
-            if (window.scrollY - this.screenPosition.y > -100) window.scrollTo({ behavior: "smooth", top: this.screenPosition.y - 100 });
-            else if (window.scrollY + window.innerHeight - this.screenPosition.y - this.screenPosition.height < 100) window.scrollTo({ behavior: "smooth", top: this.screenPosition.y + this.screenPosition.height - window.innerHeight + 100 });
+            if (window.scrollY - this.screenPosition.y > -200) window.scrollTo({ behavior: "smooth", top: this.screenPosition.y - 200 });
+            else if (window.scrollY + window.innerHeight - this.screenPosition.y - this.screenPosition.height < 200) window.scrollTo({ behavior: "smooth", top: this.screenPosition.y + this.screenPosition.height - window.innerHeight + 200 });
         }
 
         // this.element.scrollIntoView({ behavior: "smooth", block: "nearest" });

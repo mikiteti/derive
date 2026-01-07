@@ -68,7 +68,7 @@
 .h1 {
     font-size: calc(var(--font-size) * 1.46) !important;
     line-height: calc(var(--font-size) * 1.75) !important;
-    text-transform: uppercase;
+    /* text-transform: uppercase; */
     font-weight: var(--Bold-weight);
     color: var(--color-accent);
     text-align: center;
