@@ -370,12 +370,10 @@ date: ${new Date().toISOString().slice(0, 10)}
             if (m1[1] >= m2[0]) m2.push("eliminate");
         }
         marks = marks.filter(e => e[2] == undefined);
-        for (let j = 0; j < marks.length; j++) {
-            let mark = marks[j];
-            let ends = [2 * j + mark[0], 2 * j + mark[1] + 1];
-            text = text.slice(0, ends[0]) + "$" + text.slice(ends[0]);
-            text = text.slice(0, ends[1]) + "$" + text.slice(ends[1]);
-        }
+        marks = marks.flat();
+        marks = marks.filter((e, f) => !(marks[f + 1] === e || marks[f - 1] === e));
+        for (let j = 0; j < marks.length; j++) text = text.slice(0, marks[j] + j) + "$" + text.slice(marks[j] + j);
+
         if (decos.has("math") && text.trim() !== "") text = "$$" + text + "$$";
         let lastLine = content.at(-1);
         let br = (lastLine != "") ? "\n" : "";
