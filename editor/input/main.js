@@ -67,9 +67,13 @@ class Input {
             if (this.touchStart != undefined && e.touches.length === 1) {
                 let [x0, y0] = this.touchStart;
                 let [x1, y1] = [e.touches[0].clientX, e.touches[0].clientY];
-                if (Math.hypot(x1 - x0, y1 - y0) > 100 && x1 - x0 > 50) {
+                if (x1 - x0 > 80 && Math.abs(y1 - y0) < 40) {
                     this.touchStart = undefined;
                     window.state.openModal(window.state.filePicker);
+                }
+                else if (x1 - x0 < -80 && Math.abs(y1 - y0) < 40) {
+                    this.touchStart = undefined;
+                    window.state.openModal(window.state.commandPalette);
                 }
             }
         })

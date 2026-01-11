@@ -353,6 +353,9 @@ const exportFile = (editor = window.editor) => {
 window.exportFile = exportFile;
 
 const exportToMD = (editor = window.editor) => {
+    if (window.state.files.find(e => e.id === editor.fileId) == undefined || window.state.user == undefined) return;
+
+
     let content = [`---
 title: ${window.state.files.find(e => e.id == editor.fileId).name}
 author: ${window.state.user.name}
@@ -362,7 +365,18 @@ date: ${new Date().toISOString().slice(0, 10)}
 `];
     for (let i = 0; i < editor.doc.lines; i++) {
         let line = editor.doc.line(i), text = line.text;
-        if (["•", "–", "∘"].includes(text.charAt(0))) text = "- " + text.slice(2);
+        if (text.trim() == "") {
+            content.push("");
+            return;
+        }
+        let insertEmptyLineInFront = false;
+
+        if (["•", "–", "∘"].includes(text.charAt(0))) {
+            text = "- " + text.slice(2);
+            if (i > 0 && !["•", "–", "∘"].includes(editor.doc.line(i - 1).text.charAt(0)))
+                insertEmptyLineInFront = true;
+        }
+
         let decos = line.decos;
         let marks = line.marks.filter(e => e.role === "math").sort((a, b) => a.from.index - b.from.index).map(e => [e.start.column, e.end.column]);
         for (let i = 0; i < marks.length - 1; i++) for (let j = i + 1; j < marks.length; j++) {
@@ -376,17 +390,21 @@ date: ${new Date().toISOString().slice(0, 10)}
 
         if (decos.has("math") && text.trim() !== "") text = "$$" + text + "$$";
         let lastLine = content.at(-1);
-        let br = (lastLine != "") ? "\n" : "";
-        if (decos.has("h1")) text = br + "# " + text;
-        else if (decos.has("small")) text = "<small>" + text + "</small>";
-        else if (decos.has("h2")) text = br + "## " + text;
-        else if (decos.has("h3")) text = br + "### " + text;
-        else if (decos.has("h4")) text = br + "#### " + text;
-        else if (decos.has("h5")) text = br + "##### " + text;
-        else if (decos.has("h6")) text = br + "###### " + text;
-        if (["$"].includes(lastLine.charAt(lastLine.length - 1)) && !["$"].includes(lastLine.charAt(lastLine.length - 2)))
-            text = "\n" + text;
+        if (lastLine != "" && decos.has("h1", "h2", "h3", "h4", "h5", "h6")) insertEmptyLineInFront = true;
+        if (decos.has("h1")) text = "# " + text;
+        // else if (decos.has("small")) text = "<small>" + text + "</small>";
+        else if (decos.has("h2")) text = "## " + text;
+        else if (decos.has("h3")) text = "### " + text;
+        else if (decos.has("h4")) text = "#### " + text;
+        else if (decos.has("h5")) text = "##### " + text;
+        else if (decos.has("h6")) text = "###### " + text;
+
+        if (["$"].includes(lastLine.charAt(lastLine.length - 1)) && !["$"].includes(lastLine.charAt(lastLine.length - 2))) insertEmptyLineInFront = true;
         text = text.split("$").map((e, j) => j % 2 ? e.trim() : e).join("$");
+
+        // for (let j = 0; j < editor.doc.line(i).tabs.full || 0; j++) text = "\t" + text;
+        if (text[0] == "#") insertEmptyLineInFront = true;
+        if (insertEmptyLineInFront && lastLine.trim() != "") text = "\n" + text;
 
         content.push(text);
     }

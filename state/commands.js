@@ -5,10 +5,11 @@ const newCommands = (state) => {
         {
             name: "Create user",
             run: async () => {
-                let data = prompt('Input your email, name and password separated by spaces to create an account.').split(' ');
+                // let data = prompt('Input your email, name and password separated by spaces to create an account.').split(' ');
+                let [email, name, password] = await state.prompt("Create user", "Input your email, name and password to create an account", { Email: 1, Name: 1, Password: 1 });
                 let res = await state.sendRequest("new_user", {
                     method: 'POST',
-                    body: JSON.stringify({ email: data[0], name: data[1], password: data[2] }),
+                    body: JSON.stringify({ email, name, password }),
                     headers: { "Content-Type": "application/json" },
                     credentials: 'include'
                 });
@@ -17,13 +18,16 @@ const newCommands = (state) => {
                 console.log(text);
                 state.alert(text);
 
-                state.commands.find(e => e.name === "Login").run(data[0], data[2]);
+                state.commands.find(e => e.name === "Login").run(email, password);
             }
         },
         {
             name: "Login",
             run: async (email, password) => {
-                if (email == undefined || password == undefined) [email, password] = prompt('Input your email and password separated by a space to login.').split(' ');
+                // if (email == undefined || password == undefined) [email, password] = prompt('Input your email and password separated by a space to login.').split(' ');
+                if (email == undefined || password == undefined) [email, password] =
+                    await state.prompt("Login", 'Input your email and password to log in', { "Email": 1, "Password": 1 });
+                console.log(email, password);
                 localStorage.setItem('email', email);
                 localStorage.setItem('password', password);
 
@@ -58,7 +62,7 @@ const newCommands = (state) => {
         {
             name: "Rename file",
             run: async () => {
-                let name = prompt('Input the new filename');
+                let [name] = await state.prompt("Rename file", 'Input the new filename', { "Filename": 1 });
                 let editor = state.editor;
                 let res = await state.sendRequest("update_note", {
                     method: 'POST',
@@ -68,6 +72,7 @@ const newCommands = (state) => {
                 if (res === -1) return;
                 let text = await res.text();
                 console.log(text);
+                state.alert("Renamed", `Your file is now ${name}`);
 
                 state.reload(["files"]);
 
@@ -78,6 +83,10 @@ const newCommands = (state) => {
             name: "Export to Markdown",
             run: () => {
                 let text = exportToMD(state.editor);
+                if (!text) {
+                    state.alert("Error", "Something went wrong with the export");
+                    return;
+                }
                 navigator.clipboard.writeText(text).then(() => {
                     console.log('Copied!', text);
                 }).catch(console.error);

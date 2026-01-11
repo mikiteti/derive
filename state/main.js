@@ -24,7 +24,9 @@ class State {
         this.filePicker = document.querySelector("#filePicker");
         this.modalBg = document.querySelector("#modalBg");
         this.alerts = document.querySelector("#alerts");
+        this.prompts = document.querySelector("#prompts");
         this.modalBg.addEventListener("click", () => {
+            console.log("closing modal");
             this.closeModal();
         });
         this.initFuzzyFinders();
@@ -42,7 +44,7 @@ class State {
 
         document.addEventListener("click", _ => {
             if (!this.editor.interactive) return;
-            if (this.focus?.isEditor) document.getElementById("focus").focus();
+            if (this.focus?.isEditor && !this.focus?.classList?.has("prompt")) document.getElementById("focus").focus();
         });
 
         window.addEventListener("resize", _ => {
@@ -56,6 +58,14 @@ class State {
         window.addEventListener("focus", () => {
             document.body.classList.remove("dim");
         });
+
+        window.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" && this.focus?.classList?.contains("prompt")) {
+                let inputs = this.focus.querySelectorAll("input");
+                for (let i of inputs) if (i.value == "") return;
+                this.focus.querySelector(".submit").click();
+            }
+        })
     }
 
     async initFuzzyFinders() {
@@ -86,8 +96,8 @@ class State {
         this.commandPalette.addEventListener("click", async e => {
             if (!e.target.matches(".list div")) return;
             console.log(this.commands, e.target);
-            this.runCommand(this.commands.find(f => f.id == parseInt(e.target.getAttribute("item-id"))));
             this.closeModal();
+            this.runCommand(this.commands.find(f => f.id == parseInt(e.target.getAttribute("item-id"))));
         });
 
         this.filePicker.addEventListener("click", async e => {
@@ -317,7 +327,7 @@ class State {
         ], { duration: 100 });
 
         document.getElementById("focus").focus();
-        requestAnimationFrame(() => { this.focus = this.editor; });
+        this.focus = this.editor;
     }
 
     async getFiles() {
@@ -405,6 +415,58 @@ class State {
                 element.remove();
             }, 200)
         }, 3000)
+    }
+
+    prompt(title, description, fields) {
+        let element = document.createElement("div");
+        element.classList.add("prompt");
+        let innerHTML = `<div class="title">${title}</div><div class="description">${description}</div><div class="grid">`;
+        for (let field in fields) innerHTML += `<label for="${field}">${field}</label><input type="text" id="${field}" name="${field}">`;
+        innerHTML += "</div>";
+        element.innerHTML = innerHTML;
+        let submit = document.createElement("div");
+        submit.classList.add("submit");
+        submit.innerHTML = "Go";
+        element.appendChild(submit);
+        this.prompts.appendChild(element);
+        element.animate([
+            { opacity: "0", transform: "translate(-50%, 3px)" },
+            { opacity: "1", transform: "translate(-50%, 0px)" },
+        ], 200);
+        this.modalBg.style.display = "unset";
+        this.modalBg.animate([
+            { opacity: 0 },
+            { opacity: 1 }
+        ], { duration: 100 });
+
+        element.querySelector("input").focus();
+        this.focus = element;
+
+        let promise = new Promise((res, rej) => {
+            submit.addEventListener("click", _ => {
+                let inputElements = element.querySelectorAll("input");
+                let inputs = [];
+                for (let e of inputElements) inputs.push(e.value);
+                element.animate([
+                    { opacity: "1", transform: "translate(-50%, 0px)" },
+                    { opacity: "0", transform: "translate(-50%, 10px)" },
+                ], 200);
+                setTimeout(() => {
+                    element.remove();
+                }, 200)
+                this.modalBg.style.display = "none";
+                this.modalBg.animate([
+                    { opacity: 1, display: "unset" },
+                    { opacity: 0, display: "unset" }
+                ], { duration: 100 });
+
+                document.getElementById("focus").focus();
+                requestAnimationFrame(() => { this.focus = this.editor; });
+                res(inputs);
+            });
+        });
+
+        return promise;
     }
 
     async reload(elements = ["files", "user", "currentFile"]) {
