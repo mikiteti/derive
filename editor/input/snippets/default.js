@@ -130,6 +130,7 @@ class DefaultSnippets {
             { from: /([A-Z])frak/, to: "\\mathfrak{[[0]]}", in: "rmA" },
             { from: /([a-zA-Z])bb/, to: "\\mathbb{[[0]]}", in: "rmA" },
             { from: /([a-zA-Z])scr/, to: "\\mathscr{[[0]]}", in: "rmA" },
+            { from: /([A-Z])cal/, to: "\\mathcal{[[0]]}", in: "rmA" },
             { from: /([a-zA-Z])vec/, to: "\\vec{[[0]]}", in: "rmA" },
             { from: /\\(${SUBSCRIPTABLE}){([a-zA-z])},\./, to: "\\mathbf{\\[[0]]{[[1]]}}", in: "rmA" },
             { from: /\\(${SUBSCRIPTABLE}){([a-zA-z])}\.,/, to: "\\mathbf{\\[[0]]{[[1]]}}", in: "rmA" },

@@ -486,6 +486,9 @@ html.lineNumbers .textarea p.math::before {
     box-shadow: var(--shadow-lg);
     position: fixed;
     min-width: max(40vw, 300px);
+    width: 400px;
+    max-width: 96vw;
+    box-sizing: border-box;
     border-radius: 20px;
     left: 50vw;
     top: 10vw;
@@ -528,6 +531,7 @@ html.lineNumbers .textarea p.math::before {
     /* margin-left: 10px; */
     border: 1px solid #ffffff33;
     border-radius: 5px;
+    min-width: 0;
 }
 
 .prompt .submit {

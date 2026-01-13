@@ -367,7 +367,7 @@ date: ${new Date().toISOString().slice(0, 10)}
         let line = editor.doc.line(i), text = line.text;
         if (text.trim() == "") {
             content.push("");
-            return;
+            continue;
         }
         let insertEmptyLineInFront = false;
 
