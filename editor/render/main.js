@@ -80,12 +80,14 @@ class Render {
 
     async handleDM(line) {
         await window.MathJax.startup.promise;
-        if (!line.decos.has("math")) {
+        if (!line.decos.has("math") || line.deleted) {
             if (!line.element.DM) return;
             line.element.DM.remove();
             queueMicrotask(_ => {
                 line.element.DM = undefined;
             });
+
+            return;
         }
 
         if (!line.element.DM) { // create DM element
@@ -96,20 +98,25 @@ class Render {
             DM.classList.add("DM");
             DM.source = line.text;
             line.element.after(DM);
-            try {
-                DM.replaceChildren(window.MathJax.tex2svg(line.text, { display: true })); // render sync on load
-            } catch (error) {
-                DM.innerHTML = line.text; // placeholder until async is done
+            // try {
+            //     DM.replaceChildren(window.MathJax.tex2svg(line.text, { display: true })); // render sync on load
+            // } catch (error) {
+            // DM.innerHTML = line.text; // placeholder until async is done
 
-                await window.MathJax.startup.document.outputJax.font.loadDynamicFiles(); // best i got
-                DM.replaceChildren(window.MathJax.tex2svg(line.text, { display: true })); // async still didn't load fonts in time
+            // await window.MathJax.startup.document.outputJax.font.loadDynamicFiles(); // best i got
+            // DM.replaceChildren(window.MathJax.tex2svg(line.text, { display: true })); // async still didn't load fonts in time
 
-                // window.MathJax.tex2svgPromise(line.text, { display: true }).then(node => { // render async if something needs to be loaded
-                //     console.log("retried", line, "got");
-                //     console.log(node);
-                //     DM.replaceChildren(node);
-                // });
-            }
+            // window.MathJax.tex2svgPromise(line.text, { display: true }).then(node => { // render async if something needs to be loaded
+            //     // console.log("retried", line, "got");
+            //     // console.log(node);
+            //     DM.replaceChildren(node);
+            // });
+            // }
+
+            window.MathJax._.mathjax.mathjax.handleRetriesFor(async () => { // fantastic! the right solution.
+                DM.replaceChildren(window.MathJax.tex2svg(line.text, { display: true }));
+                await window.MathJax.startup.document.outputJax.font.loadDynamicFiles(); // without this, weird glyphs are rendered in another font 
+            });
         } else {
             if (line.text === line.element.DM.source) return;
             line.element.DM.source = line.text;
@@ -120,6 +127,8 @@ class Render {
                 if (!window.renderErrors && !node.querySelector('[data-mjx-error], mjx-merror, [fill="red"], [stroke="red"]')) line.element.DM.replaceChildren(node);
             });
         }
+        // window.MathJax.startup.document.clear();
+        // window.MathJax._.mathjax.mathjax.handleRetriesFor(() => window.MathJax.startup.document.updateDocument());
     }
 
     renderLine(line) {
@@ -182,6 +191,8 @@ class Render {
                 promises.push(promise);
                 promise.then(node => {
                     IM.replaceChildren(node);
+                    // window.MathJax.startup.document.clear();
+                    // window.MathJax._.mathjax.mathjax.handleRetriesFor(() => window.MathJax.startup.document.updateDocument());
                     math.after(IM);
                     let currentColor = getComputedStyle(node).getPropertyValue("color");
                     if (!node.matches(".wrapper.editingSource *")) for (let e of node.querySelectorAll("[fill]")) e.setAttribute("fill", currentColor);
@@ -237,12 +248,16 @@ class Render {
         requestAnimationFrame(() => this.renderInfo());
 
         if (promises.length > 0) {
-            return new Promise((res, rej) => {
+            return new Promise((res, _) => {
                 Promise.all(promises).then(_ => {
                     requestAnimationFrame(() => { res() });
                 });
             });
         }
+
+        return new Promise((res, _) => {
+            requestAnimationFrame(() => { res() });
+        });
     }
 
     hideLine(line) {

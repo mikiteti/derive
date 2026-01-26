@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Neuton:ital,wght@0,200;0,300;0,400;0,700;0,800;1,400&family=Playpen+Sans:wght@100..800&display=swap&family=Simonetta:ital,wght@0,400;0,900;1,400;1,900&display=swap');
+
 :root {
     --color-bg: rgb(40, 42, 54);
     --color-text: rgb(248, 248, 243);
@@ -16,9 +18,12 @@
     --math-font-size: 1;
     --small-font-size: 0.67;
     --large-font-size: 1.17;
-    --DM-font-size: 1;
-    --IM-font-size: 0.92;
-    --line-height: 1.25;
+    --DM-font-size: 1.15;
+    --IM-font-size: 1.15;
+    --IM-editing-font-size: 1.15;
+    /* --line-height: 1.25; */
+    --line-height: 1.2;
+    /* --line-padding: 2px; */
 
     /* CSS HEX */
     --baby-blue-ice: #94b1ffff;
@@ -30,14 +35,20 @@
     --color-accent: var(--baby-blue-ice);
     --color-bg: var(--shadow-grey);
     --color-math: var(--light-gold);
+
+    /* --font-face: "neuton"; */
 }
 
 .dim {
     --color-text: rgb(200, 200, 200);
 }
 
+.dim .IM {
+    filter: brightness(0.8);
+}
+
 * {
-    text-decoration-thickness: initial;
+    /* text-decoration-thickness: initial; */
     text-shadow: none;
 }
 
@@ -109,6 +120,7 @@
     content: unset;
 }
 
-.IM {
-    font-size: 1em !important;
+.textarea .DM:has(+ p + .DM) mjx-container[display] {
+    /* not last display math */
+    margin-bottom: 0.2em;
 }

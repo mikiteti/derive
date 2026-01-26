@@ -1,5 +1,5 @@
 import { Line, Leaf, Node, Doc } from "./classes.js";
-import { nodeSizes, checkTreeStructure, showTreeStructure } from "../assets.js";
+import { nodeSizes } from "../assets.js";
 
 const newDoc = ({ editor, file } = {}) => {
     let lines = file.content.map(line => new Line({

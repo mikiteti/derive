@@ -48,9 +48,9 @@ class History {
         return () => {
             for (let step of steps) step();
             this.editor.doc.change.runCallbacks();
-            setTimeout(() => { // TODO: find out why caret behaves badly on startup
-                this.editor.input.caret.placeAllAt(undefined, { keepFixedEnd: -1 });
-            }, 200);
+            // setTimeout(() => { // probably solved by renderLine returning a promise that placeAt awaits
+            this.editor.input.caret.placeAllAt(undefined, { keepFixedEnd: -1 });
+            // }, 200);
         }
     }
 

@@ -31,7 +31,9 @@
     --large-font-size: 1.4;
     --DM-font-size: 0.85;
     --line-height: 1.1;
-    --IM-font-size: 0.8;
+    --line-padding: 0;
+    --IM-font-size: 0.9;
+    --IM-editing-font-size: 0.8;
 }
 
 @font-face {
@@ -100,7 +102,7 @@
     text-decoration-thickness: var(--text-decoration-thickness);
 }
 
-*:not(.DM *) {
+*:not(.DM *, .IM *) {
     /* font-family: 'author', sans-serif; */
     font-family: 'tex', var(--font-face);
 }
@@ -140,6 +142,7 @@ html {
 .textarea p {
     margin: 0;
     line-height: calc(var(--line-height) * var(--font-size));
+    padding: var(--line-padding) 0;
 }
 
 html.lineNumbers .textarea p {
@@ -243,11 +246,11 @@ html.lineNumbers .textarea p.math::before {
 }
 
 .Bold {
-    font-weight: var(--Bold-weight);
+    font-weight: var(--Bold-weight) !important;
 }
 
 .bold {
-    font-weight: var(--bold-weight);
+    font-weight: var(--bold-weight) !important;
 }
 
 .accent {
@@ -260,7 +263,7 @@ html.lineNumbers .textarea p.math::before {
     text-transform: uppercase;
 }
 
-::highlight(selection) {
+:not(.wrapper.editingSource .IM *)::highlight(selection) {
     background-color: var(--color-highlight-bg);
     color: var(--color-highlight);
 }
@@ -272,7 +275,7 @@ html.lineNumbers .textarea p.math::before {
 
 .DM {
     font-size: calc(var(--font-size) * var(--DM-font-size));
-    overflow-x: scroll;
+    overflow-x: auto;
     overflow-y: hidden;
     scrollbar-width: thin;
 }
@@ -337,7 +340,7 @@ html.lineNumbers .textarea p.math::before {
     /* color: var(--color-math) !important; */
     pointer-events: all !important;
     vertical-align: baseline;
-    font-size: 0.9em;
+    font-size: calc(var(--IM-font-size) * var(--font-size));
 }
 
 .wrapper.editingSource .IM {
@@ -348,8 +351,9 @@ html.lineNumbers .textarea p.math::before {
     transform: translate(-50%, -100%);
     padding: 5px;
     width: max-content;
-    font-size: calc(var(--IM-font-size) * var(--font-size));
+    font-size: calc(var(--IM-editing-font-size) * var(--font-size));
     text-shadow: 2px 4px 3px rgba(0, 0, 0, 0.3);
+    color: white;
 }
 
 .opaque,

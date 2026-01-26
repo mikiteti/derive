@@ -33,7 +33,7 @@ const createCommandSet = (editor) => {
             });
         },
         "Tab": () => {
-            if (editor.input.snippets.tabstops.length > 0) { // TODO
+            if (editor.input.snippets.tabstops.length > 0) {
                 editor.input.snippets.jumpToNextTabStops();
                 return;
             }

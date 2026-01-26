@@ -73,10 +73,8 @@ class SingleCaret {
         if (hideMath && this.position.Line.decos.has("math")) this.editor.render.revealLine(this.position.Line);
         this.position.Line.unrenderedChanges.add("caret");
         if (renderLines[0] !== this.position.Line) renderLines.push(this.position.Line);
-        for (let line of renderLines) {
-            let promise = this.editor.render.renderLine(line); // if inline math needs to be rendered, wait for it
-            if (promise) await promise;
-        }
+        let promises = renderLines.map(line => this.editor.render.renderLine(line));
+        await Promise.all(promises);
         let line = this.position.Line;
 
         const walker = document.createTreeWalker(line.element, NodeFilter.SHOW_TEXT);

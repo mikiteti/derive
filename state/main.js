@@ -205,9 +205,9 @@ class State {
             this.editor = editor;
             this.focus = editor;
         }
-        setTimeout(() => { // TODO: find out why caret behaves badly on startup
-            editor.input.caret?.placeAllAt();
-        }, 200);
+        // setTimeout(() => { // probably solved by renderLine returning a promise that placeAt awaits
+        editor.input.caret?.placeAllAt();
+        // }, 200);
         queueMicrotask(() => {
             editor.render.textarea.animate([
                 { opacity: "0" },
@@ -342,11 +342,11 @@ class State {
     }
 
     fuzzyFind(string = "", array) {
-        string = string.toLowerCase();
+        string = string.toLowerCase().normalize("NFD").replace(/\p{M}/gu, "");
 
         return array
             .map(e => {
-                const name = e.name.toLowerCase();
+                const name = e.name.toLowerCase().normalize("NFD").replace(/\p{M}/gu, "");
                 let score = 0;
                 if (name === string) score += 10;
                 else if (name.startsWith(string)) score += 5;

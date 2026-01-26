@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Draw</title>
+
+    <style>
+        :root {
+            --color-bg: rgb(40, 42, 54);
+            --color-text: rgb(248, 248, 243);
+            --color-yellow: rgb(221, 155, 81);
+            --color-purple: rgb(187, 175, 244);
+            --color-accent: var(--color-purple);
+            --color-math: var(--color-accent);
+            --color-highlight-bg: rgba(255, 255, 255, 0.2);
+            --color-highlight: unset;
+            --font-size: 22px;
+            --font-face: 'author';
+            --font-weight: 300;
+
+            /* --bold-weight: 900; */
+            /* --Bold-weight: 600; */
+            --math-font-size: 1;
+            --small-font-size: 0.67;
+            --large-font-size: 1.17;
+            --DM-font-size: 1;
+            --IM-font-size: 0.92;
+            --line-height: 1.25;
+
+            /* CSS HEX */
+            --baby-blue-ice: #94b1ffff;
+            --shadow-grey: #272838ff;
+            --light-gold: #f3de8aff;
+            --muted-olive: #a2be8aff;
+            --sea-green: #5c946eff;
+
+            --color-accent: var(--baby-blue-ice);
+            --color-bg: var(--shadow-grey);
+            --color-math: var(--light-gold);
+        }
+
+        html,
+        body {
+            margin: 0;
+            min-height: 100vh;
+            width: 100vw;
+            background-color: var(--color-bg);
+            color: var(--color-text);
+        }
+
+        .wrapper {
+            position: absolute;
+            left: 50vw;
+            top: 50vh;
+            transform: translate(-50%, -50%);
+            border: 1px solid #fff3;
+            width: 80vmin;
+            height: 80vmin;
+            background-image: radial-gradient(circle, #9995 1px, transparent 2px);
+            background-size: 8vmin 8vmin;
+            background-position: 0 0;
+        }
+
+        .canvas polyline,
+        .canvas path,
+        .canvas ellipse,
+        .canvas rect {
+            stroke-width: 5px;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            fill: transparent;
+            stroke: white;
+        }
+
+        .overlay .primary {
+            stroke: white;
+            fill: var(--color-bg);
+            stroke-width: 3px;
+        }
+
+        .overlay .secondary {
+            stroke: var(--baby-blue-ice);
+            fill: var(--color-bg);
+            stroke-width: 3px;
+        }
+
+        .overlay .primary:hover,
+        .overlay .secondary:hover {
+            fill: var(--color-accent);
+        }
+
+        .overlay .boundingRect * {
+            stroke: var(--color-accent);
+            fill: transparent;
+            stroke-width: 2px;
+        }
+
+        .overlay .corner {
+            stroke: var(--color-accent);
+            stroke-width: 2px;
+            fill: var(--color-bg);
+        }
+    </style>
+</head>
+
+<body>
+    <svg width="800" height="800" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg" class="wrapper">
+        <g class="canvas"></g>
+        <g class="overlay">
+            <g class="boundingRect"></g>
+            <g class="nodes"></g>
+        </g>
+    </svg>
+    <div id="toolbar"></div>
+
+    <script src="draw/main.js"></script>
+</body>
+
+</html>

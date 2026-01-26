@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="dotGrid" width="20" height="20" patternUnits="userSpaceOnUse" >
+      <circle cx="1" cy="1" r="1" fill="#999" style="fill: #999" />
+    </pattern>
+  </defs>
+</svg>

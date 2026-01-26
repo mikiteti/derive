@@ -25,35 +25,35 @@ const checkTreeStructure = (doc) => {
     if (errorCounter === 0) console.log("%c Nothing to see here, everything is conducting themselves", "color: green; font-weight: bold");
 }
 
-const showTreeStructure = (doc) => { // TODO
-    function drawTree(node, prefix = "", isLast = true) {
-        let output = "";
-
-        // Choose the proper branch connector
-        const connector = prefix === ""
-            ? ""                             // root has no connector
-            : (isLast ? "└─ " : "├─ ");
-
-        // Print the current node
-        output += prefix + connector + node.text + "\n";
-
-        // Prepare new prefix for children
-        const newPrefix = prefix + (isLast ? "   " : "│  ");
-
-        // Recurse into children (if any)
-        if (!node.isLine) {
-            node.children.forEach((child, i) => {
-                const last = i === node.children.length - 1;
-                output += drawTree(child, newPrefix, last);
-            });
-        }
-
-        return output;
-    }
-
-
-    console.log(drawTree(doc));
-}
+// const showTreeStructure = (doc) => {
+//     function drawTree(node, prefix = "", isLast = true) {
+//         let output = "";
+//
+//         // Choose the proper branch connector
+//         const connector = prefix === ""
+//             ? ""                             // root has no connector
+//             : (isLast ? "└─ " : "├─ ");
+//
+//         // Print the current node
+//         output += prefix + connector + node.text + "\n";
+//
+//         // Prepare new prefix for children
+//         const newPrefix = prefix + (isLast ? "   " : "│  ");
+//
+//         // Recurse into children (if any)
+//         if (!node.isLine) {
+//             node.children.forEach((child, i) => {
+//                 const last = i === node.children.length - 1;
+//                 output += drawTree(child, newPrefix, last);
+//             });
+//         }
+//
+//         return output;
+//     }
+//
+//
+//     console.log(drawTree(doc));
+// }
 
 const checkSpeed = () => {
     let abc = "ABCDEFGHIJKLMNOPQRSTUVWXYZáéíóöőúüűzabcdefghijklmnopqrstuvwxyzÁÉÍÓÖŐÚÜŰ 1234567890!@#$%^&*()-=_+[]\\{}|;':.".split("").concat(Array(10).fill("\n"));
@@ -105,7 +105,7 @@ const getColumnAt = (element, x, y, { style = "bar" } = {}) => {
         index += text.length;
     }
 
-    return index - 1 - (style !== "bar"); // not between any two characters, returning last possible position
+    return Math.max(0, index - 1 - (style !== "bar")); // not between any two characters, returning last possible position
 }
 
 // const findFirstRectBorder = (node, from = 0, to = node.textContent.length) => {
@@ -422,4 +422,4 @@ date: ${new Date().toISOString().slice(0, 10)}
     return content;
 }
 
-export { nodeSizes, checkTreeStructure, showTreeStructure, getColumnAt, findXIndecesInLine, getVisualLineAt, exportFile, nodeAt, exportToMD };
+export { nodeSizes, checkTreeStructure, getColumnAt, findXIndecesInLine, getVisualLineAt, exportFile, nodeAt, exportToMD };

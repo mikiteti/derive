@@ -24,7 +24,7 @@ const createCommandSet = (editor) => {
         return (...args) => (Math.min(...funcs.map(func => func(...args))));
     }
 
-    const findStartOfWORD = (pos, count = 1) => { // TODO: implement count
+    const findStartOfWORD = (pos, count = 1) => {
         const getType = (char) => {
             return blank.includes(char) ? 0 : 1;
         }
@@ -46,7 +46,7 @@ const createCommandSet = (editor) => {
         return findStartOfWord(parsePosition(pos.Line.from - 1), count - c);
     }
 
-    const findEndOfWORD = (pos, count = 1) => { // TODO: implement count
+    const findEndOfWORD = (pos, count = 1) => {
         const getType = (char) => {
             return blank.includes(char) ? 0 : 1;
         }
@@ -206,10 +206,10 @@ const createCommandSet = (editor) => {
         "h!": (count = 1) => (pos => pos.index - count),
         "l!": (count = 1) => (pos => pos.index + count),
         "b": (count = 1) => (pos => { return findStartOfWord(parsePosition(pos.index - 1), count) }),
-        "w": (count = 1) => (pos => { return findStartOfWord(parsePosition(findEndOfWord(pos, (blank.includes(doc.charAt(pos.index)) ? 0 : 1) + count)), 1) }), // TODO: obviously
+        "w": (count = 1) => (pos => { return findStartOfWord(parsePosition(findEndOfWord(pos, (blank.includes(doc.charAt(pos.index)) ? 0 : 1) + count)), 1) }),
         "e": (count = 1) => (pos => { return findEndOfWord(parsePosition(pos.index + 1), count) }),
         "B": (count = 1) => (pos => { return findStartOfWORD(parsePosition(pos.index - 1), count) }),
-        "W": (count = 1) => (pos => { return findStartOfWORD(parsePosition(findEndOfWORD(pos, (blank.includes(doc.charAt(pos.index)) ? 0 : 1) + count)), 1) }), // TODO: obviously
+        "W": (count = 1) => (pos => { return findStartOfWORD(parsePosition(findEndOfWORD(pos, (blank.includes(doc.charAt(pos.index)) ? 0 : 1) + count)), 1) }),
         "E": (count = 1) => (pos => { return findEndOfWORD(parsePosition(pos.index + 1), count) }),
         // "j": (count = 1) => (pos => {
         //     let line = doc.line(pos.Line.number + count);

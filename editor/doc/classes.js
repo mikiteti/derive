@@ -208,7 +208,7 @@ class Doc extends Node {
         return currentNode;
     }
 
-    linesBetween(line1, line2) { // ends excluded, TODO
+    linesBetween(line1, line2) { // ends excluded
         // if (!line1.parent) {
         //     line1 = this.line(line1);
         //     line2 = this.line(line2);
