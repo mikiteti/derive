@@ -18,7 +18,7 @@
     --math-font-size: 1;
     --small-font-size: 0.67;
     --large-font-size: 1.17;
-    --DM-font-size: 1.15;
+    --DM-font-size: 1;
     --IM-font-size: 1.15;
     --IM-editing-font-size: 1.15;
     /* --line-height: 1.25; */
@@ -120,7 +120,7 @@
     content: unset;
 }
 
-.textarea .DM:has(+ p + .DM) mjx-container[display] {
-    /* not last display math */
-    margin-bottom: 0.2em;
-}
+/* .textarea .DM:has(+ p + .DM) mjx-container[display] { */
+/* not last display math */
+/*     margin-bottom: 0.2em; */
+/* } */
