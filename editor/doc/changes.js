@@ -113,7 +113,11 @@ class Change {
             let text = line1.text.substring(0, from - line1.from) + line1.text.substring(to - line1.from);
             line1.update(text);
 
-            for (let pos of positionsToShift) pos[0].reassign(pos[1]);
+            for (let pos of positionsToShift) {
+                let changeOutside = !!pos[0].range?.isMark && positionsToShift.map(e => e[0]).indexOf(pos[0].pair) !== -1;
+                pos[0].reassign(pos[1], { changeOutside });
+            }
+
             if (markStickLeft) this.stickLeft = line1.positions.filter(e => (e.index === from && positionsToShift.map(e => e[0]).indexOf(e) === -1));
             for (let pos of positionsToMaybeDelete) pos.stickWhenDeleted ? pos.reassign(from) : pos.delete();
 
@@ -141,8 +145,8 @@ class Change {
         line1.update(newText);
 
         for (let pos of positionsToShift) {
-            let justDoIt = !!pos[0].range?.isMark && positionsToShift.map(e => e[0]).indexOf(pos[0].pair) !== -1;
-            pos[0].reassign(pos[1], { justDoIt });
+            let changeOutside = !!pos[0].range?.isMark && positionsToShift.map(e => e[0]).indexOf(pos[0].pair) !== -1;
+            pos[0].reassign(pos[1], { changeOutside });
         }
         for (let pos of positionsToMaybeDelete) pos.stickWhenDeleted ? pos.reassign(from) : pos.delete();
 
@@ -219,7 +223,10 @@ class Change {
             let text = line.text.substring(0, at - line.from) + string + line.text.substring(at - line.from);
             line.update(text);
 
-            for (let pos of positionsToShift) pos[0].reassign(pos[1]);
+            for (let pos of positionsToShift) {
+                let changeOutside = !!pos[0].range?.isMark && positionsToShift.map(e => e[0]).indexOf(pos[0].pair) !== -1;
+                pos[0].reassign(pos[1], { changeOutside });
+            }
 
             let changedLines = [line]
             if (!noCallback) this.runCallbacks({ changedLines });
@@ -263,8 +270,8 @@ class Change {
 
         for (let pos of positionsToShift) {
             let initialLine = pos[0].Line;
-            let justDoIt = !!pos[0].range?.isMark && positionsToShift.map(e => e[0]).indexOf(pos[0].pair) !== -1;
-            pos[0].reassign(pos[1], { justDoIt });
+            let changeOutside = !!pos[0].range?.isMark && positionsToShift.map(e => e[0]).indexOf(pos[0].pair) !== -1;
+            pos[0].reassign(pos[1], { changeOutside });
             if (pos[0].caret) {
                 initialLine.unrenderedChanges.add("caret");
                 this.editor.render.renderLine(initialLine);

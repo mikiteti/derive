@@ -540,81 +540,53 @@ class Position {
         return this.Line.number;
     }
 
-    handleMarkReassignment(pos, { justDoIt = false } = {}) { // TODO
+    handleMarkReassignment(pos, changeOutside) { // TODO
         if (!this.range || !this.range.isMark) return;
-        let newLine = this.doc.lineAt(pos);
-        if (newLine === this.Line) return;
-        if (justDoIt) {
+        if (changeOutside) { // both ends can safely change
             this.Line.removeMark(this.range);
             this.doc.lineAt(pos).addMark(this.range);
             return;
         }
-        if (pos > this.index) { // one of the ends shifted down
-            let line1 = this.pair.Line.number, line2 = this.doc.lineAt(pos).number;
-            // check if everything up to pos has this mark -- then delete up to pos, otherwise expand
-            let deletion = false;
-            if (this.index < this.pair.index && this.pair.index >= this.pair.Line.to) {
-                deletion = true;
-                for (let i = line1 + 1; i < line2; i++) {
-                    let line = this.doc.line(i);
-                    if (line.marks.filter(
-                        e => e.role === this.range.role && e.start.index === line.from && e.end.index === line.to
-                    ).length === 0) {
-                        deletion = false;
-                        break;
-                    }
-                }
-                if (deletion) {
-                    let line = this.doc.line(line2);
-                    if (line.marks.filter(
-                        e => e.role === this.range.role && e.start.index === line.from && e.end.index >= pos
-                    ).length === 0) deletion = false;
-                }
-            }
-            if (deletion) {
-                this.Line.deleteMark(this.range);
-                for (let i = line1 + 1; i < line2; i++) {
-                    let line = this.doc.line(i);
-                    for (let mark of line.marks.filter(e => e.role === this.range.role)) line.deleteMark(mark);
-                }
-                let line = this.doc.line(line2);
-                let markAlreadyThere = line.marks.filter(e => e.role === this.range.role && e.start.index === line.from)[0], end = markAlreadyThere?.end.index;
-                if (markAlreadyThere) {
-                    line.deleteMark(markAlreadyThere);
-                    line.addNewMark({ from: pos, to: end, role: this.range.role });
-                }
-            } else {
-                for (let i = line1 + 1; i < line2; i++) { // remove similar marks from intermediate lines and mark them from from to to
-                    let line = this.doc.line(i);
-                    for (let mark of line.marks.filter(e => e.role === this.range.role)) line.deleteMark(mark);
-                    line.addNewMark({ from: line.from, to: line.to, role: this.range.role });
-                }
-                let line = this.doc.line(line2); // remove similar marks from last line up to pos, then add a mark encompassing all
-                let marksAlreadyThere = line.marks.filter(e => e.role === this.range.role && e.start.index < pos);
-                if (marksAlreadyThere.length === 0) line.addNewMark({ from: line.from, to: pos, role: this.range.role });
-                else {
-                    let end = Math.max(pos, ...marksAlreadyThere.map(e => e.end.index));
-                    for (let mark of marksAlreadyThere) line.deleteMark(mark);
-                    line.addNewMark({ from: line.from, to: end, role: this.range.role });
-                }
-                for (let mark of this.Line.marks.filter(e => e.role === this.range.role && e.start.index > this.index))
-                    this.Line.deleteMark(mark);
-                return this.Line.to;
-            }
-        } else {
+        if (pos < this.index && pos >= this.pair.index || pos > this.index && pos <= this.pair.index) return; // range gets shorter: okay anytime
+        let expandsRight = pos > this.index;
+        if (pos > this.Line.to) {
+            this.stickLeftOnInsert = true;
+            return this.Line.to;
+        }
+        if (pos < this.Line.from) {
+            this.stickLeftOnInsert = false;
+            return this.Line.from;
+        }
+        console.log({ expandsRight });
+        let closestMark = expandsRight
+            ? this.Line.marks.filter(e => e.start.index >= this.index && e !== this.range).sort((e, f) => e.start.index - f.start.index)[0]
+            : this.Line.marks.filter(e => e.end.index <= this.index && e !== this.range).sort((e, f) => f.end.index - e.end.index)[0];
+
+        console.log({ closestMark });
+        if (closestMark == undefined) return; // no marks in the line to consolidate
+        if (expandsRight && closestMark.start.index + (closestMark.role !== this.range.role) > pos) return; // marks far enough to the right
+        if (!expandsRight && closestMark.end.index - (closestMark.role !== this.range.role) < pos) return; // marks far enough to the left
+        console.log("about to consolidate with closest mark");
+        if (closestMark.role === this.range.role) {
+            console.log("closest mark has the same role, gonna merge");
+            this.delete();
+            closestMark[expandsRight ? "start" : "end"].reassign(this.pair.index, { changeOutside: true });
             return -1;
+        } else {
+            console.log("closest mark is different, only gonna expand to its closest end");
+            return closestMark[expandsRight ? "start" : "end"].index;
         }
     }
 
-    reassign(pos, { justDoIt = false } = {}) {
+    reassign(pos, { changeOutside = false } = {}) {
         if (pos === this.index) return this;
         if (this.Line) this.Line.removePosition(this);
-        let newPos = this.handleMarkReassignment(pos, { justDoIt });
+        let newPos = this.handleMarkReassignment(pos, changeOutside);
         if (newPos === -1) return;
         if (newPos !== undefined) pos = newPos;
         this.assign(pos);
 
-        if (this.range && !this.range.deleted) this.range.reassignCallback({ justDoIt });
+        if (this.range && !this.range.deleted) this.range.reassignCallback(changeOutside);
 
         return this;
     }
@@ -680,6 +652,10 @@ class Range {
         } else return bigger;
     }
 
+    get text() {
+        return this.editor.doc.textBetween(this.start, this.end);
+    }
+
     delete() {
         if (this.Range) this.editor.render.selection.removeRange(this);
         this.from = undefined;
@@ -709,9 +685,9 @@ class Mark extends Range {
         this.to = undefined;
     }
 
-    reassignCallback({ justDoIt = false }) {
+    reassignCallback(changeOutside) {
         this.from.Line.unrenderedChanges.add("marks");
-        if (!justDoIt && this.to.index >= this.from.index && this.to.index - (this.to.stickLeftOnInsert ? 1 : 0) <= this.from.index - (this.from.stickLeftOnInsert ? 1 : 0)) {
+        if (!changeOutside && this.to.index >= this.from.index && this.to.index - (this.to.stickLeftOnInsert ? 1 : 0) <= this.from.index - (this.from.stickLeftOnInsert ? 1 : 0)) {
             console.log("deleting mark");
             this.from.Line.deleteMark(this);
         }
