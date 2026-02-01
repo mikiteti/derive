@@ -114,8 +114,8 @@ class Change {
             line1.update(text);
 
             for (let pos of positionsToShift) {
-                let changeOutside = !!pos[0].range?.isMark && positionsToShift.map(e => e[0]).indexOf(pos[0].pair) !== -1;
-                pos[0].reassign(pos[1], { changeOutside });
+                // let changeOutside = !!pos[0].range?.isMark && positionsToShift.map(e => e[0]).indexOf(pos[0].pair) !== -1;
+                pos[0].reassign(pos[1], { changedAt: from, inserted: false });
             }
 
             if (markStickLeft) this.stickLeft = line1.positions.filter(e => (e.index === from && positionsToShift.map(e => e[0]).indexOf(e) === -1));
@@ -145,8 +145,8 @@ class Change {
         line1.update(newText);
 
         for (let pos of positionsToShift) {
-            let changeOutside = !!pos[0].range?.isMark && positionsToShift.map(e => e[0]).indexOf(pos[0].pair) !== -1;
-            pos[0].reassign(pos[1], { changeOutside });
+            // let changeOutside = !!pos[0].range?.isMark && positionsToShift.map(e => e[0]).indexOf(pos[0].pair) !== -1;
+            pos[0].reassign(pos[1], { changedAt: from, inserted: false });
         }
         for (let pos of positionsToMaybeDelete) pos.stickWhenDeleted ? pos.reassign(from) : pos.delete();
 
@@ -224,8 +224,8 @@ class Change {
             line.update(text);
 
             for (let pos of positionsToShift) {
-                let changeOutside = !!pos[0].range?.isMark && positionsToShift.map(e => e[0]).indexOf(pos[0].pair) !== -1;
-                pos[0].reassign(pos[1], { changeOutside });
+                // let changeOutside = !!pos[0].range?.isMark && positionsToShift.map(e => e[0]).indexOf(pos[0].pair) !== -1;
+                pos[0].reassign(pos[1], { changetdAt: at, inserted: true });
             }
 
             let changedLines = [line]
@@ -270,8 +270,8 @@ class Change {
 
         for (let pos of positionsToShift) {
             let initialLine = pos[0].Line;
-            let changeOutside = !!pos[0].range?.isMark && positionsToShift.map(e => e[0]).indexOf(pos[0].pair) !== -1;
-            pos[0].reassign(pos[1], { changeOutside });
+            // let changeOutside = !!pos[0].range?.isMark && positionsToShift.map(e => e[0]).indexOf(pos[0].pair) !== -1;
+            pos[0].reassign(pos[1], { changedAt: at, inserted: true });
             if (pos[0].caret) {
                 initialLine.unrenderedChanges.add("caret");
                 this.editor.render.renderLine(initialLine);

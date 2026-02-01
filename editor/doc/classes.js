@@ -540,53 +540,70 @@ class Position {
         return this.Line.number;
     }
 
-    handleMarkReassignment(pos, changeOutside) { // TODO
-        if (!this.range || !this.range.isMark) return;
-        if (changeOutside) { // both ends can safely change
-            this.Line.removeMark(this.range);
-            this.doc.lineAt(pos).addMark(this.range);
-            return;
-        }
-        if (pos < this.index && pos >= this.pair.index || pos > this.index && pos <= this.pair.index) return; // range gets shorter: okay anytime
-        let expandsRight = pos > this.index;
-        if (pos > this.Line.to) {
-            this.stickLeftOnInsert = true;
-            return this.Line.to;
-        }
-        if (pos < this.Line.from) {
-            this.stickLeftOnInsert = false;
-            return this.Line.from;
-        }
-        console.log({ expandsRight });
-        let closestMark = expandsRight
-            ? this.Line.marks.filter(e => e.start.index >= this.index && e !== this.range).sort((e, f) => e.start.index - f.start.index)[0]
-            : this.Line.marks.filter(e => e.end.index <= this.index && e !== this.range).sort((e, f) => f.end.index - e.end.index)[0];
+    handleMarkReassignment(pos, changedAt, inserted) { // TODO
+        if (!this.range || !this.range.isMark || !this.pair) return;
+        if (changedAt == undefined || inserted == undefined) return;
+        if (changedAt > Math.max(this.index, this.pair.index)) changedAt = 1;
+        else if (changedAt < Math.min(this.index, this.pair.index)) changedAt = -1;
+        else changedAt = 0;
 
-        console.log({ closestMark });
-        if (closestMark == undefined) return; // no marks in the line to consolidate
-        if (expandsRight && closestMark.start.index + (closestMark.role !== this.range.role) > pos) return; // marks far enough to the right
-        if (!expandsRight && closestMark.end.index - (closestMark.role !== this.range.role) < pos) return; // marks far enough to the left
-        console.log("about to consolidate with closest mark");
-        if (closestMark.role === this.range.role) {
-            console.log("closest mark has the same role, gonna merge");
-            this.delete();
-            closestMark[expandsRight ? "start" : "end"].reassign(this.pair.index, { changeOutside: true });
-            return -1;
-        } else {
-            console.log("closest mark is different, only gonna expand to its closest end");
-            return closestMark[expandsRight ? "start" : "end"].index;
+        if (inserted) {
+            if (changedAt == -1) return; // text inserted before mark
+            if (changedAt == 1) return; // text inserted after mark
+
+            // text inserted inside mark
+            if (pos > this.Line.to) {
+                // this.stickLeftOnInsert = true;
+                return this.Line.to;
+            }
         }
+
+
+        // if (changeOutside) { // both ends can safely change
+        //     this.Line.removeMark(this.range);
+        //     this.doc.lineAt(pos).addMark(this.range);
+        //     return;
+        // }
+        // if (pos < this.index && pos >= this.pair.index || pos > this.index && pos <= this.pair.index) return; // range gets shorter: okay anytime
+        // let expandsRight = pos > this.index;
+        // if (pos > this.Line.to) {
+        //     this.stickLeftOnInsert = true;
+        //     return this.Line.to;
+        // }
+        // if (pos < this.Line.from) {
+        //     this.stickLeftOnInsert = false;
+        //     return this.Line.from;
+        // }
+        // console.log({ expandsRight });
+        // let closestMark = expandsRight
+        //     ? this.Line.marks.filter(e => e.start.index >= this.index && e !== this.range).sort((e, f) => e.start.index - f.start.index)[0]
+        //     : this.Line.marks.filter(e => e.end.index <= this.index && e !== this.range).sort((e, f) => f.end.index - e.end.index)[0];
+        //
+        // console.log({ closestMark });
+        // if (closestMark == undefined) return; // no marks in the line to consolidate
+        // if (expandsRight && closestMark.start.index + (closestMark.role !== this.range.role) > pos) return; // marks far enough to the right
+        // if (!expandsRight && closestMark.end.index - (closestMark.role !== this.range.role) < pos) return; // marks far enough to the left
+        // console.log("about to consolidate with closest mark");
+        // if (closestMark.role === this.range.role) {
+        //     console.log("closest mark has the same role, gonna merge");
+        //     this.delete();
+        //     closestMark[expandsRight ? "start" : "end"].reassign(this.pair.index, { changeOutside: true });
+        //     return -1;
+        // } else {
+        //     console.log("closest mark is different, only gonna expand to its closest end");
+        //     return closestMark[expandsRight ? "start" : "end"].index;
+        // }
     }
 
-    reassign(pos, { changeOutside = false } = {}) {
+    reassign(pos, { changedAt, inserted } = {}) {
         if (pos === this.index) return this;
         if (this.Line) this.Line.removePosition(this);
-        let newPos = this.handleMarkReassignment(pos, changeOutside);
+        let newPos = this.handleMarkReassignment(pos, changedAt, inserted);
         if (newPos === -1) return;
         if (newPos !== undefined) pos = newPos;
         this.assign(pos);
 
-        if (this.range && !this.range.deleted) this.range.reassignCallback(changeOutside);
+        if (this.range && !this.range.deleted) this.range.reassignCallback(changedAt, inserted);
 
         return this;
     }
@@ -614,6 +631,7 @@ class Range {
         // console.log("range created from", from, "to", to);
         this.editor = editor;
         this.doc = editor.doc;
+        if (from > to) [from, to] = [to, from];
         this.from = from;
         this.to = to;
         this.role = role;
@@ -628,10 +646,8 @@ class Range {
         this.Range.setStart(...nodeAt(this.start));
         this.Range.setEnd(...nodeAt(this.end));
         if (maybeReveal && !this.Range.collapsed) {
-            console.log("revealing range", this);
             this.editor.render.selection.revealRange(this);
         } if (!maybeReveal && this.Range.collapsed) {
-            console.log("hiding range", this);
             this.editor.render.selection.hideRange(this);
         }
     }
@@ -685,9 +701,9 @@ class Mark extends Range {
         this.to = undefined;
     }
 
-    reassignCallback(changeOutside) {
+    reassignCallback(changedAt, inserted) {
         this.from.Line.unrenderedChanges.add("marks");
-        if (!changeOutside && this.to.index >= this.from.index && this.to.index - (this.to.stickLeftOnInsert ? 1 : 0) <= this.from.index - (this.from.stickLeftOnInsert ? 1 : 0)) {
+        if (!inserted && changedAt < this.to.index && changedAt > this.from.index && this.to.index >= this.from.index && this.to.index - (this.to.stickLeftOnInsert ? 1 : 0) <= this.from.index - (this.from.stickLeftOnInsert ? 1 : 0)) {
             console.log("deleting mark");
             this.from.Line.deleteMark(this);
         }
