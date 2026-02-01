@@ -239,6 +239,7 @@ class Change {
         let lastInsert = lines.at(-1);
         lines.pop();
         if (lines.at(-1) === "") lines.pop();
+        let shiftLineDecosToLastLine = firstLine.from == at;
 
         let strings = [text.slice(0, at - firstLine.from) + firstInsert, ...lines, lastInsert + text.slice(at - firstLine.from)];
         firstLine.update(strings[0]);
@@ -272,6 +273,10 @@ class Change {
 
         let changedLines = [firstLine, ...Lines]
         if (preserveDM && string === "\n" && firstLine.decos.has("math")) changedLines[1].addDeco("math");
+        if (shiftLineDecosToLastLine) for (let deco of firstLine.decos) {
+            firstLine.removeDeco(deco);
+            Lines.at(-1).addDeco(deco);
+        }
         if (!noCallback) this.runCallbacks({ changedLines });
         else this.completeCallbackList({ changedLines });
         const endState = {

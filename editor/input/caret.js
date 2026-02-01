@@ -80,6 +80,9 @@ class SingleCaret {
         const walker = document.createTreeWalker(line.element, NodeFilter.SHOW_TEXT);
         let column = 0;
 
+        let scrollX = this.editor.elements.editor.scrollLeft;
+        let scrollY = this.editor.elements.editor.scrollTop;
+
         while (walker.nextNode()) {
             let textNode = walker.currentNode;
             if (textNode.parentNode.matches("mjx-container *, .IM, .IM *")) continue;
@@ -97,10 +100,10 @@ class SingleCaret {
                     if (rects.length > 1 && rect.width == 0) rect = rects[1];
                     // Position the cursor
                     if (updateScreenX || true) { // TODO: updateScreenX -- if inline math expands (unknown prior to jumping), X positions shift
-                        // this.screenPosition.x = (rect.left + rect.right) / 2 + window.scrollX;
-                        this.screenPosition.x = rect.left + window.scrollX;
+                        // this.screenPosition.x = (rect.left + rect.right) / 2 + scrollX;
+                        this.screenPosition.x = rect.left + scrollX;
                     }
-                    this.screenPosition.y = rect.top + window.scrollY;
+                    this.screenPosition.y = rect.top + scrollY;
                     this.screenPosition.height = rect.height;
                     this.fixedEnd ? this.element.classList.remove("smooth") : this.element.classList.add("smooth");
                     switch (this.editor.input.caret.style) {
@@ -108,8 +111,8 @@ class SingleCaret {
                             // this.element.innerHTML = "";
                             this.element.style.borderWidth = "0px";
                             this.element.style.backgroundColor = "currentColor";
-                            this.element.style.top = rect.top + window.scrollY + "px";
-                            this.element.style.left = rect.left + window.scrollX + "px";
+                            this.element.style.top = rect.top + scrollY + "px";
+                            this.element.style.left = rect.left + scrollX + "px";
                             this.element.style.height = rect.height + "px";
                             this.element.style.width = "1px";
                             break;
@@ -122,32 +125,32 @@ class SingleCaret {
                             // this.element.style.textTransform = styles.getPropertyValue("text-transform");
                             this.element.style.borderWidth = "0px";
                             this.element.style.backgroundColor = "currentColor";
-                            this.element.style.top = rect.top + window.scrollY + "px";
-                            this.element.style.left = rect.left + window.scrollX + "px";
+                            this.element.style.top = rect.top + scrollY + "px";
+                            this.element.style.left = rect.left + scrollX + "px";
                             this.element.style.height = rect.height + "px";
                             this.element.style.width = rect.width + "px";
                             break;
                         case "underline":
                             this.element.style.borderWidth = "0px";
                             this.element.style.backgroundColor = "currentColor";
-                            this.element.style.top = rect.top + rect.height * 0.9 - .5 + window.scrollY + "px";
-                            this.element.style.left = rect.left + window.scrollX + "px";
+                            this.element.style.top = rect.top + rect.height * 0.9 - .5 + scrollY + "px";
+                            this.element.style.left = rect.left + scrollX + "px";
                             this.element.style.height = "1px";
                             this.element.style.width = rect.width + "px";
                             break;
                         case "overline":
                             this.element.style.borderWidth = "0px";
                             this.element.style.backgroundColor = "currentColor";
-                            this.element.style.top = rect.top + rect.height * 0.1 - .5 + window.scrollY + "px";
-                            this.element.style.left = rect.left + window.scrollX + "px";
+                            this.element.style.top = rect.top + rect.height * 0.1 - .5 + scrollY + "px";
+                            this.element.style.left = rect.left + scrollX + "px";
                             this.element.style.height = "1px";
                             this.element.style.width = rect.width + "px";
                             break;
                         case "hollow":
                             this.element.style.borderWidth = "1px";
                             this.element.style.backgroundColor = "transparent";
-                            this.element.style.top = rect.top - 1 + window.scrollY + "px";
-                            this.element.style.left = rect.left - 1 + window.scrollX + "px";
+                            this.element.style.top = rect.top - 1 + scrollY + "px";
+                            this.element.style.left = rect.left - 1 + scrollX + "px";
                             this.element.style.height = rect.height - 1 + "px";
                             this.element.style.width = rect.width - 1 + "px";
                             break;
@@ -160,8 +163,8 @@ class SingleCaret {
         }
 
         if (this === this.editor.input.caret.carets[0]) {
-            if (window.scrollY - this.screenPosition.y > -200) window.scrollTo({ behavior: "smooth", top: this.screenPosition.y - 200 });
-            else if (window.scrollY + window.innerHeight - this.screenPosition.y - this.screenPosition.height < 200) window.scrollTo({ behavior: "smooth", top: this.screenPosition.y + this.screenPosition.height - window.innerHeight + 200 });
+            if (scrollY - this.screenPosition.y > -200) this.editor.elements.editor.scrollTo({ behavior: "smooth", top: this.screenPosition.y - 200 });
+            else if (scrollY + window.innerHeight - this.screenPosition.y - this.screenPosition.height < 200) this.editor.elements.editor.scrollTo({ behavior: "smooth", top: this.screenPosition.y + this.screenPosition.height - window.innerHeight + 200 });
         }
 
         // this.element.scrollIntoView({ behavior: "smooth", block: "nearest" });

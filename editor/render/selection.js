@@ -7,8 +7,7 @@ class Selection {
         this.doc = editor.doc;
 
         this.ranges = new Set();
-        this.highlight = new Highlight();
-        CSS.highlights.set("selection", this.highlight);
+        this.highlight = window.state.highlight;
     }
 
     parseRange(range) {
@@ -21,11 +20,8 @@ class Selection {
     }
 
     setRanges(ranges = []) {
-        this.highlight.clear();
-        this.ranges = new Set();
-        for (let range of ranges) {
-            this.highlight.add(this.parseRange(range));
-        }
+        this.removeRange(this.ranges);
+        this.addRange(ranges);
     }
 
     addRange(ranges) {

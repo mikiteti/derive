@@ -381,7 +381,7 @@ class DefaultSnippets {
             },
 
             {
-                from: /h([0-6])/, to: (match) => {
+                from: /h([0-6]) /, to: (match) => {
                     const n = parseInt(match[1]);
                     console.log("running h", n);
 
@@ -405,6 +405,19 @@ class DefaultSnippets {
 
                     return;
                 }, in: "At", description: "Headings", priority: 1,
+            },
+            {
+                from: "hs ", to: () => {
+                    this.editor.doc.history.newChangeGroup();
+                    this.editor.input.caret.forAll(pos => {
+                        pos.Line.addDeco(`subtitle`);
+                        this.editor.render.renderLine(pos.Line);
+                    });
+                    this.editor.input.caret.placeAllAt();
+                    this.editor.doc.history.newChangeGroup();
+
+                    return;
+                }, in: "At", description: "subtitle"
             },
 
             {

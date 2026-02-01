@@ -12,7 +12,7 @@ class Keyboard {
                     this.commandSets.push(regular.createCommandSet(this.editor));
                 });
             } else if (layout === "vim") {
-                import("./vim2.js").then(vim => {
+                import("./vim.js").then(vim => {
                     this.commandSets.push(vim.createCommandSet(this.editor));
                 });
             }

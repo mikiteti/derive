@@ -98,7 +98,16 @@ const newCommands = (state) => {
             run: () => {
                 state.reload(["file", "currentFile"]);
             }
-        }
+        },
+        {
+            name: "Create file",
+            run: async () => {
+                let [fileName] = await state.prompt("Create file", "Input the filename in the box below", { Filename: 1 });
+
+                await state.openFile(await state.createFile({ name: fileName }));
+                state.focusEditor();
+            }
+        },
 
         // {
         //     name: "Restore file",

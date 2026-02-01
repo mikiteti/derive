@@ -8,6 +8,9 @@ class State {
     constructor() {
         window.state = this;
 
+        this.highlight = new Highlight();
+        CSS.highlights.set("selection", this.highlight);
+
         this.editors = [];
         this.sendRequest("user").then(res => {
             if (res === -1) {
@@ -330,6 +333,10 @@ class State {
         this.focus = this.editor;
     }
 
+    focusEditor() {
+        this.focus = this.editor;
+    }
+
     async getFiles() {
         let res = await this.sendRequest("notes");
         if (res === -1) {
@@ -378,7 +385,6 @@ class State {
             el.classList.remove("active");
             el.classList.add("nodisplay");
         }
-        console.log({ matches });
         for (let m of matches) {
             let el = modal.querySelector(`.list [item-id="${m}"]`);
             if (el == undefined) continue;

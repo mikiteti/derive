@@ -353,16 +353,14 @@ const exportFile = (editor = window.editor) => {
 window.exportFile = exportFile;
 
 const exportToMD = (editor = window.editor) => {
-    if (window.state.files.find(e => e.id === editor.fileId) == undefined || window.state.user == undefined) return;
+    let content = ["---"];
+    let title = window.state.files.find(e => e.id == editor.fileId)?.name || editor.fileId;
+    if (title) content.push(`title: ${title}`);
+    let author = window.state.user.name;
+    if (author) content.push(`author: ${author}`);
+    content.push(`date: ${new Date().toISOString().slice(0, 10)}
+---`);
 
-
-    let content = [`---
-title: ${window.state.files.find(e => e.id == editor.fileId).name}
-author: ${window.state.user.name}
-date: ${new Date().toISOString().slice(0, 10)}
----
-
-`];
     for (let i = 0; i < editor.doc.lines; i++) {
         let line = editor.doc.line(i), text = line.text;
         if (text.trim() == "") {
@@ -398,6 +396,7 @@ date: ${new Date().toISOString().slice(0, 10)}
         else if (decos.has("h4")) text = "#### " + text;
         else if (decos.has("h5")) text = "##### " + text;
         else if (decos.has("h6")) text = "###### " + text;
+        else if (decos.has("subtitle")) text = "\\begin{subtitle}" + text + "\\end{subtitle}";
 
         if (["$"].includes(lastLine.charAt(lastLine.length - 1)) && !["$"].includes(lastLine.charAt(lastLine.length - 2))) insertEmptyLineInFront = true;
         text = text.split("$").map((e, j) => j % 2 ? e.trim() : e).join("$");

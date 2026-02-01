@@ -118,12 +118,12 @@ class Snippets {
             }
 
             if (index !== undefined) {
-                this.editor.doc.history.newChangeGroup();
+                this.editor.doc.history?.newChangeGroup();
                 console.log({ to });
                 this.editor.doc.change.noCallback({ insert: to, from: index, to: at });
                 // console.log(JSON.parse(JSON.stringify(tabstops)));
                 for (let t of tabstops) for (let i in t.positions) t.positions[i] += index;
-                this.editor.doc.history.newChangeGroup();
+                this.editor.doc.history?.newChangeGroup();
                 return tabstops;
             }
         }
@@ -174,7 +174,7 @@ class Snippets {
         if (this.tabstops.length === 0) return;
         this.tabstops[0].positions = this.tabstops[0].positions.filter(e => !e.deleted);
         requestAnimationFrame(() => {
-            this.editor.doc.history.newChangeGroup();
+            this.editor.doc.history?.newChangeGroup();
             this.editor.input.caret.updateCarets(
                 // this.tabstops[0].positions.map(e => e.index)
                 this.tabstops[0].placeholder === "" ?

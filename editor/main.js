@@ -9,6 +9,7 @@ class Editor {
         this.interactive = interactive;
 
         this.elements = { editor: document.createElement("div") };
+        this.elements.editor.classList.add("editor");
         this.elements.editor.innerHTML = `<div class="textarea"></div> <div class="placeholder" onclick="window.caret.updateCarets([window.editor.doc.chars-1])"></div> <div class="leftInfo info noisy"></div> <div class="rightInfo info noisy"></div>`;
         this.wrapper.appendChild(this.elements.editor);
         this.elements.textarea = this.elements.editor.querySelector(".textarea");
