@@ -561,15 +561,10 @@ class Position {
         }
     }
 
-    reassign(pos, { changedAt, inserted, changedTo } = {}) {
+    reassign(pos) {
         if (pos === this.index) return this;
         if (this.Line) this.Line.removePosition(this);
-        let newPos = this.handleMarkReassignment(pos, changedAt, inserted);
-        if (newPos === -1) return;
-        if (newPos !== undefined) pos = newPos;
         this.assign(pos);
-
-        if (this.range && !this.range.deleted) this.range.reassignCallback(changedAt, inserted, changedTo);
 
         return this;
     }
@@ -666,6 +661,72 @@ class Mark extends Range {
         this.to.delete();
         this.from = undefined;
         this.to = undefined;
+    }
+
+    reassign(from, to, { changedTo } = {}) {
+        console.log("reassigning mark", this, this.from.index, this.to.index, from, to);
+        if (from === this.from.index && to === this.to.index || from == undefined && to == undefined) return;
+        let initialFrom = this.from.index, initialTo = this.to.index, initialLine = this.from.Line;
+        let inserted = to > this.to.index,
+            sliding = (from !== undefined && from !== this.from.index),
+            shrinking = ((to || this.to.index) - (from || this.from.index)) < (this.to.index - this.from.index);
+        // sliding and shrinking can be true at the same time!
+
+        // <Inserted>
+        if (inserted && sliding) {
+            console.log("sliding right");
+            this.from.reassign(from);
+            this.to.reassign(to);
+            if (this.from.Line !== initialLine) {
+                console.log("updating mark's line", initialLine, this.from.Line);
+                initialLine.removeMark(this);
+                this.from.Line.addMark(this);
+            }
+            return;
+        }
+
+        if (inserted && !sliding) {
+            console.log("expanding");
+            this.to.reassign(Math.min(this.to.Line.to, to));
+            return;
+        }
+        // </Inserted>
+
+        // <Deleted>
+        if (sliding) {
+            console.log("sliding left");
+            this.from.reassign(from);
+            this.to.reassign(to);
+            if (this.from.Line !== initialLine) {
+                console.log("updating mark's line", initialLine, this.from.Line);
+                initialLine.removeMark(this);
+                this.from.Line.addMark(this);
+            }
+
+            let closestMark = this.from.Line.marks.filter(e => e !== this && e.to.index <= this.from.index).sort((a, b) => b.from.index - a.from.index)[0];
+            if (closestMark != undefined && closestMark.to.index == this.from.index) {
+                if (closestMark.role === this.role) { // merge
+                    console.log("merging marks");
+                    let start = closestMark.from.index;
+                    closestMark.delete();
+                    this.from.reassign(start);
+                } else { // make sure writing into both marks at the same time is impossible
+                    console.log("keeping distance");
+                    this.from.stickLeftOnInsert = false;
+                }
+            }
+        }
+
+        if (shrinking) {
+            console.log("shrinking");
+            this.to.reassign(to);
+            if (this.from.index == this.to.index
+                && (!this.from.stickLeftOnInsert || this.to.stickLeftOnInsert || sliding || changedTo > initialTo)) {
+                console.log("deleting mark");
+                this.delete(this);
+            }
+        }
+        // </Deleted>
     }
 
     reassignCallback(changedAt, inserted, changedTo) {
