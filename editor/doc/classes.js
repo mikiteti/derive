@@ -250,6 +250,51 @@ class Doc extends Node {
 
         return text;
     }
+
+    toggleMark(role) {
+        for (let sc of this.editor.input.caret.carets) {
+            let from = sc.from, to = sc.to, handled = false,
+                line = sc.position.Line, marks = line.marks;
+
+            if (sc.fixedEnd && sc.fixedEnd.Line !== sc.position.Line) continue;
+            if (sc.fixedEnd) {
+                for (let mark of marks) if (mark.start.index < to && mark.end.index > from) mark.delete();
+                sc.position.Line.addNewMark({ from, to, role });
+                handled = true;
+                sc.position.Line.checkMarks();
+                continue;
+            }
+
+            for (let mark of marks) {
+                if (mark.to.index === from) {
+                    mark.to.stickLeftOnInsert = !mark.to.stickLeftOnInsert;
+                    line.unrenderedChanges.add("marks");
+                    if (mark.to.index - (mark.to.stickLeftOnInsert ? 1 : 0) <= mark.from.index - (mark.from.stickLeftOnInsert ? 1 : 0)) {
+                        line.deleteMark(mark);
+                    }
+                    handled = true;
+                    break;
+                }
+                if (mark.from.index === from) {
+                    mark.from.stickLeftOnInsert = !mark.from.stickLeftOnInsert;
+                    line.unrenderedChanges.add("marks");
+                    if (mark.to.index - (mark.to.stickLeftOnInsert ? 1 : 0) <= mark.from.index - (mark.from.stickLeftOnInsert ? 1 : 0)) {
+                        line.deleteMark(mark);
+                    }
+                    handled = true;
+                    break;
+                }
+                if (mark.from.index < from && mark.to.index > from) {
+                    line.deleteMark(mark);
+                    handled = true;
+                    break;
+                }
+            }
+
+            if (!handled) line.addNewMark({ from: sc.from, to: sc.to, role });
+        }
+        this.editor.input.caret.placeAllAt();
+    }
 }
 
 export { Doc }
@@ -414,6 +459,21 @@ class Line {
             mark.delete();
         }
         this.unrenderedChanges.add("marks");
+    }
+
+    checkMarks() {
+        let marks = this.marks.sort((a, b) => a.from.index - b.from.index);
+        for (let i = 1; i < this.marks.length; i++) {
+            let prevMark = marks[i - 1], mark = marks[i];
+            if (prevMark.to.index < mark.from.index) continue;
+            if (prevMark.role === mark.role) {
+                let start = prevMark.from.index;
+                prevMark.delete();
+                mark.from.reassign(start);
+            } else {
+                mark.from.stickLeftOnInsert = false;
+            }
+        }
     }
 
     get from() {

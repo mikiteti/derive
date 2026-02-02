@@ -237,7 +237,8 @@ html.lineNumbers .textarea p.math::before {
     font-size: calc(var(--font-size) * var(--math-font-size));
 }
 
-.underline .content {
+.underline .content,
+.wrapper .underline {
     text-decoration: underline;
 }
 
@@ -259,6 +260,10 @@ html.lineNumbers .textarea p.math::before {
 
 .bold {
     font-weight: var(--bold-weight) !important;
+}
+
+.italic {
+    font-style: italic;
 }
 
 .accent {
