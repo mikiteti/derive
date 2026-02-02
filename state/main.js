@@ -432,7 +432,7 @@ class State {
         element.innerHTML = innerHTML;
         let submit = document.createElement("div");
         submit.classList.add("submit");
-        submit.innerHTML = "Go";
+        submit.innerHTML = "OK";
         element.appendChild(submit);
         this.prompts.appendChild(element);
         element.animate([

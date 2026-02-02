@@ -1,0 +1,27 @@
+@import url('https://fonts.googleapis.com/css2?family=Playpen+Sans:wght@100..800&display=swap');
+
+:root {
+    --color-text: #000;
+    --color-yellow: rgb(221, 155, 81);
+    --color-purple: rgb(187, 175, 244);
+    --color-math: var(--color-accent);
+    --color-highlight-bg: rgba(0, 0, 0, 0.2);
+    --color-highlight: unset;
+
+    /* CSS HEX */
+    --shadow-grey: #272838ff;
+    --muted-olive: #a2be8aff;
+    --sea-green: #5c946eff;
+
+    --color-accent: #000080;
+    --color-bg: beige;
+    --font-face: "Playpen Sans";
+}
+
+.dim {
+    --color-text: #333;
+}
+
+.noisy::before {
+    content: "";
+}

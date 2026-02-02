@@ -276,13 +276,7 @@ class Line {
     }
 
     parseMarks() {
-        this.marks = this.marks.map(e => new Mark(this.editor, e));
-        // this.marks = this.marks.map(e => new Range(
-        //     this.editor,
-        //     new Position(e.from, this.editor.doc),
-        //     new Position(e.to, this.editor.doc),
-        //     { role: e.role }
-        // ));
+        this.marks = this.marks.map(e => new Mark(this.editor, e)); // needs to be Array instead of Set so it can be filtered
     }
 
     update(text = "") {

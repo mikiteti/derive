@@ -9,17 +9,8 @@ const createCommandSet = (editor) => {
             if (!caret.carets[0].fixedEnd) {
                 text = caret.carets[0].position.Line.text + "\n";
             } else {
-                let from = caret.carets[0].position, to = caret.carets[0].fixedEnd;
-                if (from.index > to.index) [from, to] = [to, from];
-                text = "";
-                if (from.Line === to.Line) text = from.Line.text.slice(from.index - from.Line.from, to.index - from.Line.from);
-                else {
-                    text = from.Line.text.slice(from.index - from.Line.from);
-                    for (let i = from.Line.number + 1; i < to.Line.number; i++) {
-                        text += "\n" + doc.line(i).text;
-                    };
-                    text += "\n" + to.Line.text.slice(0, to.index - to.Line.from);
-                }
+                let from = caret.carets[0].from, to = caret.carets[0].to;
+                text = doc.textBetween(from, to);
             }
             navigator.clipboard.writeText(text).then(() => {
                 console.log('Copied!', text);
