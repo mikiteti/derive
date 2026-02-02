@@ -566,7 +566,7 @@ class Position {
         if (this.Line) this.Line.removePosition(this);
         this.assign(pos);
 
-        if (this.range && !this.range.isMark) this.range.reassignCallback();
+        if (this.range && !this.range.isMark && !this.range.deleted) this.range.reassignCallback();
 
         return this;
     }
