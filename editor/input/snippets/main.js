@@ -72,6 +72,8 @@ class Snippets {
     handleDocChanges(at) {
         let line = this.editor.doc.lineAt(at);
         let text = line.text.slice(0, at - line.from);
+        let textStartColumn = line.marks.filter(e => e.role === "math").map(e => [e.from.column, e.to.column]).flat().filter(e => e < at - line.from).sort((a, b) => b - a)[0] || 0;
+        text = text.slice(textStartColumn);
         let pos = new Position(at, this.editor.doc, { track: false });
 
         for (let snippet of this.snippets.filter(e => this.checkEnvironment(pos, e.in))) {
@@ -83,7 +85,7 @@ class Snippets {
                 index = match?.index;
                 if (index != undefined) {
                     // console.log(JSON.parse(JSON.stringify(tabstops)));
-                    index += line.from;
+                    index += line.from + textStartColumn;
                     for (let i = 1; i < match.length; i++) {
                         let from = `[[${i - 1}]]`;
                         for (let safety = 0; safety < 100; safety++) {

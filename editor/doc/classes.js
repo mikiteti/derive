@@ -250,6 +250,51 @@ class Doc extends Node {
 
         return text;
     }
+
+    toggleMark(role) {
+        for (let sc of this.editor.input.caret.carets) {
+            let from = sc.from, to = sc.to, handled = false,
+                line = sc.position.Line, marks = line.marks;
+
+            if (sc.fixedEnd && sc.fixedEnd.Line !== sc.position.Line) continue;
+            if (sc.fixedEnd) {
+                for (let mark of marks) if (mark.start.index < to && mark.end.index > from) mark.delete();
+                sc.position.Line.addNewMark({ from, to, role });
+                handled = true;
+                sc.position.Line.checkMarks();
+                continue;
+            }
+
+            for (let mark of marks) {
+                if (mark.to.index === from) {
+                    mark.to.stickLeftOnInsert = !mark.to.stickLeftOnInsert;
+                    line.unrenderedChanges.add("marks");
+                    if (mark.to.index - (mark.to.stickLeftOnInsert ? 1 : 0) <= mark.from.index - (mark.from.stickLeftOnInsert ? 1 : 0)) {
+                        line.deleteMark(mark);
+                    }
+                    handled = true;
+                    break;
+                }
+                if (mark.from.index === from) {
+                    mark.from.stickLeftOnInsert = !mark.from.stickLeftOnInsert;
+                    line.unrenderedChanges.add("marks");
+                    if (mark.to.index - (mark.to.stickLeftOnInsert ? 1 : 0) <= mark.from.index - (mark.from.stickLeftOnInsert ? 1 : 0)) {
+                        line.deleteMark(mark);
+                    }
+                    handled = true;
+                    break;
+                }
+                if (mark.from.index < from && mark.to.index > from) {
+                    line.deleteMark(mark);
+                    handled = true;
+                    break;
+                }
+            }
+
+            if (!handled) line.addNewMark({ from: sc.from, to: sc.to, role });
+        }
+        this.editor.input.caret.placeAllAt();
+    }
 }
 
 export { Doc }
@@ -410,6 +455,21 @@ class Line {
         this.unrenderedChanges.add("marks");
     }
 
+    checkMarks() {
+        let marks = this.marks.sort((a, b) => a.from.index - b.from.index);
+        for (let i = 1; i < this.marks.length; i++) {
+            let prevMark = marks[i - 1], mark = marks[i];
+            if (prevMark.to.index < mark.from.index) continue;
+            if (prevMark.role === mark.role) {
+                let start = prevMark.from.index;
+                prevMark.delete();
+                mark.from.reassign(start);
+            } else {
+                mark.from.stickLeftOnInsert = false;
+            }
+        }
+    }
+
     get from() {
         if (!this.parent) return;
 
@@ -534,81 +594,33 @@ class Position {
         return this.Line.number;
     }
 
-    handleMarkReassignment(pos, { justDoIt = false } = {}) { // TODO
-        if (!this.range || !this.range.isMark) return;
-        let newLine = this.doc.lineAt(pos);
-        if (newLine === this.Line) return;
-        if (justDoIt) {
-            this.Line.removeMark(this.range);
-            this.doc.lineAt(pos).addMark(this.range);
-            return;
-        }
-        if (pos > this.index) { // one of the ends shifted down
-            let line1 = this.pair.Line.number, line2 = this.doc.lineAt(pos).number;
-            // check if everything up to pos has this mark -- then delete up to pos, otherwise expand
-            let deletion = false;
-            if (this.index < this.pair.index && this.pair.index >= this.pair.Line.to) {
-                deletion = true;
-                for (let i = line1 + 1; i < line2; i++) {
-                    let line = this.doc.line(i);
-                    if (line.marks.filter(
-                        e => e.role === this.range.role && e.start.index === line.from && e.end.index === line.to
-                    ).length === 0) {
-                        deletion = false;
-                        break;
-                    }
-                }
-                if (deletion) {
-                    let line = this.doc.line(line2);
-                    if (line.marks.filter(
-                        e => e.role === this.range.role && e.start.index === line.from && e.end.index >= pos
-                    ).length === 0) deletion = false;
-                }
-            }
-            if (deletion) {
-                this.Line.deleteMark(this.range);
-                for (let i = line1 + 1; i < line2; i++) {
-                    let line = this.doc.line(i);
-                    for (let mark of line.marks.filter(e => e.role === this.range.role)) line.deleteMark(mark);
-                }
-                let line = this.doc.line(line2);
-                let markAlreadyThere = line.marks.filter(e => e.role === this.range.role && e.start.index === line.from)[0], end = markAlreadyThere?.end.index;
-                if (markAlreadyThere) {
-                    line.deleteMark(markAlreadyThere);
-                    line.addNewMark({ from: pos, to: end, role: this.range.role });
-                }
-            } else {
-                for (let i = line1 + 1; i < line2; i++) { // remove similar marks from intermediate lines and mark them from from to to
-                    let line = this.doc.line(i);
-                    for (let mark of line.marks.filter(e => e.role === this.range.role)) line.deleteMark(mark);
-                    line.addNewMark({ from: line.from, to: line.to, role: this.range.role });
-                }
-                let line = this.doc.line(line2); // remove similar marks from last line up to pos, then add a mark encompassing all
-                let marksAlreadyThere = line.marks.filter(e => e.role === this.range.role && e.start.index < pos);
-                if (marksAlreadyThere.length === 0) line.addNewMark({ from: line.from, to: pos, role: this.range.role });
-                else {
-                    let end = Math.max(pos, ...marksAlreadyThere.map(e => e.end.index));
-                    for (let mark of marksAlreadyThere) line.deleteMark(mark);
-                    line.addNewMark({ from: line.from, to: end, role: this.range.role });
-                }
-                for (let mark of this.Line.marks.filter(e => e.role === this.range.role && e.start.index > this.index))
-                    this.Line.deleteMark(mark);
+    handleMarkReassignment(pos, changedAt, inserted) { // TODO
+        if (!this.range || !this.range.isMark || !this.pair) return;
+        if (changedAt == undefined || inserted == undefined) return;
+        if (changedAt > Math.max(this.index, this.pair.index)) changedAt = 1;
+        else if (changedAt < Math.min(this.index, this.pair.index)) changedAt = -1;
+        else changedAt = 0;
+
+        if (inserted) {
+            if (changedAt == -1) return; // text inserted before mark
+            if (changedAt == 1) return; // text inserted after mark
+
+            // text inserted inside mark
+            if (pos > this.Line.to) {
+                // this.stickLeftOnInsert = true;
                 return this.Line.to;
             }
-        } else {
-            return -1;
+
+            return;
         }
     }
 
-    reassign(pos, { justDoIt = false } = {}) {
+    reassign(pos) {
         if (pos === this.index) return this;
         if (this.Line) this.Line.removePosition(this);
-        let newPos = this.handleMarkReassignment(pos, { justDoIt });
-        if (newPos === -1) return;
-        if (newPos !== undefined) pos = newPos;
         this.assign(pos);
 
-        if (this.range && !this.range.deleted) this.range.reassignCallback({ justDoIt });
+        if (this.range && !this.range.isMark && !this.range.deleted) this.range.reassignCallback();
 
         return this;
     }
@@ -636,6 +648,7 @@ class Range {
         // console.log("range created from", from, "to", to);
         this.editor = editor;
         this.doc = editor.doc;
+        if (from > to) [from, to] = [to, from];
         this.from = from;
         this.to = to;
         this.role = role;
@@ -650,28 +663,30 @@ class Range {
         this.Range.setStart(...nodeAt(this.start));
         this.Range.setEnd(...nodeAt(this.end));
         if (maybeReveal && !this.Range.collapsed) {
-            console.log("revealing range", this);
             this.editor.render.selection.revealRange(this);
         } if (!maybeReveal && this.Range.collapsed) {
-            console.log("hiding range", this);
             this.editor.render.selection.hideRange(this);
         }
     }
 
     get collapsed() {
-        return this.from.index !== this.to.index;
+        return this.from?.index !== this.to?.index;
     }
 
     get start() {
-        return this.from.index <= this.to.index ? this.from : this.to;
+        return this.from?.index <= this.to?.index ? this.from : this.to;
     }
 
     get end() {
-        let bigger = this.from.index <= this.to.index ? this.to : this.from;
+        let bigger = this.from?.index <= this.to?.index ? this.to : this.from;
         let addOne = this.role === "selection" && this.editor.input.caret.style !== "bar";
         if (addOne) {
             return new Position(bigger.index + 1, this.editor.doc, { track: false });
         } else return bigger;
+    }
+
+    get text() {
+        return this.editor.doc.textBetween(this.start, this.end);
     }
 
     delete() {
@@ -696,6 +711,7 @@ class Mark extends Range {
     }
 
     delete() {
+        this.from.Line.removeMark(this);
         this.deleted = true;
         this.from.delete();
         this.to.delete();
@@ -703,11 +719,69 @@ class Mark extends Range {
         this.to = undefined;
     }
 
-    reassignCallback({ justDoIt = false }) {
-        this.from.Line.unrenderedChanges.add("marks");
-        if (!justDoIt && this.to.index >= this.from.index && this.to.index - (this.to.stickLeftOnInsert ? 1 : 0) <= this.from.index - (this.from.stickLeftOnInsert ? 1 : 0)) {
-            console.log("deleting mark");
-            this.from.Line.deleteMark(this);
+    reassign(from, to, { changedTo } = {}) {
+        console.log("reassigning mark", this, this.from.index, this.to.index, from, to);
+        if (from === this.from.index && to === this.to.index || from == undefined && to == undefined) return;
+        let initialFrom = this.from.index, initialTo = this.to.index, initialLine = this.from.Line;
+        let inserted = to > this.to.index,
+            sliding = (from !== undefined && from !== this.from.index),
+            shrinking = ((to || this.to.index) - (from || this.from.index)) < (this.to.index - this.from.index);
+        // sliding and shrinking can be true at the same time!
+
+        // <Inserted>
+        if (inserted && sliding) {
+            console.log("sliding right");
+            this.from.reassign(from);
+            this.to.reassign(to);
+            if (this.from.Line !== initialLine) {
+                console.log("updating mark's line", initialLine, this.from.Line);
+                initialLine.removeMark(this);
+                this.from.Line.addMark(this);
+            }
+            return;
         }
+
+        if (inserted && !sliding) {
+            console.log("expanding");
+            this.to.reassign(Math.min(this.to.Line.to, to));
+            return;
+        }
+        // </Inserted>
+
+        // <Deleted>
+        if (sliding) {
+            console.log("sliding left");
+            this.from.reassign(from);
+            this.to.reassign(to);
+            if (this.from.Line !== initialLine) {
+                console.log("updating mark's line", initialLine, this.from.Line);
+                initialLine.removeMark(this);
+                this.from.Line.addMark(this);
+            }
+
+            let closestMark = this.from.Line.marks.filter(e => e !== this && e.to.index <= this.from.index).sort((a, b) => b.from.index - a.from.index)[0];
+            if (closestMark != undefined && closestMark.to.index == this.from.index) {
+                if (closestMark.role === this.role) { // merge
+                    console.log("merging marks");
+                    let start = closestMark.from.index;
+                    closestMark.delete();
+                    this.from.reassign(start);
+                } else { // make sure writing into both marks at the same time is impossible
+                    console.log("keeping distance");
+                    this.from.stickLeftOnInsert = false;
+                }
+            }
+        }
+
+        if (shrinking) {
+            console.log("shrinking");
+            this.to.reassign(to);
+            if (this.from.index == this.to.index
+                && (!this.from.stickLeftOnInsert || this.to.stickLeftOnInsert || sliding || changedTo > initialTo)) {
+                console.log("deleting mark");
+                this.delete(this);
+            }
+        }
+        // </Deleted>
     }
 }

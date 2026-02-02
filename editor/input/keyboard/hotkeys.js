@@ -60,6 +60,15 @@ const createCommandSet = (editor) => {
             history.newChangeGroup();
         },
         "M+u": () => {
+            // history.newChangeGroup();
+            // caret.forAll(pos => {
+            //     pos.Line.toggleDeco("underline");
+            //     render.renderLine(pos.Line);
+            // });
+            // history.newChangeGroup();
+            doc.toggleMark("underline")
+        },
+        "M+S+u": () => {
             history.newChangeGroup();
             caret.forAll(pos => {
                 pos.Line.toggleDeco("underline");
@@ -102,13 +111,14 @@ const createCommandSet = (editor) => {
             history.newChangeGroup();
         },
         "M+k": () => {
-            history.newChangeGroup();
-            caret.forAll(pos => {
-                pos.Line.toggleDeco("capital");
-                render.renderLine(pos.Line);
-            });
-            caret.placeAllAt();
-            history.newChangeGroup();
+            // history.newChangeGroup();
+            // caret.forAll(pos => {
+            //     pos.Line.toggleDeco("capital");
+            //     render.renderLine(pos.Line);
+            // });
+            // caret.placeAllAt();
+            // history.newChangeGroup();
+            doc.toggleMark("math");
         },
         "M+w": () => {
             history.newChangeGroup();
@@ -129,6 +139,9 @@ const createCommandSet = (editor) => {
             history.newChangeGroup();
         },
         "M+b": () => {
+            doc.toggleMark("bold");
+        },
+        "M+S+b": () => {
             history.newChangeGroup();
             caret.forAll(pos => {
                 if (!pos.Line.decos.has("bold") && !pos.Line.decos.has("Bold")) pos.Line.addDeco("bold");
@@ -144,49 +157,16 @@ const createCommandSet = (editor) => {
             history.newChangeGroup();
         },
         "M+i": () => {
-            for (let sc of caret.carets) {
-                let from = sc.from, to = sc.to, handled = false,
-                    line = sc.position.Line, marks = line.marks.filter(e => e.role === "math");
-
-                if (sc.fixedEnd && sc.fixedEnd.Line !== sc.position.Line) continue;
-                if (sc.fixedEnd) {
-                    for (let mark of marks) if (mark.start.index < to && mark.end.index > from) {
-                        handled = true;
-                        break;
-                    }
-                    if (!handled) sc.position.Line.addNewMark({ from, to, role: "math" });
-                    continue;
-                }
-
-                for (let mark of marks) {
-                    if (mark.to.index === from) {
-                        mark.to.stickLeftOnInsert = !mark.to.stickLeftOnInsert;
-                        line.unrenderedChanges.add("marks");
-                        if (mark.to.index - (mark.to.stickLeftOnInsert ? 1 : 0) <= mark.from.index - (mark.from.stickLeftOnInsert ? 1 : 0)) {
-                            line.deleteMark(mark);
-                        }
-                        handled = true;
-                        break;
-                    }
-                    if (mark.from.index === from) {
-                        mark.from.stickLeftOnInsert = !mark.from.stickLeftOnInsert;
-                        line.unrenderedChanges.add("marks");
-                        if (mark.to.index - (mark.to.stickLeftOnInsert ? 1 : 0) <= mark.from.index - (mark.from.stickLeftOnInsert ? 1 : 0)) {
-                            line.deleteMark(mark);
-                        }
-                        handled = true;
-                        break;
-                    }
-                    if (mark.from.index < sc.from && mark.to.index > sc.from) {
-                        line.deleteMark(mark);
-                        handled = true;
-                        break;
-                    }
-                }
-
-                if (!handled) line.addNewMark({ from: sc.from, to: sc.to, role: "math" });
-            }
+            doc.toggleMark("italic");
+        },
+        "M+S+i": () => {
+            history.newChangeGroup();
+            caret.forAll(pos => {
+                pos.Line.toggleDeco("italic");
+                render.renderLine(pos.Line);
+            });
             caret.placeAllAt();
+            history.newChangeGroup();
         },
         "M+0": () => {
             history.newChangeGroup();

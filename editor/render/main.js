@@ -20,7 +20,7 @@ class Render {
             editor.doc.change.addCallback(renderCarets);
         });
 
-        this.decos = ["underline", "bold", "Bold", "accent", "math", "middle", "small", "large", "capital", "spin_border", "h1", "h2", "h3", "h4", "h5", "h6", "subtitle"];
+        this.decos = ["underline", "bold", "Bold", "italic", "accent", "math", "middle", "small", "large", "capital", "spin_border", "h1", "h2", "h3", "h4", "h5", "h6", "subtitle"];
         this.selection = new Selection(editor);
     }
 
@@ -163,42 +163,48 @@ class Render {
                 line.element.appendChild(lineWrapper);
                 afterBullet = lineWrapper;
             }
-            for (let mark of line.marks.filter(e => e.role === "math").sort((a, b) => a.start.index - b.start.index)) {
+
+            for (let mark of line.marks.sort((a, b) => a.start.index - b.start.index)) {
                 let wrapper = document.createElement("span");
                 wrapper.classList.add("wrapper");
-                let textSource = text.slice(index, mark.start.index - line.from);
-                let mathSource = text.slice(mark.start.index - line.from, mark.end.index - line.from);
-                content.appendChild(document.createTextNode(textSource));
-                let math = document.createElement("span");
-                math.classList.add("math");
-                math.innerText = mathSource;
-                wrapper.append(math);
+                let prevSource = text.slice(index, mark.start.index - line.from);
+                let source = text.slice(mark.start.index - line.from, mark.end.index - line.from);
+                content.appendChild(document.createTextNode(prevSource));
+                let el = document.createElement("span");
+                el.classList.add(mark.role);
+                el.innerText = source;
+                wrapper.append(el);
                 content.appendChild(wrapper);
-                wrapper.classList.remove("editingSource");
-                for (let sc of this.editor?.input?.caret?.carets || [])
-                    if (sc.from >= mark.start.index + !mark.start.stickLeftOnInsert && sc.from <= mark.end.index - !!mark.end.stickLeftOnInsert) {
-                        wrapper.classList.add("editingSource");
-                        break;
-                    }
-                if (mark.IM == undefined) mark.IM = document.createElement("span");
-                let IM = mark.IM;
-                IM.classList.add("IM");
-                mark.IM = IM;
                 mark.wrapper = wrapper;
-                IM.mark = mark;
-                IM.source = mathSource;
-                let promise = window.MathJax.tex2svgPromise(mathSource, { display: false });
-                promises.push(promise);
-                promise.then(node => {
-                    IM.replaceChildren(node);
-                    // window.MathJax.startup.document.clear();
-                    // window.MathJax._.mathjax.mathjax.handleRetriesFor(() => window.MathJax.startup.document.updateDocument());
-                    math.after(IM);
-                    let currentColor = getComputedStyle(node).getPropertyValue("color");
-                    if (!node.matches(".wrapper.editingSource *")) for (let e of node.querySelectorAll("[fill]")) e.setAttribute("fill", currentColor);
-                });
+
+                if (mark.role === "math") {
+                    wrapper.classList.remove("editingSource");
+                    for (let sc of this.editor?.input?.caret?.carets || [])
+                        if (sc.from >= mark.start.index + !mark.start.stickLeftOnInsert && sc.from <= mark.end.index - !!mark.end.stickLeftOnInsert) {
+                            wrapper.classList.add("editingSource");
+                            break;
+                        }
+                    if (mark.IM == undefined) mark.IM = document.createElement("span");
+                    let IM = mark.IM;
+                    IM.classList.add("IM");
+                    mark.IM = IM;
+                    IM.mark = mark;
+                    IM.source = source;
+                    let promise = window.MathJax.tex2svgPromise(source, { display: false });
+                    promises.push(promise);
+                    promise.then(node => {
+                        IM.replaceChildren(node);
+                        // window.MathJax.startup.document.clear();
+                        // window.MathJax._.mathjax.mathjax.handleRetriesFor(() => window.MathJax.startup.document.updateDocument());
+                        el.after(IM);
+                        let currentColor = getComputedStyle(node).getPropertyValue("color");
+                        if (!node.matches(".wrapper.editingSource *")) for (let e of node.querySelectorAll("[fill]")) e.setAttribute("fill", currentColor);
+                    });
+                }
+
                 index = mark.end.index - line.from;
             }
+
             content.appendChild(document.createTextNode(text.slice(index)));
             (afterBullet || line.element).replaceChildren(content);
             let endChar = document.createElement("span");
@@ -211,7 +217,7 @@ class Render {
         }
 
         if (caretChanged && !marksChanged && !textChanged) {
-            for (let mark of line.marks.filter(e => e.wrapper && !e.deleted)) {
+            for (let mark of line.marks.filter(e => e.role === "math" && e.wrapper && !e.deleted)) {
                 let wrapper = mark.wrapper;
                 wrapper.classList.remove("editingSource");
                 for (let sc of this.editor?.input?.caret?.carets || [])
