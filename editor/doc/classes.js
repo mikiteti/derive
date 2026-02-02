@@ -566,6 +566,8 @@ class Position {
         if (this.Line) this.Line.removePosition(this);
         this.assign(pos);
 
+        if (this.range && !this.range.isMark) this.range.reassignCallback();
+
         return this;
     }
 
@@ -727,38 +729,5 @@ class Mark extends Range {
             }
         }
         // </Deleted>
-    }
-
-    reassignCallback(changedAt, inserted, changedTo) {
-        if (changedAt == undefined || inserted == undefined) return; // called by the same mark's previous reassignCallback: mergin marks
-        this.from.Line.unrenderedChanges.add("marks");
-        if (inserted) return;
-        if (this.to.Line !== this.from.Line) return;
-
-        // if overlapping with same type, merge
-        let merged = (() => {
-            if (changedAt > this.from.index) return; // can't have slid left if change happened after from
-            let marksToLeft = this.from.Line.marks.filter(e => e !== this && e.end.index <= this.from.index);
-            let closestMarkToLeft = marksToLeft.sort((e, f) => f.end.index - e.end.index)[0];
-            if (closestMarkToLeft == undefined || closestMarkToLeft.end.index < this.from.index || closestMarkToLeft.role !== this.role) return;
-            console.log("merging same role marks", closestMarkToLeft, this);
-            let startIndex = closestMarkToLeft.from.index;
-            closestMarkToLeft.delete();
-            this.from.reassign(startIndex);
-            return true;
-        })();
-
-        if (merged) return;
-
-        // if collapsed, delete self
-        if (changedAt === this.from.index && this.to.index <= changedTo && this.to.index > this.from.index) {
-            console.log("could delete", this.to.index, changedTo, this.from.stickLeftOnInsert, this.to.stickLeftOnInsert);
-            if (this.to.index < changedTo || !this.from.stickLeftOnInsert || this.to.stickLeftOnInsert) {
-                console.log("deleting mark ", this.editor.doc.textBetween(this.from.index, this.to.index));
-                this.from.Line.deleteMark(this);
-
-                return;
-            }
-        }
     }
 }
