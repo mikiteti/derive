@@ -115,11 +115,11 @@ class Change {
 
             for (let pos of positionsToShift) {
                 // let changeOutside = !!pos[0].range?.isMark && positionsToShift.map(e => e[0]).indexOf(pos[0].pair) !== -1;
-                pos[0].reassign(pos[1], { changedAt: from, inserted: false });
+                pos[0].reassign(pos[1], { changedAt: from, inserted: false, changedTo: to });
             }
 
             if (markStickLeft) this.stickLeft = line1.positions.filter(e => (e.index === from && positionsToShift.map(e => e[0]).indexOf(e) === -1));
-            for (let pos of positionsToMaybeDelete) pos.stickWhenDeleted ? pos.reassign(from) : pos.delete();
+            for (let pos of positionsToMaybeDelete) pos.stickWhenDeleted ? pos.reassign(from, { changedAt: from, inserted: false, changedTo: to }) : pos.delete();
 
             let changedLines = [line1];
             if (!noCallback) this.runCallbacks({ changedLines });
@@ -146,9 +146,9 @@ class Change {
 
         for (let pos of positionsToShift) {
             // let changeOutside = !!pos[0].range?.isMark && positionsToShift.map(e => e[0]).indexOf(pos[0].pair) !== -1;
-            pos[0].reassign(pos[1], { changedAt: from, inserted: false });
+            pos[0].reassign(pos[1], { changedAt: from, inserted: false, changedTo: to });
         }
-        for (let pos of positionsToMaybeDelete) pos.stickWhenDeleted ? pos.reassign(from) : pos.delete();
+        for (let pos of positionsToMaybeDelete) pos.stickWhenDeleted ? pos.reassign(from, { changedAt: from, inserted: false, changedTo: to }) : pos.delete();
 
         let linesToRemove = this.editor.doc.linesBetween(line1.number, line2.number).concat([line2]);
         // console.log({ linesToRemove: linesToRemove.map(line => line.text) });
@@ -225,7 +225,7 @@ class Change {
 
             for (let pos of positionsToShift) {
                 // let changeOutside = !!pos[0].range?.isMark && positionsToShift.map(e => e[0]).indexOf(pos[0].pair) !== -1;
-                pos[0].reassign(pos[1], { changetdAt: at, inserted: true });
+                pos[0].reassign(pos[1], { changedAt: at, inserted: true });
             }
 
             let changedLines = [line]
