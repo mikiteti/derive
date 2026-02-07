@@ -66,7 +66,9 @@ const createCommandSet = (editor) => {
             })
         },
         "M+m": () => {
+            history.newChangeGroup();
             doc.toggleMark("math");
+            history.newChangeGroup();
         },
         "M+S+m": () => {
             history.newChangeGroup();
@@ -87,7 +89,9 @@ const createCommandSet = (editor) => {
             history.newChangeGroup();
         },
         "M+u": () => {
+            history.newChangeGroup();
             doc.toggleMark("underline")
+            history.newChangeGroup();
         },
         "M+S+u": () => {
             history.newChangeGroup();
@@ -98,7 +102,9 @@ const createCommandSet = (editor) => {
             history.newChangeGroup();
         },
         "M+b": () => {
+            history.newChangeGroup();
             doc.toggleMark("bold");
+            history.newChangeGroup();
         },
         "M+S+b": () => {
             history.newChangeGroup();
@@ -116,7 +122,9 @@ const createCommandSet = (editor) => {
             history.newChangeGroup();
         },
         "M+i": () => {
+            history.newChangeGroup();
             doc.toggleMark("italic");
+            history.newChangeGroup();
         },
         "M+S+i": () => {
             history.newChangeGroup();
@@ -128,7 +136,9 @@ const createCommandSet = (editor) => {
             history.newChangeGroup();
         },
         "M+h": () => {
+            history.newChangeGroup();
             doc.toggleMark("highlight");
+            history.newChangeGroup();
         },
         "M+S+h": () => {
             history.newChangeGroup();
@@ -140,7 +150,9 @@ const createCommandSet = (editor) => {
             history.newChangeGroup();
         },
         "M+w": () => {
+            history.newChangeGroup();
             doc.toggleMark("spin_border");
+            history.newChangeGroup();
         },
         "M+S+w": () => {
             history.newChangeGroup();

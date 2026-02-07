@@ -426,24 +426,34 @@ class Line {
         this.tabs[type] = Math.max(number, 0);
     }
 
-    addMark(Mark) {
+    addMark(Mark, { addToHistory = true } = {}) {
+        let startState = { line: this.number, marks: this.marks.map(e => ({ role: e.role, from: e.from.index, to: e.to.index })) };
         this.marks.push(Mark);
         this.unrenderedChanges.add("marks");
+        let endState = { line: this.number, marks: this.marks.map(e => ({ role: e.role, from: e.from.index, to: e.to.index })) };
+        if (addToHistory) this.editor.doc.history.addChange({ from: startState, to: endState });
     }
 
-    addNewMark(mark) {
+    addNewMark(mark, { addToHistory = true } = {}) {
+        let startState = { line: this.number, marks: this.marks.map(e => ({ role: e.role, from: e.from.index, to: e.to.index })) };
         let marks = Array.isArray(mark) ? mark : [mark];
         for (let mark of marks) this.marks.push(new Mark(this.editor, mark));
         this.unrenderedChanges.add("marks");
+        let endState = { line: this.number, marks: this.marks.map(e => ({ role: e.role, from: e.from.index, to: e.to.index })) };
+        if (addToHistory) this.editor.doc.history.addChange({ from: startState, to: endState });
     }
 
-    removeMark(Mark) {
+    removeMark(Mark, { addToHistory = true } = {}) {
+        let startState = { line: this.number, marks: this.marks.map(e => ({ role: e.role, from: e.from.index, to: e.to.index })) };
         let index = this.marks.indexOf(Mark);
         if (index === -1) return;
         this.marks = [...this.marks.slice(0, index), ...this.marks.slice(index + 1)];
+        let endState = { line: this.number, marks: this.marks.map(e => ({ role: e.role, from: e.from.index, to: e.to.index })) };
+        if (addToHistory) this.editor.doc.history.addChange({ from: startState, to: endState });
     }
 
-    deleteMark(mark) {
+    deleteMark(mark, { addToHistory = true } = {}) {
+        let startState = { line: this.number, marks: this.marks.map(e => ({ role: e.role, from: e.from.index, to: e.to.index })) };
         let marks = Array.isArray(mark) ? mark : [mark];
         for (let mark of marks) {
             if (!this.marks.includes(mark)) continue;
@@ -453,6 +463,16 @@ class Line {
             mark.delete();
         }
         this.unrenderedChanges.add("marks");
+        let endState = { line: this.number, marks: this.marks.map(e => ({ role: e.role, from: e.from.index, to: e.to.index })) };
+        if (addToHistory) this.editor.doc.history.addChange({ from: startState, to: endState });
+    }
+
+    setMarks(marks, { addToHistory = true } = {}) {
+        let startState = { line: this.number, marks: this.marks.map(e => ({ role: e.role, from: e.from.index, to: e.to.index })) };
+        this.marks = marks.map(e => new Mark(this.editor, e));
+        this.unrenderedChanges.add("marks");
+        let endState = { line: this.number, marks: this.marks.map(e => ({ role: e.role, from: e.from.index, to: e.to.index })) };
+        if (addToHistory) this.editor.doc.history.addChange({ from: startState, to: endState });
     }
 
     checkMarks() {

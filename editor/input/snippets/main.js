@@ -69,7 +69,7 @@ class Snippets {
         }
     }
 
-    handleDocChanges(at) {
+    handleDocChanges(at, { newChangeGroup = true } = {}) {
         let line = this.editor.doc.lineAt(at);
         let text = line.text.slice(0, at - line.from);
         let textStartColumn = line.marks.filter(e => e.role === "math").map(e => [e.from.column, e.to.column]).flat().filter(e => e < at - line.from).sort((a, b) => b - a)[0] || 0;
@@ -120,25 +120,15 @@ class Snippets {
             }
 
             if (index !== undefined) {
-                this.editor.doc.history?.newChangeGroup();
+                if (newChangeGroup) this.editor.doc.history?.newChangeGroup();
                 console.log({ to });
                 this.editor.doc.change.noCallback({ insert: to, from: index, to: at });
                 // console.log(JSON.parse(JSON.stringify(tabstops)));
                 for (let t of tabstops) for (let i in t.positions) t.positions[i] += index;
-                this.editor.doc.history?.newChangeGroup();
                 return tabstops;
             }
         }
     }
-
-    // handle(at = this.editor.input.caret.position.index) {
-    //     console.error("handle running");
-    //     let tabstops = this.handleDocChanges(at);
-    //     if (tabstops === undefined) return;
-    //
-    //     for (let t of tabstops.reverse()) this.editor.input.caret.addTabStops(t.positions);
-    //     this.editor.input.caret.jumpToNextTabStops();
-    // }
 
     multiHandle(positions) {
         if (positions.length === 0) return;
@@ -155,7 +145,7 @@ class Snippets {
         }
 
         for (let pos of positions.slice(1)) {
-            let tabstops = this.handleDocChanges(pos.index);
+            let tabstops = this.handleDocChanges(pos.index, { newChangeGroup: false });
             if (tabstops === undefined) continue;
             for (let i = 0; i < tabstops.length; i++) this.tabstops[i].positions.push(...tabstops[i].positions.map(e => new Position(e, this.editor.doc, { stickLeftOnInsert: true })));
         }

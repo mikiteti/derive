@@ -8,6 +8,10 @@
 // to: {decos: [""], line: 13},
 // }
 //
+// change: {
+// from: {marks: [{role: "math", from: 123, to: 127}], line: 14}
+// from: {marks: [{role: "bold", from: 126, to: 129}], line: 14}
+// }
 // changeGroup: change[]
 
 class History {
@@ -41,6 +45,12 @@ class History {
             if (from.decos != undefined) {
                 steps.push(() => {
                     this.editor.doc.line(from.line).setDecos(to.decos, { addToHistory: false });
+                });
+            }
+
+            if (from.marks != undefined) {
+                steps.push(() => {
+                    this.editor.doc.line(from.line).setMarks(to.marks, { addToHistory: false });
                 });
             }
         }
