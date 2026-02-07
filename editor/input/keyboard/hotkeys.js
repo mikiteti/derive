@@ -23,6 +23,21 @@ const createCommandSet = (editor) => {
                 });
             });
         },
+        "M+s": () => {
+            window.state.saveFile(editor);
+        },
+        "M+o": () => {
+            window.state.openModal(window.state.filePicker);
+        },
+        "M+p": () => {
+            window.state.openModal(window.state.commandPalette);
+        },
+        "M+l": () => {
+            document.documentElement.classList.toggle("lineNumbers")
+            queueMicrotask(() => {
+                caret.placeAllAt();
+            });
+        },
         "Tab": () => {
             if (editor.input.snippets.tabstops.length > 0) {
                 editor.input.snippets.jumpToNextTabStops();
@@ -50,6 +65,18 @@ const createCommandSet = (editor) => {
                 render.renderLine(line);
             })
         },
+        "M+m": () => {
+            doc.toggleMark("math");
+        },
+        "M+S+m": () => {
+            history.newChangeGroup();
+            caret.forAll(pos => {
+                pos.Line.toggleDeco("math");
+                render.renderLine(pos.Line);
+            });
+            caret.placeAllAt();
+            history.newChangeGroup();
+        },
         "M+d": () => {
             history.newChangeGroup();
             caret.forAll(pos => {
@@ -60,12 +87,6 @@ const createCommandSet = (editor) => {
             history.newChangeGroup();
         },
         "M+u": () => {
-            // history.newChangeGroup();
-            // caret.forAll(pos => {
-            //     pos.Line.toggleDeco("underline");
-            //     render.renderLine(pos.Line);
-            // });
-            // history.newChangeGroup();
             doc.toggleMark("underline")
         },
         "M+S+u": () => {
@@ -74,68 +95,6 @@ const createCommandSet = (editor) => {
                 pos.Line.toggleDeco("underline");
                 render.renderLine(pos.Line);
             });
-            history.newChangeGroup();
-        },
-        // "M+s": () => {
-        //     caret.forAll(pos => {
-        //         pos.Line.toggleDeco("small");
-        //         render.renderLine(pos.Line);
-        //     });
-        //     caret.placeAllAt();
-        // },
-        "M+s": () => {
-            window.state.saveFile(editor);
-        },
-        // "M+l": () => {
-        //     history.newChangeGroup();
-        //     caret.forAll(pos => {
-        //         pos.Line.toggleDeco("large");
-        //         render.renderLine(pos.Line);
-        //     });
-        //     caret.placeAllAt();
-        //     history.newChangeGroup();
-        // },
-        "M+l": () => {
-            document.documentElement.classList.toggle("lineNumbers")
-            queueMicrotask(() => {
-                caret.placeAllAt();
-            })
-        },
-        "M+a": () => {
-            history.newChangeGroup();
-            caret.forAll(pos => {
-                pos.Line.toggleDeco("accent");
-                render.renderLine(pos.Line);
-            });
-            caret.placeAllAt();
-            history.newChangeGroup();
-        },
-        "M+k": () => {
-            // history.newChangeGroup();
-            // caret.forAll(pos => {
-            //     pos.Line.toggleDeco("capital");
-            //     render.renderLine(pos.Line);
-            // });
-            // caret.placeAllAt();
-            // history.newChangeGroup();
-            doc.toggleMark("math");
-        },
-        "M+w": () => {
-            history.newChangeGroup();
-            caret.forAll(pos => {
-                pos.Line.toggleDeco("spin_border");
-                render.renderLine(pos.Line);
-            });
-            caret.placeAllAt();
-            history.newChangeGroup();
-        },
-        "M+m": () => {
-            history.newChangeGroup();
-            caret.forAll(pos => {
-                pos.Line.toggleDeco("middle");
-                render.renderLine(pos.Line);
-            });
-            caret.placeAllAt();
             history.newChangeGroup();
         },
         "M+b": () => {
@@ -168,6 +127,39 @@ const createCommandSet = (editor) => {
             caret.placeAllAt();
             history.newChangeGroup();
         },
+        "M+h": () => {
+            doc.toggleMark("highlight");
+        },
+        "M+S+h": () => {
+            history.newChangeGroup();
+            caret.forAll(pos => {
+                pos.Line.toggleDeco("highlight");
+                render.renderLine(pos.Line);
+            });
+            caret.placeAllAt();
+            history.newChangeGroup();
+        },
+        "M+w": () => {
+            doc.toggleMark("spin_border");
+        },
+        "M+S+w": () => {
+            history.newChangeGroup();
+            caret.forAll(pos => {
+                pos.Line.toggleDeco("spin_border");
+                render.renderLine(pos.Line);
+            });
+            caret.placeAllAt();
+            history.newChangeGroup();
+        },
+        "M+S+c": () => {
+            history.newChangeGroup();
+            caret.forAll(pos => {
+                pos.Line.toggleDeco("center");
+                render.renderLine(pos.Line);
+            });
+            caret.placeAllAt();
+            history.newChangeGroup();
+        },
         "M+0": () => {
             history.newChangeGroup();
             caret.forAll(pos => {
@@ -177,39 +169,11 @@ const createCommandSet = (editor) => {
             caret.placeAllAt();
             history.newChangeGroup();
         },
-        // "M+1": () => {
-        //     caret.forAll(pos => {
-        //         pos.Line.addDeco(["h1"]);
-        //         render.renderLine(pos.Line);
-        //     });
-        //     caret.placeAllAt();
-        // },
-        // "M+2": () => {
-        //     caret.forAll(pos => {
-        //         pos.Line.addDeco(["h2"]);
-        //         render.renderLine(pos.Line);
-        //     });
-        //     caret.placeAllAt();
-        // },
-        // "M+3": () => {
-        //     caret.forAll(pos => {
-        //         pos.Line.addDeco(["h3"]);
-        //         render.renderLine(pos.Line);
-        //     });
-        //     caret.placeAllAt();
-        // },
-        // "M+4": () => {
-        //     caret.forAll(pos => {
-        //         pos.Line.addDeco(["h4"]);
-        //         render.renderLine(pos.Line);
-        //     });
-        //     caret.placeAllAt();
-        // },
         "M+S+a": () => {
             history.newChangeGroup();
-            let applyClasses = getComputedStyle(document.body).getPropertyValue("--h1-classes").slice(1, -1).split(" ");
             caret.forAll(pos => {
-                pos.Line.addDeco([...applyClasses, "h1"]);
+                pos.Line.removeDeco(render.decos);
+                pos.Line.addDeco("h1");
                 render.renderLine(pos.Line);
             });
             caret.placeAllAt();
@@ -217,9 +181,9 @@ const createCommandSet = (editor) => {
         },
         "M+S+s": () => {
             history.newChangeGroup();
-            let applyClasses = getComputedStyle(document.body).getPropertyValue("--h2-classes").slice(1, -1).split(" ");
             caret.forAll(pos => {
-                pos.Line.addDeco([...applyClasses, "h2"]);
+                pos.Line.removeDeco(render.decos);
+                pos.Line.addDeco("subtitle");
                 render.renderLine(pos.Line);
             });
             caret.placeAllAt();
@@ -227,9 +191,9 @@ const createCommandSet = (editor) => {
         },
         "M+S+d": () => {
             history.newChangeGroup();
-            let applyClasses = getComputedStyle(document.body).getPropertyValue("--h3-classes").slice(1, -1).split(" ");
             caret.forAll(pos => {
-                pos.Line.addDeco([...applyClasses, "h3"]);
+                pos.Line.removeDeco(render.decos);
+                pos.Line.addDeco("h2");
                 render.renderLine(pos.Line);
             });
             caret.placeAllAt();
@@ -237,20 +201,14 @@ const createCommandSet = (editor) => {
         },
         "M+S+f": () => {
             history.newChangeGroup();
-            let applyClasses = getComputedStyle(document.body).getPropertyValue("--h4-classes").slice(1, -1).split(" ");
             caret.forAll(pos => {
-                pos.Line.addDeco([...applyClasses, "h4"]);
+                pos.Line.removeDeco(render.decos);
+                pos.Line.addDeco("h3");
                 render.renderLine(pos.Line);
             });
             caret.placeAllAt();
             history.newChangeGroup();
         },
-        "M+o": () => {
-            window.state.openModal(window.state.filePicker);
-        },
-        "M+p": () => {
-            window.state.openModal(window.state.commandPalette);
-        }
     };
 
     const command = (e) => {

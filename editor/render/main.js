@@ -20,7 +20,7 @@ class Render {
             editor.doc.change.addCallback(renderCarets);
         });
 
-        this.decos = ["underline", "bold", "Bold", "italic", "accent", "math", "middle", "small", "large", "capital", "spin_border", "h1", "h2", "h3", "h4", "h5", "h6", "subtitle"];
+        this.decos = ["underline", "bold", "Bold", "italic", "highlight", "math", "center", "small", "large", "capital", "spin_border", "h1", "h2", "h3", "h4", "h5", "h6", "subtitle"];
         this.selection = new Selection(editor);
     }
 

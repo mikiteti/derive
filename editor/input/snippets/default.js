@@ -421,6 +421,12 @@ class DefaultSnippets {
             },
 
             {
+                from: "mk", to: (match) => {
+                    this.editor.doc.toggleMark("math");
+                }, in: "At", description: "Inline math", priority: 1,
+            },
+
+            {
                 from: "dm", to: (match) => {
                     this.editor.doc.history.newChangeGroup();
                     this.editor.input.caret.forAll(pos => {

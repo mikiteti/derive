@@ -250,7 +250,7 @@ html.lineNumbers .textarea p.math::before {
     font-size: calc(var(--font-size) * var(--large-font-size));
 }
 
-.middle {
+.center {
     text-align: center;
 }
 
@@ -266,8 +266,8 @@ html.lineNumbers .textarea p.math::before {
     font-style: italic;
 }
 
-.accent {
-    color: var(--color-accent);
+.highlight {
+    color: var(--color-accent) !important;
 }
 
 .capital {
@@ -327,7 +327,8 @@ html.lineNumbers .textarea p.math::before {
     }
 }
 
-.spin_border .content {
+.spin_border .content,
+.wrapper .spin_border {
     --border-width: 1px;
     /* --background-color: var(--color-background-secondary); */
     animation: 3s spin-border-offset linear infinite;
