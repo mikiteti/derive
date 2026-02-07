@@ -740,7 +740,7 @@ const createCommandSet = (editor) => {
                     {
                         name: "cc",
                         keys: ["c"],
-                        run: (keys) => { dispatch([["change", pos => pos.Line.from, pos => pos.Line.to - 1]]); },
+                        run: (keys) => { dispatch([["change", pos => pos.Line.from, pos => Math.max(pos.Line.to - 1, pos.Line.from)]]); },
                     }
                 ]
             },

@@ -325,7 +325,7 @@ class Change {
         }
 
         let changedLines = [firstLine, ...Lines]
-        if (preserveDM && string === "\n" && firstLine.decos.has("math")) changedLines[1].addDeco("math");
+        if (preserveDM && string === "\n" && firstLine.decos.has("math")) changedLines[1].addDeco("math", { addToHistory });
         if (shiftLineDecosToLastLine) for (let deco of firstLine.decos) {
             firstLine.removeDeco(deco);
             Lines.at(-1).addDeco(deco);
