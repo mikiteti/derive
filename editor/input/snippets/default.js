@@ -289,7 +289,6 @@ class DefaultSnippets {
             { from: "(", to: "(${0})${1}", in: "mA" },
             { from: "{", to: "{${0}}${1}", in: "mA" },
             { from: "[", to: "[${0}]${1}", in: "mA" },
-            // { from: " {", to: "\\{${0}\\}${1}", in: "mA", priority: 1 }, // test
             { from: "lr(", to: "\\left( ${0} \\right) ${1}", in: "mA", priority: 2 },
             { from: "lr{", to: "\\left\\{ ${0} \\right\\} ${1}", in: "mA", priority: 2 },
             { from: "lr[", to: "\\left[ ${0} \\right] ${1}", in: "mA", priority: 2 },
