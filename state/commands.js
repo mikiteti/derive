@@ -108,6 +108,25 @@ const newCommands = (state) => {
                 state.focusEditor();
             }
         },
+        {
+            name: "Copy note URL",
+            run: async () => {
+                let url = new URL(window.location);
+                let noteUrl = window.state.getCurrentNoteUrl();
+                if (noteUrl == undefined) {
+                    state.alert("Something went wrong", "The note may not have shareable a URL.");
+                    return;
+                }
+                url.searchParams.set("note", noteUrl);
+
+                navigator.clipboard.writeText(url.href).then(() => {
+                    console.log('Copied!', url.href);
+                    state.alert("URL copied", "Now you can share it with anyone. They will be able to see your note, but they won't be able to write to it.");
+                }).catch(() => {
+                    state.alert("Something went wrong with copying to your clipboard.", "Here is the URL though: " + url.href);
+                });
+            }
+        },
 
         // {
         //     name: "Restore file",

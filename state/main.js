@@ -21,7 +21,7 @@ class State {
             res.json().then(user => {
                 console.log("Logged in as:", user);
                 this.user = user;
-            })
+            });
         });
         this.commandPalette = document.querySelector("#commandPalette");
         this.filePicker = document.querySelector("#filePicker");
@@ -32,7 +32,18 @@ class State {
             console.log("closing modal");
             this.closeModal();
         });
-        this.initFuzzyFinders();
+
+        this.systemFiles = systemFiles;
+        this.URL = new URL(window.location);
+        this.note_url = this.URL.searchParams.get("note");
+
+        this.initFuzzyFinders().then(() => {
+            if (this.note_url != undefined && this.files.find(e => e.url == this.note_url).content) {
+                console.log({ note_url: this.note_url });
+                console.log(this.files.find(e => e.url == this.note_url));
+                this.newEditor(this.files.find(e => e.url == this.note_url));
+            } else this.newEditor(this.systemFiles.find(e => e.id === "welcome"));
+        });
 
         Object.defineProperty(window, "editor", { get() { return this.state.editor; }, });
         Object.defineProperty(window, "doc", { get() { return this.state.editor?.doc; }, });
@@ -41,9 +52,6 @@ class State {
         Object.defineProperty(window, "input", { get() { return this.state.editor?.input; }, });
         Object.defineProperty(window, "caret", { get() { return this.state.editor?.input?.caret; }, });
         Object.defineProperty(window, "snippets", { get() { return this.state.editor?.input?.snippets; }, });
-
-        this.systemFiles = systemFiles;
-        this.newEditor(this.systemFiles.find(e => e.id === "welcome"));
 
         document.addEventListener("click", _ => {
             if (!this.editor.interactive) return;
@@ -69,6 +77,17 @@ class State {
                 this.focus.querySelector(".submit").click();
             }
         })
+    }
+
+    setNoteUrl(url) {
+        console.log("setting note url to", url);
+        this.note_url = url;
+        this.URL.searchParams.set("note", url);
+        history.replaceState({}, "", this.URL);
+    }
+
+    getCurrentNoteUrl() {
+        return this.files.find(e => e.id === this.editor.fileId).url;
     }
 
     async initFuzzyFinders() {
@@ -248,12 +267,23 @@ class State {
     }
 
     async getFile(file) {
-        let res = await this.sendRequest("note", {
-            method: 'POST',
-            body: JSON.stringify({ id: file.id }),
-            headers: { "Content-Type": "application/json" }
-        });
+        console.log("getting file", file);
+        let res;
+        if (file.id != undefined) {
+            res = await this.sendRequest("note", {
+                method: 'POST',
+                body: JSON.stringify({ id: file.id }),
+                headers: { "Content-Type": "application/json" }
+            });
+        } else if (file.url != undefined) {
+            res = await this.sendRequest("note_by_url", {
+                method: 'POST',
+                body: JSON.stringify({ url: file.url }),
+                headers: { "Content-Type": "application/json" }
+            });
+        }
 
+        if (res == -1) return res;
         let note = await res.json();
         console.log(note);
         note.content = JSON.parse(note.content);
@@ -263,14 +293,14 @@ class State {
     }
 
     async openFile(file) {
-        console.log("opening file", file);
         if (this.systemFiles.find(e => e.id == file.id)) {
             file = this.systemFiles.find(e => e.id == file.id);
         } else {
-            if (file.id === undefined) file = this.createFile(file);
+            if (file.id === undefined) file = await this.createFile(file);
             file = this.files.find(e => e.id === file.id)
         }
         console.log(file);
+        // this.setNoteUrl(file.url);
 
         let editor = this.editors.filter(e => e.fileId != undefined).find(e => e.fileId === file.id);
         if (editor == undefined) {
@@ -345,6 +375,15 @@ class State {
         }
         let json = await res.json();
         for (let file of json) file.misc = JSON.parse(file.misc);
+
+        let currentFile;
+        if (this.note_url != undefined) currentFile = await this.getFile({ url: this.note_url });
+        if (currentFile != undefined && currentFile != -1) {
+            (json.find(e => e.url == this.note_url) == undefined)
+                ? json.push(currentFile)
+                : json[json.indexOf(json.find(e => e.url == this.note_url))] = currentFile;
+        }
+
         return json;
     }
 
