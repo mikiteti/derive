@@ -368,13 +368,12 @@ class State {
     }
 
     async getFiles() {
-        let res = await this.sendRequest("notes");
-        if (res === -1) {
-            console.log("files weren't received");
-            return [];
+        let res = await this.sendRequest("notes"), json = [];
+        if (res === -1) console.log("files weren't received");
+        else {
+            json = await res.json();
+            for (let file of json) file.misc = JSON.parse(file.misc);
         }
-        let json = await res.json();
-        for (let file of json) file.misc = JSON.parse(file.misc);
 
         let currentFile;
         if (this.note_url != undefined) currentFile = await this.getFile({ url: this.note_url });
