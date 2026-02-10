@@ -421,4 +421,12 @@ const exportToMD = (editor = window.editor) => {
     return content;
 }
 
-export { nodeSizes, checkTreeStructure, getColumnAt, findXIndecesInLine, getVisualLineAt, exportFile, nodeAt, exportToMD };
+const isMac = navigator.platform.toUpperCase().includes("MAC");
+const key = {
+    metaKey: (e) => isMac ? e.metaKey : e.ctrlKey,
+    altKey: (e) => e.altkey,
+    ctrlKey: (e) => isMac ? e.ctrlKey : e.metaKey,
+    shiftKey: (e) => e.shiftKey,
+};
+
+export { nodeSizes, checkTreeStructure, getColumnAt, findXIndecesInLine, getVisualLineAt, exportFile, nodeAt, exportToMD, isMac, key };

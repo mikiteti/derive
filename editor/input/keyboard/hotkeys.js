@@ -1,3 +1,5 @@
+import { key } from "../../assets.js";
+
 const abc = "ABCDEFGHIJKLMNOPQRSTUVWXYZáéíóöőúüűzabcdefghijklmnopqrstuvwxyzÁÉÍÓÖŐÚÜŰ 1234567890!@#$%^&*()-=_+[]\\{}|;':\",./<>?`~".split("");
 
 const createCommandSet = (editor) => {
@@ -232,21 +234,11 @@ const createCommandSet = (editor) => {
     commands["M+d"] = commands["M+S+m"];
 
     const command = (e) => {
-        let isMac = navigator.platform.toUpperCase().includes("MAC");
-        let keyName;
-        if (isMac) {
-            keyName = (e.metaKey ? "M+" : "")
-                + (e.altKey ? "A+" : "")
-                + (e.ctrlKey ? "C+" : "")
-                + (e.shiftKey && (abc.indexOf(e.key) == -1 || e.metaKey || e.altKey || e.ctrlKey) ? "S+" : "")
-                + e.key;
-        } else {
-            keyName = (e.ctrlKey ? "M+" : "")
-                + (e.altKey ? "A+" : "")
-                + (e.metaKey ? "C+" : "")
-                + (e.shiftKey && (abc.indexOf(e.key) == -1 || e.metaKey || e.altKey || e.ctrlKey) ? "S+" : "")
-                + e.key;
-        }
+        let keyName = (key.metaKey(e) ? "M+" : "")
+            + (key.altKey(e) ? "A+" : "")
+            + (key.ctrlKey(e) ? "C+" : "")
+            + (key.shiftKey(e) && (abc.indexOf(e.key) == -1 || key.metaKey(e) || key.altKey(e) || key.ctrlKey(e)) ? "S+" : "")
+            + e.key;
         return commands[keyName];
     }
 

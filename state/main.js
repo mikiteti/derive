@@ -3,6 +3,7 @@ import newEditor from "../editor/main.js";
 import Environment from "../environment.js";
 import { exportFile } from "../editor/assets.js";
 import newCommands from "./commands.js";
+import { key } from "../editor/assets.js";
 
 class State {
     constructor() {
@@ -129,7 +130,7 @@ class State {
         });
 
         this.filePicker.querySelector("input").addEventListener("keydown", async (e) => {
-            if (e.key === "Enter" && e.metaKey) {
+            if (e.key === "Enter" && key.metaKey(e)) {
                 await this.openFile(await this.createFile({ name: this.filePicker.querySelector("input").value }));
                 this.closeModal();
             }
@@ -144,12 +145,12 @@ class State {
                 }
 
                 if (e.key === "Enter") {
-                    if (!e.metaKey) element.querySelector(".list div.active").click();
+                    if (!key.metaKey(e)) element.querySelector(".list div.active").click();
 
                     return;
                 }
 
-                if (!e.metaKey) return;
+                if (!key.metaKey(e)) return;
                 if (e.key === "j") {
                     e.preventDefault();
                     let displayed = element.querySelectorAll(".list div:not(.nodisplay)");
