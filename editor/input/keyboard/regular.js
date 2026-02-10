@@ -154,11 +154,21 @@ const createCommandSet = (editor) => {
 
     const command = (e) => {
         currentEvent = e;
-        let keyName = (e.metaKey ? "M+" : "")
-            + (e.altKey ? "A+" : "")
-            + (e.ctrlKey ? "C+" : "")
-            + (e.shiftKey && (abc.indexOf(e.key) == -1 || e.metaKey || e.altKey || e.ctrlKey) ? "S+" : "")
-            + e.key;
+        let isMac = navigator.platform.toUpperCase().includes("MAC");
+        let keyName;
+        if (isMac) {
+            keyName = (e.metaKey ? "M+" : "")
+                + (e.altKey ? "A+" : "")
+                + (e.ctrlKey ? "C+" : "")
+                + (e.shiftKey && (abc.indexOf(e.key) == -1 || e.metaKey || e.altKey || e.ctrlKey) ? "S+" : "")
+                + e.key;
+        } else {
+            keyName = (e.ctrlKey ? "M+" : "")
+                + (e.altKey ? "A+" : "")
+                + (e.metaKey ? "C+" : "")
+                + (e.shiftKey && (abc.indexOf(e.key) == -1 || e.metaKey || e.altKey || e.ctrlKey) ? "S+" : "")
+                + e.key;
+        }
         return commands[keyName];
     }
 

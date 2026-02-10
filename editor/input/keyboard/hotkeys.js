@@ -223,12 +223,30 @@ const createCommandSet = (editor) => {
         },
     };
 
+    commands["M+S+s"] = commands["M+s"];
+    commands["M+S+c"] = commands["M+c"];
+    commands["M+S+v"] = commands["M+v"];
+    commands["M+S+o"] = commands["M+o"];
+    commands["M+S+p"] = commands["M+p"];
+    commands["M+S+l"] = commands["M+l"];
+    commands["M+d"] = commands["M+S+m"];
+
     const command = (e) => {
-        let keyName = (e.metaKey ? "M+" : "")
-            + (e.altKey ? "A+" : "")
-            + (e.ctrlKey ? "C+" : "")
-            + (e.shiftKey && (abc.indexOf(e.key) == -1 || e.metaKey || e.altKey || e.ctrlKey) ? "S+" : "")
-            + e.key;
+        let isMac = navigator.platform.toUpperCase().includes("MAC");
+        let keyName;
+        if (isMac) {
+            keyName = (e.metaKey ? "M+" : "")
+                + (e.altKey ? "A+" : "")
+                + (e.ctrlKey ? "C+" : "")
+                + (e.shiftKey && (abc.indexOf(e.key) == -1 || e.metaKey || e.altKey || e.ctrlKey) ? "S+" : "")
+                + e.key;
+        } else {
+            keyName = (e.ctrlKey ? "M+" : "")
+                + (e.altKey ? "A+" : "")
+                + (e.metaKey ? "C+" : "")
+                + (e.shiftKey && (abc.indexOf(e.key) == -1 || e.metaKey || e.altKey || e.ctrlKey) ? "S+" : "")
+                + e.key;
+        }
         return commands[keyName];
     }
 
