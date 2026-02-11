@@ -2,6 +2,7 @@ import newChange from "./changes.js";
 import { nodeSizes } from "../assets.js";
 import { nodeAt } from "../assets.js";
 import newHistory from "./history.js";
+import newClipboard from "./clipboard.js";
 
 const previousSibling = (obj) => {
     if (obj.deleted) return null;
@@ -164,6 +165,7 @@ class Doc extends Node {
         super(...args)
         this.isDoc = true;
         this.history = newHistory(this.editor);
+        this.clipboard = newClipboard(this.editor);
 
         this.change = newChange({ editor: this.editor });
         this.size = { min: 0, max: Infinity };
@@ -256,8 +258,8 @@ class Doc extends Node {
             let from = sc.from, to = sc.to, handled = false,
                 line = sc.position.Line, marks = line.marks;
 
-            if (sc.fixedEnd && sc.fixedEnd.Line !== sc.position.Line) continue;
-            if (sc.fixedEnd) {
+            if (sc.fixedEnd && sc.fixedEnd.Line !== sc.position.Line) continue; // ignore multiline selections
+            if (sc.fixedEnd) { // mark selection
                 for (let mark of marks) if (mark.start.index < to && mark.end.index > from) mark.delete();
                 sc.position.Line.addNewMark({ from, to, role });
                 handled = true;
@@ -265,8 +267,9 @@ class Doc extends Node {
                 continue;
             }
 
+            // no selection
             for (let mark of marks) {
-                if (mark.to.index === from) {
+                if (mark.to.index === from) { // toggle end's stickLeftOnInsert
                     mark.to.stickLeftOnInsert = !mark.to.stickLeftOnInsert;
                     line.unrenderedChanges.add("marks");
                     if (mark.to.index - (mark.to.stickLeftOnInsert ? 1 : 0) <= mark.from.index - (mark.from.stickLeftOnInsert ? 1 : 0)) {
@@ -275,7 +278,7 @@ class Doc extends Node {
                     handled = true;
                     break;
                 }
-                if (mark.from.index === from) {
+                if (mark.from.index === from) { // toggle start's stickLeftOnInsert
                     mark.from.stickLeftOnInsert = !mark.from.stickLeftOnInsert;
                     line.unrenderedChanges.add("marks");
                     if (mark.to.index - (mark.to.stickLeftOnInsert ? 1 : 0) <= mark.from.index - (mark.from.stickLeftOnInsert ? 1 : 0)) {
@@ -284,14 +287,14 @@ class Doc extends Node {
                     handled = true;
                     break;
                 }
-                if (mark.from.index < from && mark.to.index > from) {
+                if (mark.from.index < from && mark.to.index > from) { // delete mark if selection is inside
                     line.deleteMark(mark);
                     handled = true;
                     break;
                 }
             }
 
-            if (!handled) line.addNewMark({ from: sc.from, to: sc.to, role });
+            if (!handled) line.addNewMark({ from: sc.from, to: sc.to, role }); // if did nothing, add collapsed mark
         }
         this.editor.input.caret.placeAllAt();
     }
@@ -480,12 +483,13 @@ class Line {
         for (let i = 1; i < this.marks.length; i++) {
             let prevMark = marks[i - 1], mark = marks[i];
             if (prevMark.to.index < mark.from.index) continue;
-            if (prevMark.role === mark.role) {
+            if (prevMark.role === mark.role) { // if same role, merge
                 let start = prevMark.from.index;
                 prevMark.delete();
                 mark.from.reassign(start);
             } else {
                 mark.from.stickLeftOnInsert = false;
+                if (prevMark.to.index > mark.from.index) prevMark.to.reassign(mark.from.index); // if overlapped, push right side to the left
             }
         }
     }

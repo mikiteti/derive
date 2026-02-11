@@ -7,22 +7,28 @@ const createCommandSet = (editor) => {
 
     const commands = {
         "M+c": () => {
-            let text;
+            let from, to;
             if (!caret.carets[0].fixedEnd) {
-                text = caret.carets[0].position.Line.text + "\n";
+                from = caret.carets[0].position.Line.from;
+                to = caret.carets[0].position.Line.to + 1;
+                // text = caret.carets[0].position.Line.text + "\n";
             } else {
-                let from = caret.carets[0].from, to = caret.carets[0].to;
-                text = doc.textBetween(from, to);
+                from = caret.carets[0].from;
+                to = caret.carets[0].to;
             }
-            navigator.clipboard.writeText(text).then(() => {
-                console.log('Copied!', text);
+            let clipboardContent = doc.clipboard.copy(from, to);
+            navigator.clipboard.writeText(clipboardContent.text).then(() => {
+                console.log('Copied!', clipboardContent.text);
             }).catch(console.error);
         },
         "M+v": () => {
             navigator.clipboard.readText().then(text => {
-                caret.changeForAll(sc => {
-                    return { insert: text, at: sc.position.index };
-                });
+                if (doc.clipboard.compare(text)) for (let sc of caret.carets) doc.clipboard.paste(sc.position.index);
+                else {
+                    caret.changeForAll(sc => {
+                        return { insert: text, at: sc.position.index };
+                    });
+                }
             });
         },
         "M+s": () => {
