@@ -231,7 +231,6 @@ const createCommandSet = (editor) => {
         },
     };
 
-    commands["M+S+s"] = commands["M+s"];
     commands["M+S+c"] = commands["M+c"];
     commands["M+S+v"] = commands["M+v"];
     commands["M+S+o"] = commands["M+o"];

@@ -749,7 +749,7 @@ class Mark extends Range {
         let initialFrom = this.from.index, initialTo = this.to.index, initialLine = this.from.Line;
         let inserted = to > this.to.index,
             sliding = (from !== undefined && from !== this.from.index),
-            shrinking = ((to || this.to.index) - (from || this.from.index)) < (this.to.index - this.from.index);
+            shrinking = ((to == undefined ? this.to.index : to) - (from == undefined ? this.from.index : from)) < (this.to.index - this.from.index);
         // sliding and shrinking can be true at the same time!
 
         // <Inserted>

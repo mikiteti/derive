@@ -5,7 +5,7 @@ class Clipboard {
 
     parse(from, to) {
         let text = this.editor.doc.textBetween(from, to);
-        console.log(`parsed ${text}`);
+        console.log(`parsed from ${from} to ${to}`);
         let line1 = this.editor.doc.lineAt(from), line2 = this.editor.doc.lineAt(to);
         let lines = line1 === line2 ? [line1] : [line1, ...this.editor.doc.linesBetween(line1.number, line2.number), line2];
         let decos = lines.map(e => [...e.decos]);
@@ -25,7 +25,7 @@ class Clipboard {
 
     paste(at, content = window.state.clipboardContent) {
         this.editor.doc.history.newChangeGroup();
-        console.log(`pasted at ${at} text ${content.text}`);
+        console.log(`pasted at ${at}`);
         if (at == undefined || content == undefined || content.text == undefined) return;
         this.editor.doc.change.insert(content.text, at);
         let lineNum = content.text.split("\n").length;
@@ -40,7 +40,10 @@ class Clipboard {
         for (let i = 0; i < lineNum; i++)
             this.editor.doc.line(line1.number + i).addNewMark(content.marks[i].map(e => ({ from: e.from + at, to: e.to + at, role: e.role })));
 
-        for (let i = 0; i < lineNum; i++) this.editor.render.renderLine(this.editor.doc.line(line1.number + i));
+        for (let i = 0; i < lineNum; i++) {
+            this.editor.doc.line(line1.number + i).unrenderedChanges.add("caret");
+            this.editor.render.renderLine(this.editor.doc.line(line1.number + i));
+        }
         this.editor.doc.history.newChangeGroup();
     }
 

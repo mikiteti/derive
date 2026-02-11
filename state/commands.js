@@ -127,6 +127,12 @@ const newCommands = (state) => {
                 });
             }
         },
+        {
+            name: "Save file",
+            run: () => {
+                state.saveFile(state.editor);
+            }
+        },
 
         // {
         //     name: "Restore file",

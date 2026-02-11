@@ -149,12 +149,9 @@ class Change {
         }
 
         let newText = line1.text.substring(0, from - line1.from) + line2.text.substring(to - line2.from);
-        if (from === line1.from) { // if first line is deleted completely, keep last line's decos
-            let line1decos = [], line2decos = [];
-            for (let deco of line1.decos) line1decos.push(deco);
-            for (let deco of line2.decos) line2decos.push(deco);
-            line1.removeDeco(line1decos, { addToHistory });
-            line1.addDeco(line2decos, { addToHistory });
+        if (from === line1.from) { // if first line is deleted completely, delete its decos
+            line1.removeDeco([...line1.decos], { addToHistory });
+            if (to < line2.to) line1.addDeco([...line2.decos], { addToHistory }); // if last line is not deleted completely, let first line have its decos
         }
 
         line1.update(newText);
