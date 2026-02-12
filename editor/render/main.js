@@ -180,7 +180,7 @@ class Render {
                 if (mark.role === "math") {
                     wrapper.classList.remove("editingSource");
                     for (let sc of this.editor?.input?.caret?.carets || [])
-                        if (sc.from >= mark.start.index + !mark.start.stickLeftOnInsert && sc.from <= mark.end.index - !!mark.end.stickLeftOnInsert) {
+                        if (sc.position.index >= mark.start.index + !mark.start.stickLeftOnInsert && sc.position.index <= mark.end.index - !!mark.end.stickLeftOnInsert) {
                             wrapper.classList.add("editingSource");
                             break;
                         }
@@ -221,7 +221,7 @@ class Render {
                 let wrapper = mark.wrapper;
                 wrapper.classList.remove("editingSource");
                 for (let sc of this.editor?.input?.caret?.carets || [])
-                    if (sc.from >= mark.start.index + !mark.start.stickLeftOnInsert && sc.from <= mark.end.index - !!mark.end.stickLeftOnInsert) {
+                    if (sc.position.index >= mark.start.index + !mark.start.stickLeftOnInsert && sc.position.index <= mark.end.index - !!mark.end.stickLeftOnInsert) {
                         wrapper.classList.add("editingSource");
                         break;
                     }

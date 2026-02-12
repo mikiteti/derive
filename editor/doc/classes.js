@@ -430,33 +430,33 @@ class Line {
     }
 
     addMark(Mark, { addToHistory = true } = {}) {
-        let startState = { line: this.number, marks: this.marks.map(e => ({ role: e.role, from: e.from.index, to: e.to.index })) };
+        let startState = { line: this.number, marks: this.exportMarks() };
         this.marks.push(Mark);
         this.unrenderedChanges.add("marks");
-        let endState = { line: this.number, marks: this.marks.map(e => ({ role: e.role, from: e.from.index, to: e.to.index })) };
+        let endState = { line: this.number, marks: this.exportMarks() };
         if (addToHistory) this.editor.doc.history.addChange({ from: startState, to: endState });
     }
 
     addNewMark(mark, { addToHistory = true } = {}) {
-        let startState = { line: this.number, marks: this.marks.map(e => ({ role: e.role, from: e.from.index, to: e.to.index })) };
+        let startState = { line: this.number, marks: this.exportMarks() };
         let marks = Array.isArray(mark) ? mark : [mark];
         for (let mark of marks) this.marks.push(new Mark(this.editor, mark));
         this.unrenderedChanges.add("marks");
-        let endState = { line: this.number, marks: this.marks.map(e => ({ role: e.role, from: e.from.index, to: e.to.index })) };
+        let endState = { line: this.number, marks: this.exportMarks() };
         if (addToHistory) this.editor.doc.history.addChange({ from: startState, to: endState });
     }
 
     removeMark(Mark, { addToHistory = true } = {}) {
-        let startState = { line: this.number, marks: this.marks.map(e => ({ role: e.role, from: e.from.index, to: e.to.index })) };
+        let startState = { line: this.number, marks: this.exportMarks() };
         let index = this.marks.indexOf(Mark);
         if (index === -1) return;
         this.marks = [...this.marks.slice(0, index), ...this.marks.slice(index + 1)];
-        let endState = { line: this.number, marks: this.marks.map(e => ({ role: e.role, from: e.from.index, to: e.to.index })) };
+        let endState = { line: this.number, marks: this.exportMarks() };
         if (addToHistory) this.editor.doc.history.addChange({ from: startState, to: endState });
     }
 
     deleteMark(mark, { addToHistory = true } = {}) {
-        let startState = { line: this.number, marks: this.marks.map(e => ({ role: e.role, from: e.from.index, to: e.to.index })) };
+        let startState = { line: this.number, marks: this.exportMarks() };
         let marks = Array.isArray(mark) ? mark : [mark];
         for (let mark of marks) {
             if (!this.marks.includes(mark)) continue;
@@ -466,16 +466,20 @@ class Line {
             mark.delete();
         }
         this.unrenderedChanges.add("marks");
-        let endState = { line: this.number, marks: this.marks.map(e => ({ role: e.role, from: e.from.index, to: e.to.index })) };
+        let endState = { line: this.number, marks: this.exportMarks() };
         if (addToHistory) this.editor.doc.history.addChange({ from: startState, to: endState });
     }
 
     setMarks(marks, { addToHistory = true } = {}) {
-        let startState = { line: this.number, marks: this.marks.map(e => ({ role: e.role, from: e.from.index, to: e.to.index })) };
+        let startState = { line: this.number, marks: this.exportMarks() };
         this.marks = marks.map(e => new Mark(this.editor, e));
         this.unrenderedChanges.add("marks");
-        let endState = { line: this.number, marks: this.marks.map(e => ({ role: e.role, from: e.from.index, to: e.to.index })) };
+        let endState = { line: this.number, marks: this.exportMarks() };
         if (addToHistory) this.editor.doc.history.addChange({ from: startState, to: endState });
+    }
+
+    exportMarks() {
+        return this.marks.map(e => ({ from: e.from.index, to: e.to.index, role: e.role, stickLeft: [e.from.stickLeftOnInsert, e.to.stickLeftOnInsert] }));
     }
 
     checkMarks() {
@@ -489,7 +493,7 @@ class Line {
                 mark.from.reassign(start);
             } else {
                 mark.from.stickLeftOnInsert = false;
-                if (prevMark.to.index > mark.from.index) prevMark.to.reassign(mark.from.index); // if overlapped, push right side to the left
+                // if (prevMark.to.index > mark.from.index) prevMark.to.reassign(mark.from.index); // if overlapped, push right side to the left
             }
         }
     }
@@ -724,18 +728,18 @@ class Range {
 export { Range }
 
 class Mark extends Range {
-    constructor(editor, { from, to, role = "math" } = {}) {
+    constructor(editor, { from, to, role = "math", stickLeft } = {}) {
         super(
             editor,
-            new Position(from, editor.doc, { stickLeftOnInsert: true }),
-            new Position(to, editor.doc),
+            new Position(from, editor.doc, { stickLeftOnInsert: (stickLeft != undefined) ? stickLeft[0] : true }),
+            new Position(to, editor.doc, { stickLeftOnInsert: (stickLeft != undefined) ? stickLeft[0] : false }),
             { role },
         )
         this.isMark = true;
     }
 
-    delete() {
-        this.from.Line.removeMark(this);
+    delete({ addToHistory = true } = {}) {
+        this.from.Line.removeMark(this, { addToHistory });
         this.deleted = true;
         this.from.delete();
         this.to.delete();
@@ -743,8 +747,10 @@ class Mark extends Range {
         this.to = undefined;
     }
 
-    reassign(from, to, { changedTo } = {}) {
-        console.log("reassigning mark", this, this.from.index, this.to.index, from, to);
+    reassign(from, to, { changedTo } = {}) { // TODO: add to history mark reassignments
+        let addToHistory = false;
+        if (this.deleted) return;
+        // console.log("reassigning mark", this, this.from.index, this.to.index, from, to, { addToHistory });
         if (from === this.from.index && to === this.to.index || from == undefined && to == undefined) return;
         let initialFrom = this.from.index, initialTo = this.to.index, initialLine = this.from.Line;
         let inserted = to > this.to.index,
@@ -754,19 +760,24 @@ class Mark extends Range {
 
         // <Inserted>
         if (inserted && sliding) {
-            console.log("sliding right");
+            // console.log("sliding right");
+            // let startState = { line: this.from.Line.number, marks: this.from.Line.marks.map(e => ({ role: e.role, from: e.from.index, to: e.to.index })) };
             this.from.reassign(from);
             this.to.reassign(to);
             if (this.from.Line !== initialLine) {
-                console.log("updating mark's line", initialLine, this.from.Line);
-                initialLine.removeMark(this);
-                this.from.Line.addMark(this);
+                // console.log("updating mark's line", initialLine, this.from.Line);
+                initialLine.removeMark(this, { addToHistory });
+                this.from.Line.addMark(this, { addToHistory });
+            } else {
+                // let endState ={ line: this.from.Line.number, marks: this.from.Line.marks.map(e => ({ role: e.role, from: e.from.index, to: e.to.index })) }; 
+                // if (addToHistory) this.editor.doc.history.addChange({from: startState, to: endState});
             }
+
             return;
         }
 
         if (inserted && !sliding) {
-            console.log("expanding");
+            // console.log("expanding");
             this.to.reassign(Math.min(this.to.Line.to, to));
             return;
         }
@@ -774,36 +785,40 @@ class Mark extends Range {
 
         // <Deleted>
         if (sliding) {
-            console.log("sliding left");
+            // console.log("sliding left");
+            // let startState = { line: this.from.Line.number, marks: this.from.Line.marks.map(e => ({ role: e.role, from: e.from.index, to: e.to.index })) };
             this.from.reassign(from);
             this.to.reassign(to);
             if (this.from.Line !== initialLine) {
-                console.log("updating mark's line", initialLine, this.from.Line);
-                initialLine.removeMark(this);
-                this.from.Line.addMark(this);
+                // console.log("updating mark's line", initialLine, this.from.Line);
+                initialLine.removeMark(this, { addToHistory });
+                this.from.Line.addMark(this, { addToHistory });
+            } else {
+                // let endState ={ line: this.from.Line.number, marks: this.from.Line.marks.map(e => ({ role: e.role, from: e.from.index, to: e.to.index })) }; 
+                // if (addToHistory) this.editor.doc.history.addChange({from: startState, to: endState});
             }
 
             let closestMark = this.from.Line.marks.filter(e => e !== this && e.to.index <= this.from.index).sort((a, b) => b.from.index - a.from.index)[0];
             if (closestMark != undefined && closestMark.to.index == this.from.index) {
                 if (closestMark.role === this.role) { // merge
-                    console.log("merging marks");
+                    // console.log("merging marks");
                     let start = closestMark.from.index;
                     closestMark.delete();
                     this.from.reassign(start);
                 } else { // make sure writing into both marks at the same time is impossible
-                    console.log("keeping distance");
+                    // console.log("keeping distance");
                     this.from.stickLeftOnInsert = false;
                 }
             }
         }
 
         if (shrinking) {
-            console.log("shrinking");
+            // console.log("shrinking");
             this.to.reassign(to);
             if (this.from.index == this.to.index
                 && (!this.from.stickLeftOnInsert || this.to.stickLeftOnInsert || sliding || changedTo > initialTo)) {
-                console.log("deleting mark");
-                this.delete(this);
+                // console.log("deleting mark");
+                this.delete({ addToHistory });
             }
         }
         // </Deleted>

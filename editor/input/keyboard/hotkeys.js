@@ -17,9 +17,15 @@ const createCommandSet = (editor) => {
                 to = caret.carets[0].to;
             }
             let clipboardContent = doc.clipboard.copy(from, to);
-            navigator.clipboard.writeText(clipboardContent.text).then(() => {
-                console.log('Copied!', clipboardContent.text);
-            }).catch(console.error);
+
+            const item = new ClipboardItem({
+                "text/html": new Blob([doc.clipboard.convertToClipboardHTML(clipboardContent)], { type: "text/html" }),
+                "text/plain": new Blob([clipboardContent.text], { type: "text/plain" })
+            });
+
+            navigator.clipboard.write([item]).then(e => {
+                console.log("copied");
+            });
         },
         "M+v": () => {
             navigator.clipboard.readText().then(text => {

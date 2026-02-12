@@ -50,6 +50,51 @@ class Clipboard {
     compare(text, content = window.state.clipboardContent) {
         return content?.text === text;
     }
+
+    convertToClipboardHTML(content) {
+        let lines = content.text.split("\n");
+        let html = "", charsBeforeLine = 0;
+        for (let i = 0; i < lines.length; i++) {
+            let atoms = [], index = 0, marks = content.marks[i];
+            for (let mark of marks) {
+                atoms.push(lines[i].slice(index, mark.from - charsBeforeLine));
+                atoms.push(lines[i].slice(mark.from - charsBeforeLine, mark.to - charsBeforeLine));
+                index = mark.to - charsBeforeLine;
+            }
+            atoms.push(lines[i].slice(index));
+
+            let lineElement = "p";
+            for (let h of ["h1", "h2", "h3", "h4", "h5", "h6"]) if (content.decos[i].includes(h)) {
+                lineElement = h;
+                break;
+            }
+            if (content.decos[i].includes("math")) lineElement = 'p class="math" style="font-style: italic;"';
+
+            let markElements = {
+                "bold": "b",
+                "italic": "i",
+                "math": 'span class="math" style="font-style: italic;"',
+            }
+
+            let text = `<${lineElement}>` + atoms[0];
+            for (let j = 0; j < marks.length; j++) {
+                if (markElements[marks[j].role]) {
+                    text += `<${markElements[marks[j].role]}>${atoms[2 * j + 1]}</${markElements[marks[j].role].split(" ")[0]}>${atoms[2 * j + 2]}`;
+                } else text += atoms[2 * j + 1] + atoms[2 * j + 2];
+            }
+            text += `</${lineElement.split(" ")[0]}>`;
+
+            html += text + "\n";
+
+            charsBeforeLine += lines[i].length + 1;
+        }
+
+        return html;
+    }
+
+    parseClipboardHTML(html) {
+
+    }
 }
 
 const newClipboard = (editor) => {

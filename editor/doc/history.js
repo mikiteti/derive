@@ -10,7 +10,7 @@
 //
 // change: {
 // from: {marks: [{role: "math", from: 123, to: 127}], line: 14}
-// from: {marks: [{role: "bold", from: 126, to: 129}], line: 14}
+// to: {marks: [{role: "bold", from: 126, to: 129}], line: 14}
 // }
 // changeGroup: change[]
 
@@ -52,6 +52,16 @@ class History {
                 steps.push(() => {
                     this.editor.doc.line(from.line).setMarks(to.marks, { addToHistory: false });
                 });
+            }
+
+            if (to.lines != undefined) {
+                for (let line of to.lines) {
+                    if (line.marks != undefined) {
+                        steps.push(() => {
+                            this.editor.doc.line(line.line).setMarks(line.marks, { addToHistory: false });
+                        });
+                    }
+                }
             }
         }
 

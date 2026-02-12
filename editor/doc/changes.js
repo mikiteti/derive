@@ -104,28 +104,19 @@ class Change {
         };
 
         let line1 = this.editor.doc.lineAt(from), line2 = this.editor.doc.lineAt(to);
-        let positionsAffected = (line1 === line2 ? [line1] : [line1, ...this.editor.doc.linesBetween(line1.number, line2.number), line2])
+        let linesAffected = (line1 === line2) ? [line1] : [line1, ...this.editor.doc.linesBetween(line1.number, line2.number), line2];
+        let positionsAffected = linesAffected
             .map(e => e.positions).flat()
             .filter(e => e.index >= from);
         let newPositions = positionsAffected.map(e => [e, Math.max(e.index - (to - from), from)]);
         let marksAffected = [];
         for (let p of positionsAffected) if (p.range && p.range.isMark && marksAffected.at(-1) !== p.range) marksAffected.push(p.range);
-        // let positionsToShift = line2.positions.filter(e => e.index >= to).map(e => [e, e.index - (to - from)]);
-        // let positionsToMaybeDelete = [line1, ...this.editor.doc.linesBetween(line1.number, line2.number), line2]
-        //     .map(e => e.positions).flat()
-        //     .filter(e => e.index >= from && e.index < to);
+        startState.lines = linesAffected.map(l => ({ line: l.number, marks: l.exportMarks() }));
+        console.log(startState.lines);
 
         if (line1 == line2) {
             let text = line1.text.substring(0, from - line1.from) + line1.text.substring(to - line1.from);
             line1.update(text);
-
-            // for (let pos of positionsToShift) {
-            //     // let changeOutside = !!pos[0].range?.isMark && positionsToShift.map(e => e[0]).indexOf(pos[0].pair) !== -1;
-            //     pos[0].reassign(pos[1], { changedAt: from, inserted: false, changedTo: to });
-            // }
-            //
-            // if (markStickLeft) this.stickLeft = line1.positions.filter(e => (e.index === from && positionsToShift.map(e => e[0]).indexOf(e) === -1));
-            // for (let pos of positionsToMaybeDelete) pos.stickWhenDeleted ? pos.reassign(from, { changedAt: from, inserted: false, changedTo: to }) : pos.delete();
 
             if (markStickLeft) this.stickLeft = positionsAffected.filter(e => e.index === from);
             for (let p of positionsAffected.filter(e => !e.range?.isMark && e.index < to && !e.stickWhenDeleted)) p.delete();
@@ -143,6 +134,7 @@ class Change {
                 carets: this.editor.input.caret.carets.map(e => e.fixedEnd != undefined ? [e.position.index, e.fixedEnd.index] : e.position.index),
                 text: "",
                 at: from,
+                lines: [{ line: line1.number, marks: line1.exportMarks() }]
             };
             if (addToHistory) this.editor.doc.history.addChange({ from: startState, to: endState });
             return changedLines;
@@ -154,13 +146,14 @@ class Change {
             if (to < line2.to) line1.addDeco([...line2.decos], { addToHistory }); // if last line is not deleted completely, let first line have its decos
         }
 
+        let linesToRemove = this.editor.doc.linesBetween(line1.number, line2.number).concat([line2]);
+        for (let line of linesToRemove) {
+            line.setDecos([], { addToHistory });
+            line.delete();
+        }
+
         line1.update(newText);
 
-        // for (let pos of positionsToShift) {
-        //     // let changeOutside = !!pos[0].range?.isMark && positionsToShift.map(e => e[0]).indexOf(pos[0].pair) !== -1;
-        //     pos[0].reassign(pos[1], { changedAt: from, inserted: false, changedTo: to });
-        // }
-        // for (let pos of positionsToMaybeDelete) pos.stickWhenDeleted ? pos.reassign(from, { changedAt: from, inserted: false, changedTo: to }) : pos.delete();
         for (let p of positionsAffected.filter(e => !e.range?.isMark && e.index < to && !e.stickWhenDeleted)) p.delete();
         for (let p of positionsAffected.filter(e => !e.range?.isMark && (e.index >= to || e.stickWhenDeleted))) p.reassign(newPositions.find(e => e[0] === p)[1]);
         for (let m of marksAffected) m.reassign(
@@ -168,11 +161,6 @@ class Change {
             positionsAffected.includes(m.to) ? newPositions.find(e => e[0] === m.to)[1] : undefined,
             { changedTo: to }
         );
-
-        let linesToRemove = this.editor.doc.linesBetween(line1.number, line2.number).concat([line2]);
-        // console.log({ linesToRemove: linesToRemove.map(line => line.text) });
-        for (let line of linesToRemove) line.setDecos([], { addToHistory });
-        for (let line of linesToRemove) line.delete();
 
         let removedChildren = linesToRemove;
         while (removedChildren[0]?.parent?.parent) { // deleting empty ancestors
@@ -212,6 +200,7 @@ class Change {
             carets: this.editor.input.caret.carets.map(e => e.fixedEnd != undefined ? [e.position.index, e.fixedEnd.index] : e.position.index),
             text: "",
             at: from,
+            lines: [{ line: line1.number, marks: line1.exportMarks() }]
         };
         if (addToHistory) this.editor.doc.history.addChange({ from: startState, to: endState });
         return changedLines;
@@ -228,7 +217,9 @@ class Change {
         if (at.index) at = at.index;
 
         // console.log(`inserting "${string}" at ${at}`);
-        let positionsAffected = this.editor.doc.lineAt(at).positions.filter(e => {
+        let line = this.editor.doc.lineAt(at);
+        startState.lines = [{ line: line.number, marks: line.exportMarks() }];
+        let positionsAffected = line.positions.filter(e => {
             if (e.range && e.range.isMark && e.range.end === e && e.index === e.Line.to && !preserveDM) return false;
             return stickLeft || e.stickLeftOnInsert || this.stickLeft.indexOf(e) !== -1 ?
                 e.index > at :
@@ -237,24 +228,13 @@ class Change {
         let newPositions = positionsAffected.map(e => [e, e.index + string.length]);
         let marksAffected = [];
         for (let p of positionsAffected) if (p.range && p.range.isMark && marksAffected.at(-1) !== p.range) marksAffected.push(p.range);
-        // let positionsToShift = this.editor.doc.lineAt(at).positions.filter(e => {
-        //     if (e.range && e.range.isMark && e.range.end === e && e.index === e.Line.to && !preserveDM) return false;
-        //     return stickLeft || e.stickLeftOnInsert || this.stickLeft.indexOf(e) !== -1 ?
-        //         e.index > at :
-        //         e.index >= at
-        // }).map(e => [e, e.index + string.length]);
         this.stickLeft = [];
 
         let lines = string.split("\n");
         if (lines.length == 1) {
-            let line = this.editor.doc.lineAt(at);
             let text = line.text.substring(0, at - line.from) + string + line.text.substring(at - line.from);
             line.update(text);
 
-            // for (let pos of positionsToShift) {
-            //     // let changeOutside = !!pos[0].range?.isMark && positionsToShift.map(e => e[0]).indexOf(pos[0].pair) !== -1;
-            //     pos[0].reassign(pos[1], { changedAt: at, inserted: true });
-            // }
             for (let p of positionsAffected.filter(e => !e.range?.isMark)) p.reassign(newPositions.find(e => e[0] === p)[1]);
             for (let m of marksAffected) m.reassign(
                 positionsAffected.includes(m.from) ? newPositions.find(e => e[0] === m.from)[1] : undefined,
@@ -268,6 +248,7 @@ class Change {
                 carets: this.editor.input.caret.carets.map(e => e.fixedEnd != undefined ? [e.position.index, e.fixedEnd.index] : e.position.index),
                 text: string,
                 at: at,
+                lines: [{ line: line.number, marks: line.exportMarks() }]
             };
             if (addToHistory) this.editor.doc.history.addChange({ from: startState, to: endState });
             return changedLines;
@@ -301,15 +282,6 @@ class Change {
             node = node.parent;
         }
 
-        // for (let pos of positionsToShift) {
-        //     let initialLine = pos[0].Line;
-        //     // let changeOutside = !!pos[0].range?.isMark && positionsToShift.map(e => e[0]).indexOf(pos[0].pair) !== -1;
-        //     pos[0].reassign(pos[1], { changedAt: at, inserted: true });
-        //     if (pos[0].caret) {
-        //         initialLine.unrenderedChanges.add("caret");
-        //         this.editor.render.renderLine(initialLine);
-        //     }
-        // }
         let caretLines = new Set(positionsAffected.filter(e => e.caret).map(e => e.Line));
         for (let p of positionsAffected.filter(e => !e.range?.isMark)) p.reassign(newPositions.find(e => e[0] === p)[1]);
         for (let m of marksAffected) m.reassign(
@@ -333,6 +305,7 @@ class Change {
             carets: this.editor.input.caret.carets.map(e => e.fixedEnd != undefined ? [e.position.index, e.fixedEnd.index] : e.position.index),
             text: string,
             at: at,
+            lines: [{ line: line.number, marks: line.exportMarks() }]
         };
         if (addToHistory) this.editor.doc.history.addChange({ from: startState, to: endState });
         return changedLines;
