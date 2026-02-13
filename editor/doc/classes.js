@@ -2,7 +2,6 @@ import newChange from "./changes.js";
 import { nodeSizes } from "../assets.js";
 import { nodeAt } from "../assets.js";
 import newHistory from "./history.js";
-import newClipboard from "./clipboard.js";
 
 const previousSibling = (obj) => {
     if (obj.deleted) return null;
@@ -165,7 +164,6 @@ class Doc extends Node {
         super(...args)
         this.isDoc = true;
         this.history = newHistory(this.editor);
-        this.clipboard = newClipboard(this.editor);
 
         this.change = newChange({ editor: this.editor });
         this.size = { min: 0, max: Infinity };

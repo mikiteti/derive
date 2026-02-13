@@ -4,6 +4,7 @@ import Environment from "../environment.js";
 import { exportFile } from "../editor/assets.js";
 import newCommands from "./commands.js";
 import { key } from "../editor/assets.js";
+import newClipboard from "../editor/doc/clipboard.js";
 
 class State {
     constructor() {
@@ -11,6 +12,10 @@ class State {
 
         this.highlight = new Highlight();
         CSS.highlights.set("selection", this.highlight);
+        this.clipboard = newClipboard("window");
+        this.registers = {};
+        for (let regName of ["", ...".0123456789abcdefghijklmnopqrstuvwxyz|"]) this.registers[regName] = newClipboard(regName);
+        this.registers["+"] = this.clipboard;
 
         this.editors = [];
         this.sendRequest("user").then(res => {

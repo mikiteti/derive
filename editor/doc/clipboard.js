@@ -1,7 +1,10 @@
 class Clipboard {
-    constructor(editor, syncWithWindowClipboard = true) {
-        this.editor = editor;
-        this.sync = syncWithWindowClipboard;
+    constructor(name) {
+        this.name = name;
+    }
+
+    get editor() {
+        return window.state.editor;
     }
 
     parse(from, to) {
@@ -21,11 +24,10 @@ class Clipboard {
 
     copy(from, to, text) {
         this.content = (from != undefined && to != undefined) ? this.parse(from, to) : { text };
-        if (this.sync) window.state.clipboardContent = this.content;
         return this.content;
     }
 
-    paste(at, content = window.state.clipboardContent, { from, to } = {}) {
+    paste(at, content = this.content, { from, to } = {}) {
         this.editor.doc.history.newChangeGroup();
         console.log(`pasted at ${at}`, content);
         if (at == undefined && (from == undefined || to == undefined) || content == undefined || content.text == undefined) return;
@@ -52,7 +54,7 @@ class Clipboard {
         this.editor.doc.history.newChangeGroup();
     }
 
-    compare(text, content = window.state.clipboardContent) {
+    compare(text, content = window.state.clipboard.content) {
         return content?.text === text;
     }
 

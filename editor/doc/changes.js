@@ -112,7 +112,6 @@ class Change {
         let marksAffected = [];
         for (let p of positionsAffected) if (p.range && p.range.isMark && marksAffected.at(-1) !== p.range) marksAffected.push(p.range);
         startState.lines = linesAffected.map(l => ({ line: l.number, marks: l.exportMarks() }));
-        console.log(startState.lines);
 
         if (line1 == line2) {
             let text = line1.text.substring(0, from - line1.from) + line1.text.substring(to - line1.from);
