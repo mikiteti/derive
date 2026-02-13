@@ -1,9 +1,11 @@
 class Clipboard {
-    constructor(editor) {
+    constructor(editor, syncWithWindowClipboard = true) {
         this.editor = editor;
+        this.sync = syncWithWindowClipboard;
     }
 
     parse(from, to) {
+        if (from > to) [from, to] = [to, from];
         let text = this.editor.doc.textBetween(from, to);
         console.log(`parsed from ${from} to ${to}`);
         let line1 = this.editor.doc.lineAt(from), line2 = this.editor.doc.lineAt(to);
@@ -17,17 +19,20 @@ class Clipboard {
         return { text, decos, marks };
     }
 
-    copy(from, to) {
-        console.log(`copied from ${from} to ${to}`);
-        window.state.clipboardContent = this.parse(from, to);
-        return window.state.clipboardContent;
+    copy(from, to, text) {
+        this.content = (from != undefined && to != undefined) ? this.parse(from, to) : { text };
+        if (this.sync) window.state.clipboardContent = this.content;
+        return this.content;
     }
 
-    paste(at, content = window.state.clipboardContent) {
+    paste(at, content = window.state.clipboardContent, { from, to } = {}) {
         this.editor.doc.history.newChangeGroup();
-        console.log(`pasted at ${at}`);
-        if (at == undefined || content == undefined || content.text == undefined) return;
-        this.editor.doc.change.insert(content.text, at);
+        console.log(`pasted at ${at}`, content);
+        if (at == undefined && (from == undefined || to == undefined) || content == undefined || content.text == undefined) return;
+        if (at == undefined) {
+            at = from;
+            this.editor.doc.change.replace(content.text, from, to);
+        } else this.editor.doc.change.insert(content.text, at);
         let lineNum = content.text.split("\n").length;
         let line1 = this.editor.doc.lineAt(at);
 
