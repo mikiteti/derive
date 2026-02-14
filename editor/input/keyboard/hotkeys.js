@@ -16,26 +16,10 @@ const createCommandSet = (editor) => {
                 from = caret.carets[0].from;
                 to = caret.carets[0].to;
             }
-            let clipboardContent = window.state.clipboard.copy(from, to);
-
-            const item = new ClipboardItem({
-                "text/html": new Blob([window.state.clipboard.convertToClipboardHTML(clipboardContent)], { type: "text/html" }),
-                "text/plain": new Blob([clipboardContent.text], { type: "text/plain" })
-            });
-
-            navigator.clipboard.write([item]).then(e => {
-                console.log("copied");
-            });
+            window.state.clipboard.copy(from, to);
         },
         "M+v": () => {
-            navigator.clipboard.readText().then(text => {
-                if (window.state.clipboard.compare(text)) for (let sc of caret.carets) window.state.clipboard.paste(sc.position.index);
-                else {
-                    caret.changeForAll(sc => {
-                        return { insert: text, at: sc.position.index };
-                    });
-                }
-            });
+            for (let sc of caret.carets) window.state.clipboard.paste(sc.position.index);
         },
         "M+s": () => {
             window.state.saveFile(editor);

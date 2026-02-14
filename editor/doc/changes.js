@@ -206,14 +206,14 @@ class Change {
     }
 
     insert(string, at, { noCallback = false, stickLeft = false, preserveDM = true, addToHistory = true } = {}) {
+        if (string === "") return [];
+        if (at.index) at = at.index;
+
         const startState = {
             carets: this.editor.input.caret.carets.map(e => e.fixedEnd != undefined ? [e.position.index, e.fixedEnd.index] : e.position.index),
             text: "",
             at: at,
         };
-
-        if (string === "") return [];
-        if (at.index) at = at.index;
 
         // console.log(`inserting "${string}" at ${at}`);
         let line = this.editor.doc.lineAt(at);

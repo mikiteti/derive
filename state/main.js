@@ -14,7 +14,7 @@ class State {
         CSS.highlights.set("selection", this.highlight);
         this.clipboard = newClipboard("window");
         this.registers = {};
-        for (let regName of ["", ...".0123456789abcdefghijklmnopqrstuvwxyz|"]) this.registers[regName] = newClipboard(regName);
+        for (let regName of ["", ..."_0123456789abcdefghijklmnopqrstuvwxyz|"]) this.registers[regName] = newClipboard(regName);
         this.registers["+"] = this.clipboard;
 
         this.editors = [];

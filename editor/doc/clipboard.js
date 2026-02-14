@@ -1,6 +1,7 @@
 class Clipboard {
     constructor(name) {
         this.name = name;
+        this.content = { text: "" };
     }
 
     get editor() {
@@ -10,7 +11,7 @@ class Clipboard {
     parse(from, to) {
         if (from > to) [from, to] = [to, from];
         let text = this.editor.doc.textBetween(from, to);
-        console.log(`parsed from ${from} to ${to}`);
+        console.log(`parsed from ${from} to ${to} text ${text}`);
         let line1 = this.editor.doc.lineAt(from), line2 = this.editor.doc.lineAt(to);
         let lines = line1 === line2 ? [line1] : [line1, ...this.editor.doc.linesBetween(line1.number, line2.number), line2];
         let decos = lines.map(e => [...e.decos]);
@@ -22,12 +23,51 @@ class Clipboard {
         return { text, decos, marks };
     }
 
-    copy(from, to, text) {
-        this.content = (from != undefined && to != undefined) ? this.parse(from, to) : { text };
+    copy(from, to, { text, clipboard } = {}) {
+        if (from != undefined && to != undefined) this.content = this.parse(from, to);
+        else if (text != undefined) this.content = { text };
+        else if (clipboard != undefined) this.content = JSON.parse(JSON.stringify(clipboard.content || {}));
+
+        if (this.name === "window") {
+            console.log("copying to window clipboard");
+            const item = new ClipboardItem({
+                "text/html": new Blob([this.convertToClipboardHTML(this.content)], { type: "text/html" }),
+                "text/plain": new Blob([this.content.text], { type: "text/plain" })
+            });
+
+            navigator.clipboard.write([item]).then(e => {
+                console.log("copied");
+            });
+        }
+
         return this.content;
     }
 
-    paste(at, content = this.content, { from, to } = {}) {
+    append(from, to, { text, clipboard } = {}) {
+        let content;
+        if (from != undefined && to != undefined) content = this.parse(from, to);
+        else if (text != undefined) content = { text };
+        else if (clipboard != undefined) content = JSON.parse(JSON.stringify(clipboard.content || {}));
+
+        for (let mark of content.marks || []) {
+            mark.from += this.content.text?.length || 0;
+            mark.to += this.content.text?.length || 0;
+        }
+        this.content.text += content.text;
+        this.content.decos = [...this.content.decos, ...content.decos.slice(1)];
+        this.content.marks = [...this.content.marks, ...content.marks];
+    }
+
+    async update() {
+        if (this.name !== "window") return;
+
+        let text = await navigator.clipboard.readText();
+        if (!this.compare(text)) this.content = { text, decos: text.split("\n").map(_ => []), marks: text.split("\n").map(_ => []) };
+    }
+
+    async paste(at, content = this.content, { from, to } = {}) {
+        await this.update();
+
         this.editor.doc.history.newChangeGroup();
         console.log(`pasted at ${at}`, content);
         if (at == undefined && (from == undefined || to == undefined) || content == undefined || content.text == undefined) return;
@@ -35,7 +75,9 @@ class Clipboard {
             at = from;
             this.editor.doc.change.replace(content.text, from, to);
         } else this.editor.doc.change.insert(content.text, at);
-        let lineNum = content.text.split("\n").length;
+        let lines = content.text.split("\n");
+        if (lines.at(-1) == "") lines.pop();
+        let lineNum = lines.length;
         let line1 = this.editor.doc.lineAt(at);
 
         if (line1.decos.size == 0 && content.decos[0].length > 0) line1.setDecos(content.decos[0]);

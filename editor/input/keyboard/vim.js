@@ -264,7 +264,11 @@ const createCommandSet = (editor) => {
         },
         delete: (getFrom, getTo, regName = "") => {
             // console.log(`deleting from ${getFrom} to ${getTo}`)
-            functions["yank"](getFrom, getTo, regName);
+            functions["yank"](getFrom, getTo, regName, false);
+            if (regName == "") {
+                for (let i = 9; i > 1; i--) registers[i].copy(undefined, undefined, { clipboard: registers[i - 1] });
+                registers["1"].copy(undefined, undefined, { clipboard: registers[""] });
+            }
             caret.changeForAll(sc => {
                 let from = getFrom(sc.position), to = getTo(sc.position);
                 return { from: Math.min(from, to), to: Math.max(from, to) + 1 }; // inclusive change
@@ -278,12 +282,17 @@ const createCommandSet = (editor) => {
             });
         },
         change: (getFrom, getTo, text = "", regName = "") => {
-            functions["yank"](getFrom, getTo, regName);
+            functions["yank"](getFrom, getTo, regName, false);
+            if (regName == "") {
+                for (let i = 9; i > 1; i--) registers[i].copy(undefined, undefined, { clipboard: registers[i - 1] });
+                registers["1"].copy(undefined, undefined, { clipboard: registers[""] });
+            }
             functions["replace"](getFrom, getTo, text);
             functions["mode"]("i");
         },
-        yank: (getFrom, getTo, regName = "") => {
+        yank: (getFrom, getTo, regName = "", writeTo0 = true) => {
             functions["writeReg"](regName, { from: getFrom(caret.carets[0].position), to: getTo(caret.carets[0].position) });
+            if (regName == "" && writeTo0) registers["0"].copy(undefined, undefined, { clipboard: registers[""] });
         },
         move: (getNewPos, { updateScreenX = true } = {}) => {
             // console.log(`moving carets with the rule ${getNewPos}, ${updateScreenX}`)
@@ -343,16 +352,21 @@ const createCommandSet = (editor) => {
             if (text != undefined) registers[regName.toLowerCase()].copy(
                 undefined,
                 undefined,
-                (regName == regName.toUpperCase() ? registers[regName].content.text : "") + text
+                (regName == regName.toLowerCase() ? "" : registers[regName].content.text) + text
             );
 
-            else if (from != undefined && to != undefined) registers[regName.toLowerCase()].copy(Math.min(from, to), Math.max(from, to) + 1);
+            else if (from != undefined && to != undefined) {
+                regName == regName.toLowerCase()
+                    ? registers[regName].copy(Math.min(from, to), Math.max(from, to) + 1)
+                    : registers[regName.toLowerCase()].append(Math.min(from, to), Math.max(from, to) + 1);
+            }
 
             console.log("yanked", registers[regName.toLowerCase()].content, `to ${regName || '""'}`, { text, from, to });
         },
-        pasteReg: (getAt, regName = "", { belowIfLine = true } = {}) => {
+        pasteReg: async (getAt, regName = "", { belowIfLine = true } = {}) => {
             for (let sc of caret.carets) {
                 let index = getAt(sc.position);
+                await registers[regName].update();
                 if (registers[regName].content.text.at(-1) == "\n") {
                     let line = doc.lineAt(index);
                     index = belowIfLine ? line.to + 1 : line.from;
@@ -367,7 +381,7 @@ const createCommandSet = (editor) => {
                 let from = getFrom(sc.position), to = getTo(sc.position);
                 registers[regName].paste(undefined, registers[regName].content, { from: Math.min(from, to), to: Math.max(from, to) + 1 });
             }
-            if (registers["|"].content?.text?.length > 0) registers[regName].content = JSON.parse(JSON.stringify(registers["|"].content));
+            if (registers["|"].content?.text?.length > 0) registers[regName].copy(undefined, undefined, { clipboard: registers["|"] });
         }
     };
 
@@ -845,12 +859,40 @@ const createCommandSet = (editor) => {
             },
             {
                 name: "indent",
+                count: true,
                 keys: ["<", ">"],
-                run: (keys) => {
-                    console.log(`indenting lines with ${keys[0]} in normal mode`);
+                run: (keys, { count = 1 } = {}) => {
+                    for (let sc of caret.carets) {
+                        let line = sc.position.Line
+                        line.setTabs("full", line.tabs.full + count * (keys[0] === ">" ? 1 : -1));
+                        render.renderLine(line);
+                    }
                 }
             },
             ...headCommands,
+            {
+                name: "to clipboard",
+                keys: [" "],
+                next: [
+                    ...headCommands,
+                    { // paste
+                        name: "paste",
+                        count: true,
+                        keys: ["p"],
+                        run: (keys, context, allKeys) => { dispatch([["pasteReg", pos => Math.min(pos.index + 1, pos.Line.to), allKeys[0] || ""], ["mode", "n"]]) },
+                    },
+                    { // Paste
+                        name: "Paste",
+                        count: true,
+                        keys: ["P"],
+                        run: (keys, context, allKeys) => { dispatch([["pasteReg", pos => Math.min(pos.index, pos.Line.to), allKeys[0] || "", { belowIfLine: false }], ["mode", "n"]]) },
+                    },
+                ],
+                run: (keys, { nexts, count = 1 } = {}) => {
+                    keys[0] = "+";
+                    runNext(keys, nexts, { count });
+                }
+            },
             {
                 name: "register",
                 keys: ['"'],
@@ -926,8 +968,8 @@ const createCommandSet = (editor) => {
             run: (keys, context, allKeys = []) => {
                 // console.log(`running ${keys[0]} in visual mode`);
                 dispatch({
-                    "d": [["delete", moves["iden"], moves["fixedEnd"]], ["mode", "n"], allKeys[0] || ""],
-                    "x": [["delete", moves["iden"], moves["fixedEnd"]], ["mode", "n"], allKeys[0] || ""],
+                    "d": [["delete", moves["iden"], moves["fixedEnd"], allKeys[0] || ""], ["mode", "n"]],
+                    "x": [["delete", moves["iden"], moves["fixedEnd"], allKeys[0] || ""], ["mode", "n"]],
                     "c": curMode === "vLine"
                         ? [["change", pos => Math.min(pos.index, pos.caret.fixedEnd.index), pos => {
                             let eol = [pos.Line.number, pos.caret.fixedEnd.Line.number].includes(doc.lines - 1) ? 0 : -1;
@@ -987,6 +1029,17 @@ const createCommandSet = (editor) => {
             ...textObjects,
             ...visualHeadcommands,
             {
+                name: "to clipboard",
+                keys: [" "],
+                next: [
+                    ...visualHeadcommands,
+                ],
+                run: (keys, { nexts, count = 1 } = {}) => {
+                    keys[0] = "+";
+                    runNext(keys, nexts, { count });
+                }
+            },
+            {
                 name: "register",
                 keys: ['"'],
                 next: [
@@ -1004,9 +1057,20 @@ const createCommandSet = (editor) => {
             },
             {
                 name: "indent",
+                count: true,
                 keys: ["<", ">"],
-                run: (keys) => {
-                    console.log(`indenting lines with ${keys[0]} in visual mode`);
+                run: (keys, { count = 1 } = {}) => {
+                    for (let sc of caret.carets) {
+                        let line1 = sc.position.Line, line2 = sc.fixedEnd.Line;
+                        if (line1.number > line2.number) [line1, line2] = [line2, line1];
+                        let lines;
+                        if (line1 === line2) lines = [line1];
+                        else lines = [line1, ...doc.linesBetween(line1.number, line2.number), line2];
+                        for (let line of lines) {
+                            line.setTabs("full", line.tabs.full + count * (keys[0] === ">" ? 1 : -1));
+                            render.renderLine(line);
+                        }
+                    }
                 }
             },
             {
@@ -1090,7 +1154,6 @@ const createCommandSet = (editor) => {
     });
 
 
-    // let groupLevel = 0;
     return (e) => {
         if (e.key.length !== 1 && !["Tab", "Escape", "Backspace", "Enter", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)) {
             return;
@@ -1101,8 +1164,6 @@ const createCommandSet = (editor) => {
             + (e.ctrlKey ? "\\C" : "")
             + (e.shiftKey && (e.key.length !== 1 || e.metaKey || e.altKey || e.ctrlKey) ? "\\S" : "")
             + e.key;
-        // console.group(key);
-        // groupLevel++;
         if (!Number.isNaN(parseInt(curCommand.at(-1))) && parseInt(curCommand.at(-1)) !== 0 && !Number.isNaN(parseInt(key))) curCommand[curCommand.length - 1] = curCommand.at(-1) + key;
         else curCommand.push(key);
 
@@ -1115,22 +1176,12 @@ const createCommandSet = (editor) => {
             case 0:
                 // console.log("%caborting command for", "color: red; font-weight: bold", curCommand);
                 curCommand = [];
-                // while (groupLevel > 0) {
-                //     console.groupEnd();
-                //     groupLevel--;
-                // }
                 break;
             default:
                 // console.log("%ccommand found for", "color: green; font-weight: bold", curCommand);
                 curCommand = [];
                 render.renderInfo();
-                return () => {
-                    parsed();
-                    // while (groupLevel > 0) {
-                    //     console.groupEnd();
-                    //     groupLevel--;
-                    // }
-                };
+                return parsed;
         }
         render.renderInfo();
     };

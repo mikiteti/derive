@@ -193,6 +193,12 @@ class Doc extends Node {
     }
 
     lineAt(index) {
+        if (index >= this.chars) {
+            let currentNode = this;
+            while (!currentNode.isLine) currentNode = currentNode.children.at(-1);
+            return currentNode;
+        }
+
         let sum = 0, currentNode = this;
         while (!currentNode.isLine) {
             for (let child of currentNode.children) {
@@ -247,6 +253,7 @@ class Doc extends Node {
         let text = line1.text.slice(from - line1.from);
         for (let i = line1.number + 1; i < line2.number; i++) text += "\n" + this.line(i).text;
         text += "\n" + line2.text.slice(0, to - line2.from);
+        // if (to > line2.to) text += "\n" // last line of doc
 
         return text;
     }
