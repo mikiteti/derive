@@ -198,6 +198,7 @@ const getLineBreaks = (line, nodes) => {
 
     const range = document.createRange();
 
+    let prevRect;
     for (let i = 1; i < line.text.length; i++) {
         let nodeAt1 = _nodeAt(nodes, i - 1);
         let nodeAt2 = _nodeAt(nodes, i);
@@ -207,6 +208,9 @@ const getLineBreaks = (line, nodes) => {
         if (Rects.length > 1 && nodeAt1[0] === nodeAt2[0]) { // TODO: what if new node starts right at the beggining of a new line
             lineBreaks.push(i - 1);
         } else if (Rects.length > 1 && Rects[0].left > Rects[1].left && Rects[0].bottom < Rects[1].top) lineBreaks.push(i);
+        // else if (prevRect && prevRect.left > Rects[0].left && prevRect.bottom < Rects[0].top) lineBreaks.push(i - 1);
+
+        prevRect = Rects[Rects.length - 1];
     }
 
     // let counter = 0, prevRects = 1;
@@ -255,7 +259,7 @@ const nodeAt = (pos) => {
     return [nodes.at(-1), nodes.at(-1).textContent.length];
 }
 
-const findXInVisualLine = (x, nodes, from, to) => {
+const findXInVisualLine = (x, nodes, from, to) => { // TODO: check for edge cases
     // console.log({ x, nodes, from, to });
     let min = from, max = to;
     let range = document.createRange();
@@ -288,10 +292,10 @@ const findXInVisualLine = (x, nodes, from, to) => {
         : Math.min(max, to - 1);
 }
 
-const findXIndecesInLine = (x, line) => { // works even when height: 0; transform: scaleY(0)
+const findXIndicesInLine = (x, line) => { // works even when height: 0; transform: scaleY(0)
     if (line.chars === 1) return [line.from];
 
-    const indeces = [];
+    const indices = [];
 
     const walker = document.createTreeWalker(line.element, NodeFilter.SHOW_TEXT);
     const nodes = [];
@@ -307,11 +311,10 @@ const findXIndecesInLine = (x, line) => { // works even when height: 0; transfor
 
     for (let i = 0; i < linebreaks.length - 1; i++) {
         let from = linebreaks[i], to = linebreaks[i + 1];
-        indeces.push(findXInVisualLine(x, nodes, from, to) + line.from);
+        indices.push(findXInVisualLine(x, nodes, from, to) + line.from);
     }
 
-    // console.log({ indeces });
-    return indeces;
+    return indices;
 }
 
 const getVisualLineAt = (position, editor) => {
@@ -429,4 +432,13 @@ const key = {
     shiftKey: (e) => e.shiftKey,
 };
 
-export { nodeSizes, checkTreeStructure, getColumnAt, findXIndecesInLine, getVisualLineAt, exportFile, nodeAt, exportToMD, isMac, key };
+const saveState = () => {
+    console.log("saving state", window.state.registers["a"].content);
+    let registers = [];
+    for (let reg in window.state.registers) registers.push({ name: window.state.registers[reg].name, content: window.state.registers[reg].content });
+    let state = { registers };
+    console.log({ state });
+    localStorage.setItem('state', JSON.stringify(state));
+}
+
+export { nodeSizes, checkTreeStructure, getColumnAt, findXIndicesInLine, getVisualLineAt, exportFile, nodeAt, exportToMD, isMac, key, saveState };

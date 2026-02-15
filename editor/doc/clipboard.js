@@ -80,7 +80,7 @@ class Clipboard {
         let lineNum = lines.length;
         let line1 = this.editor.doc.lineAt(at);
 
-        if (line1.decos.size == 0 && content.decos[0].length > 0) line1.setDecos(content.decos[0]);
+        if (line1.decos.size == 0 && content.decos && content.decos[0].length > 0) line1.setDecos(content.decos[0]);
         for (let i = 1; i < lineNum; i++) this.editor.doc.line(line1.number + i).setDecos(content.decos[i]);
 
         if (line1.marks.find(e => e.from.index <= at && e.to.index >= at) && content.marks[0])

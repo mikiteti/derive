@@ -1,4 +1,4 @@
-import { findXIndecesInLine, getVisualLineAt } from "../../assets.js";
+import { findXIndicesInLine, getVisualLineAt } from "../../assets.js";
 import { Position } from "../../doc/classes.js";
 import newClipboard from "../../doc/clipboard.js";
 
@@ -142,16 +142,16 @@ const createCommandSet = (editor) => {
 
     const findNextVisualLine = (pos, count = 1) => {
         if (!pos.caret) return pos.index;
-        let indeces = findXIndecesInLine(pos.caret.screenPosition.x, pos.Line);
-        if (caret.style !== "bar" && indeces.at(-1) === pos.Line.to && pos.Line.chars > 1) indeces[indeces.length - 1]--;
-        let bestBet = indeces[0];
-        while (indeces.length && indeces[0] <= pos.index) {
-            indeces.shift();
-            if (indeces.length) bestBet = indeces[0];
+        let indices = findXIndicesInLine(pos.caret.screenPosition.x, pos.Line);
+        if (caret.style !== "bar" && indices.at(-1) === pos.Line.to && pos.Line.chars > 1) indices[indices.length - 1]--;
+        let bestBet = indices[0];
+        while (indices.length && indices[0] <= pos.index) {
+            indices.shift();
+            if (indices.length) bestBet = indices[0];
         }
-        if (indeces.length >= count) return indeces[count - 1];
+        if (indices.length >= count) return indices[count - 1];
         // console.log("not in currentline, bestbet", bestBet);
-        count -= indeces.length;
+        count -= indices.length;
         // console.log(count);
 
         let number = pos.Line.number;
@@ -159,27 +159,27 @@ const createCommandSet = (editor) => {
             number++;
             let nextLine = editor.doc.line(number);
             if (!nextLine || number >= editor.doc.lines) return bestBet;
-            indeces = findXIndecesInLine(pos.caret.screenPosition.x, nextLine);
-            if (caret.style !== "bar" && indeces.at(-1) === nextLine.to && nextLine.chars > 1) indeces[indeces.length - 1]--;
-            if (indeces.length >= count) return indeces[count - 1];
-            count -= indeces.length;
-            bestBet = indeces.at(-1);
+            indices = findXIndicesInLine(pos.caret.screenPosition.x, nextLine);
+            if (caret.style !== "bar" && indices.at(-1) === nextLine.to && nextLine.chars > 1) indices[indices.length - 1]--;
+            if (indices.length >= count) return indices[count - 1];
+            count -= indices.length;
+            bestBet = indices.at(-1);
         }
         return bestBet;
     }
 
     const findPreviousVisualLine = (pos, count = 1) => {
         if (!pos.caret) return pos.index;
-        let indeces = findXIndecesInLine(pos.caret.screenPosition.x, pos.Line);
-        if (caret.style !== "bar" && indeces.at(-1) === pos.Line.to && pos.Line.chars > 1) indeces[indeces.length - 1]--;
-        let bestBet = indeces[0];
-        while (indeces.length && indeces.at(-1) >= pos.index) {
-            indeces.pop();
-            if (indeces.length) bestBet = indeces.at(-1);
+        let indices = findXIndicesInLine(pos.caret.screenPosition.x, pos.Line);
+        if (caret.style !== "bar" && indices.at(-1) === pos.Line.to && pos.Line.chars > 1) indices[indices.length - 1]--;
+        let bestBet = indices[0];
+        while (indices.length && indices.at(-1) >= pos.index) {
+            indices.pop();
+            if (indices.length) bestBet = indices.at(-1);
         }
-        if (indeces.length >= count) return indeces[indeces.length - count];
+        if (indices.length >= count) return indices[indices.length - count];
         // console.log("not in currentline, bestbet", bestBet);
-        count -= indeces.length;
+        count -= indices.length;
         // console.log(count);
 
         let number = pos.Line.number;
@@ -187,11 +187,11 @@ const createCommandSet = (editor) => {
             number--;
             let prevLine = editor.doc.line(number);
             if (!prevLine || number < 0) return bestBet;
-            indeces = findXIndecesInLine(pos.caret.screenPosition.x, prevLine);
-            if (caret.style !== "bar" && indeces.at(-1) === prevLine.to && prevLine.chars > 1) indeces[indeces.length - 1]--;
-            if (indeces.length >= count) return indeces[indeces.length - count];
-            count -= indeces.length;
-            bestBet = indeces[0];
+            indices = findXIndicesInLine(pos.caret.screenPosition.x, prevLine);
+            if (caret.style !== "bar" && indices.at(-1) === prevLine.to && prevLine.chars > 1) indices[indices.length - 1]--;
+            if (indices.length >= count) return indices[indices.length - count];
+            count -= indices.length;
+            bestBet = indices[0];
         }
         return bestBet;
     }
@@ -772,7 +772,7 @@ const createCommandSet = (editor) => {
                 }[keys[0]]);
             },
         },
-        { // x, X // TODO: "a4x
+        { // x, X
             name: "x, X",
             count: true,
             keys: ["x", "X"],
@@ -832,20 +832,20 @@ const createCommandSet = (editor) => {
                 name: "add carets",
                 keys: ["ArrowDown", "ArrowUp"],
                 run: (keys, { count = 1 } = {}) => {
-                    let indeces;
+                    let indices;
                     switch (keys[0]) {
                         case "ArrowDown":
                             for (let i = 0; i < count; i++) {
-                                indeces = caret.carets.map(e => e.position.index + e.position.Line.chars).filter(e => e <= doc.chars);
-                                caret.addCaret(Math.max(...indeces));
+                                indices = caret.carets.map(e => e.position.index + e.position.Line.chars).filter(e => e <= doc.chars);
+                                caret.addCaret(Math.max(...indices));
                             }
                             break;
                         case "ArrowUp":
                             for (let i = 0; i < count; i++) {
-                                indeces = caret.carets
+                                indices = caret.carets
                                     .filter(e => e.position.Line.number > 0)
                                     .map(e => doc.line(e.position.Line.number - 1).from + e.position.column)
-                                caret.addCaret(Math.min(...indeces));
+                                caret.addCaret(Math.min(...indices));
                             }
                             break;
                     }
@@ -943,9 +943,9 @@ const createCommandSet = (editor) => {
                                 run: (keys, { register = "" } = {}) => { dispatch([["pasteReg", pos => Math.min(pos.index, pos.Line.to), register, { belowIfLine: false }], ["mode", "n"]]) },
                             },
                         ],
-                        run: (keys, { nexts, count = 1 } = {}) => {
+                        run: (keys, { nexts } = {}) => {
                             console.log(keys);
-                            runNext(keys, nexts, { count, register: keys[0] });
+                            runNext(keys, nexts, { register: keys[0] });
                         },
                     }
                 ]

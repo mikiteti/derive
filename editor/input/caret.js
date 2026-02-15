@@ -99,10 +99,10 @@ class SingleCaret {
                     let rect = rects[0];
                     if (rects.length > 1 && rect.width == 0) rect = rects[1];
                     // Position the cursor
-                    if (updateScreenX || true) { // TODO: updateScreenX -- if inline math expands (unknown prior to jumping), X positions shift
-                        // this.screenPosition.x = (rect.left + rect.right) / 2 + scrollX;
-                        this.screenPosition.x = rect.left + scrollX;
-                    }
+
+                    // TODO: updateScreenX -- if inline math expands (unknown prior to jumping), X positions shift
+                    if (updateScreenX || true) this.screenPosition.x = rect.left + scrollX;
+
                     this.screenPosition.y = rect.top + scrollY;
                     this.screenPosition.height = rect.height;
                     this.fixedEnd ? this.element.classList.remove("smooth") : this.element.classList.add("smooth");

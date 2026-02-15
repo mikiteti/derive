@@ -1,4 +1,4 @@
-import { findXIndecesInLine, getVisualLineAt } from "../../assets.js";
+import { findXIndicesInLine, getVisualLineAt } from "../../assets.js";
 import { key } from "../../assets.js";
 
 const abc = "ABCDEFGHIJKLMNOPQRSTUVWXYZáéíóöőúüűzabcdefghijklmnopqrstuvwxyzÁÉÍÓÖŐÚÜŰ 1234567890!@#$%^&*()-=_+[]\\{}|;':\",./<>?`~".split("");
@@ -36,33 +36,33 @@ const createCommandSet = (editor) => {
 
     const moveDown = ({ keepFixedEnd = false } = {}) => {
         for (let sc of caret.carets) {
-            let indeces = findXIndecesInLine(sc.screenPosition.x, sc.position.Line);
-            while (indeces.length && indeces[0] <= sc.position.index) indeces.shift();
-            if (indeces.length) {
-                sc.placeAt(indeces[0], { updateScreenX: false, keepFixedEnd });
+            let indices = findXIndicesInLine(sc.screenPosition.x, sc.position.Line);
+            while (indices.length && indices[0] <= sc.position.index) indices.shift();
+            if (indices.length) {
+                sc.placeAt(indices[0], { updateScreenX: false, keepFixedEnd });
                 continue;
             }
 
             let nextLine = editor.doc.line(sc.position.Line.number + 1);
             if (!nextLine) continue;
-            indeces = findXIndecesInLine(sc.screenPosition.x, nextLine);
-            sc.placeAt(indeces[0], { updateScreenX: false, keepFixedEnd });
+            indices = findXIndicesInLine(sc.screenPosition.x, nextLine);
+            sc.placeAt(indices[0], { updateScreenX: false, keepFixedEnd });
         }
     }
 
     const moveUp = ({ keepFixedEnd = false } = {}) => {
         for (let sc of caret.carets) {
-            let indeces = findXIndecesInLine(sc.screenPosition.x, sc.position.Line);
-            while (indeces.length && indeces.at(-1) >= sc.position.index) indeces.pop();
-            if (indeces.length) {
-                sc.placeAt(indeces.at(-1), { updateScreenX: false, keepFixedEnd });
+            let indices = findXIndicesInLine(sc.screenPosition.x, sc.position.Line);
+            while (indices.length && indices.at(-1) >= sc.position.index) indices.pop();
+            if (indices.length) {
+                sc.placeAt(indices.at(-1), { updateScreenX: false, keepFixedEnd });
                 continue;
             }
 
             let prevLine = editor.doc.line(sc.position.Line.number - 1);
             if (!prevLine) continue;
-            indeces = findXIndecesInLine(sc.screenPosition.x, prevLine);
-            sc.placeAt(indeces.at(-1), { updateScreenX: false, keepFixedEnd });
+            indices = findXIndicesInLine(sc.screenPosition.x, prevLine);
+            sc.placeAt(indices.at(-1), { updateScreenX: false, keepFixedEnd });
         }
     }
 

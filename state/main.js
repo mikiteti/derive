@@ -3,18 +3,22 @@ import newEditor from "../editor/main.js";
 import Environment from "../environment.js";
 import { exportFile } from "../editor/assets.js";
 import newCommands from "./commands.js";
-import { key } from "../editor/assets.js";
+import { key, saveState } from "../editor/assets.js";
 import newClipboard from "../editor/doc/clipboard.js";
 
 class State {
     constructor() {
         window.state = this;
+        let savedState = localStorage.getItem("state");
+        if (savedState != undefined) savedState = JSON.parse(savedState);
 
         this.highlight = new Highlight();
         CSS.highlights.set("selection", this.highlight);
         this.clipboard = newClipboard("window");
         this.registers = {};
         for (let regName of ["", ..."_0123456789abcdefghijklmnopqrstuvwxyz|"]) this.registers[regName] = newClipboard(regName);
+        if (savedState.registers != undefined) for (let reg of savedState.registers)
+            this.registers[reg.name]?.copy(undefined, undefined, { clipboard: reg });
         this.registers["+"] = this.clipboard;
 
         this.editors = [];
@@ -82,7 +86,13 @@ class State {
                 for (let i of inputs) if (i.value == "") return;
                 this.focus.querySelector(".submit").click();
             }
-        })
+        });
+
+        document.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === "hidden") {
+                saveState();
+            }
+        });
     }
 
     setNoteUrl(url) {

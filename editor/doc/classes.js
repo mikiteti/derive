@@ -627,27 +627,6 @@ class Position {
         return this.Line.number;
     }
 
-    handleMarkReassignment(pos, changedAt, inserted) { // TODO
-        if (!this.range || !this.range.isMark || !this.pair) return;
-        if (changedAt == undefined || inserted == undefined) return;
-        if (changedAt > Math.max(this.index, this.pair.index)) changedAt = 1;
-        else if (changedAt < Math.min(this.index, this.pair.index)) changedAt = -1;
-        else changedAt = 0;
-
-        if (inserted) {
-            if (changedAt == -1) return; // text inserted before mark
-            if (changedAt == 1) return; // text inserted after mark
-
-            // text inserted inside mark
-            if (pos > this.Line.to) {
-                // this.stickLeftOnInsert = true;
-                return this.Line.to;
-            }
-
-            return;
-        }
-    }
-
     reassign(pos) {
         if (pos === this.index) return this;
         if (this.Line) this.Line.removePosition(this);
@@ -752,7 +731,7 @@ class Mark extends Range {
         this.to = undefined;
     }
 
-    reassign(from, to, { changedTo } = {}) { // TODO: add to history mark reassignments
+    reassign(from, to, { changedTo } = {}) {
         let addToHistory = false;
         if (this.deleted) return;
         // console.log("reassigning mark", this, this.from.index, this.to.index, from, to, { addToHistory });

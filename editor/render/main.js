@@ -4,7 +4,7 @@ const renderChangedLines = (editor, changedLines) => {
     for (let line of changedLines) editor.render.renderLine(line);
 }
 
-const renderCarets = (editor) => { // TODO: with the first, when autoEnlarge runs, fixedEnds get lost. with the second, it's even worse.
+const renderCarets = (editor) => {
     requestAnimationFrame(() => {
         editor.input.caret.placeAllAt();
     });
