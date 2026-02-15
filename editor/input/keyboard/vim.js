@@ -196,6 +196,29 @@ const createCommandSet = (editor) => {
         return bestBet;
     }
 
+    const findBrackets = (pos, bracket, includeBrackets = false) => {
+        let pairs = ["{}", "()", "[]", "''", '""', "``", "<>"];
+        if (bracket == undefined) return pos.index;
+        let pair = pairs.find(e => e.includes(bracket));
+        if (pair == undefined) return pos.index;
+        let open = pair[0], close = pair[1];
+        let text = pos.Line.text, col = pos.column;
+        let index = text.slice(0, col + 1).includes(open) ? text.slice(0, col + 1).lastIndexOf(open) : text.indexOf(open);
+        if (index == -1) return pos.index;
+        let start = index;
+        let count = 1;
+        while (count > 0 && index < text.length) {
+            let nextOpen = text.indexOf(open, index + 1), nextClose = text.indexOf(close, index + 1);
+            if (nextOpen == -1 && nextClose == -1) return pos.index;
+            let next = nextOpen == -1 ? nextClose : (nextClose == -1 ? nextOpen : Math.min(nextClose, nextOpen));
+            count += next == nextClose ? -1 : +1;
+            index = next;
+        }
+        let end = index;
+
+        return [pos.Line.from + start + (includeBrackets ? 0 : 1), pos.Line.from + end + (includeBrackets ? 0 : -1)];
+    }
+
     const moves = {
         "iden": (pos) => pos.index,
         "safety": (pos) => Math.min(pos.index, pos.Line.to - (caret.style === "bar" || pos.Line.chars === 1 ? 0 : 1)),
@@ -361,7 +384,7 @@ const createCommandSet = (editor) => {
                     : registers[regName.toLowerCase()].append(Math.min(from, to), Math.max(from, to) + 1);
             }
 
-            console.log("yanked", registers[regName.toLowerCase()].content, `to ${regName || '""'}`, { text, from, to });
+            // console.log("yanked", registers[regName.toLowerCase()].content, `to ${regName || '""'}`, { text, from, to });
         },
         pasteReg: async (getAt, regName = "", { belowIfLine = true } = {}) => {
             for (let sc of caret.carets) {
@@ -553,16 +576,15 @@ const createCommandSet = (editor) => {
 
     const textObjects = [
         { // text objects
-            name: "half text objects (i/a)",
+            name: "first half of text objects (i/a)",
             keys: ["i", "a"],
             next: [
                 {
-                    name: "full text objects",
-                    keys: ["w", "W", "s", "p", "b", "B", "t", "'", "\"", "`", "{", "}", "(", ")", "[", "]", "<", ">"],
+                    name: "second half of text objects",
+                    keys: ["w", "W", "s", "p", "b", "B", "t", "'", '"', "`", "{", "}", "(", ")", "[", "]", "<", ">"],
                     run: (keys, { method } = {}) => {
                         let modeChanges = keys.at(-1) == "p" ? [["mode", "vLine"]] : [];
-
-                        dispatch([["move", {
+                        let move = {
                             "iw": (pos) => [findStartOfWord(pos), findEndOfWord(pos)],
                             "aw": (pos) => [findStartOfWord(pos), findStartOfWord(parsePosition(findEndOfWord(pos, 2))) - 1],
                             "iW": (pos) => [findStartOfWORD(pos), findEndOfWORD(pos)],
@@ -578,8 +600,15 @@ const createCommandSet = (editor) => {
                                     for (let n = pos.Line.number; n < doc.lines; n++) if (doc.line(n).text.trim() === "") return doc.line(n - 1).to - 1;
                                     return doc.chars - 1;
                                 })()
-                            ]
-                        }[method + keys[0]]], ...modeChanges]);
+                            ],
+                        }[method + keys[0]];
+                        if (move == undefined) {
+                            let bracket = keys[0];
+                            if ("bBt".includes(bracket)) bracket = ({ "b": "[", "B": "{", "t": "<" })[bracket];
+                            move = (pos) => findBrackets(pos, bracket, method == "a");
+                        }
+
+                        dispatch([["move", move], ...modeChanges]);
                     },
                 },
             ],
@@ -685,7 +714,7 @@ const createCommandSet = (editor) => {
                 {
                     name: "dd",
                     keys: ["d"],
-                    run: (keys, context, allKeys = []) => { dispatch([["delete", pos => pos.Line.from, pos => pos.Line.to, allKeys[0] || ""]]); },
+                    run: (keys, { register = "" } = {}) => { dispatch([["delete", pos => pos.Line.from, pos => pos.Line.to, register]]); },
                 }
             ],
         },
@@ -697,7 +726,7 @@ const createCommandSet = (editor) => {
                 {
                     name: "cc",
                     keys: ["c"],
-                    run: (keys, context, allKeys = []) => { dispatch([["change", pos => pos.Line.from, pos => Math.max(pos.Line.to - 1, pos.Line.from), allKeys[0] || ""]]); },
+                    run: (keys, { register = "" } = {}) => { dispatch([["change", pos => pos.Line.from, pos => Math.max(pos.Line.to - 1, pos.Line.from), "", register]]); },
                 }
             ]
         },
@@ -709,7 +738,7 @@ const createCommandSet = (editor) => {
                 {
                     name: "yy",
                     keys: ["y"],
-                    run: (keys, context, allKeys = []) => { dispatch([["yank", pos => pos.Line.from, pos => pos.Line.to, allKeys[0] || ""]]) },
+                    run: (keys, { register = "" } = {}) => { dispatch([["yank", pos => pos.Line.from, pos => pos.Line.to, register]]) },
                 }
             ]
         },
@@ -721,13 +750,13 @@ const createCommandSet = (editor) => {
                 ...motionsAfterHeadcommands,
                 ...motions, // fallback
             ],
-            run: (keys, { nexts } = {}, allKeys = []) => {
+            run: (keys, { nexts, register = "" } = {}) => {
                 // console.log(`running headcommand ${keys[0]}`);
                 runNext(keys, nexts);
                 dispatch({
-                    "d": [["delete", moves["iden"], moves["fixedEnd"], allKeys[0] || ""]],
-                    "c": [["change", moves["iden"], moves["fixedEnd"], allKeys[0] || ""]],
-                    "y": [["yank", moves["iden"], moves["fixedEnd"], allKeys[0] || ""]],
+                    "d": [["delete", moves["iden"], moves["fixedEnd"], register]],
+                    "c": [["change", moves["iden"], moves["fixedEnd"], "", register]],
+                    "y": [["yank", moves["iden"], moves["fixedEnd"], register]],
                 }[keys[0]]);
             }
         },
@@ -735,11 +764,11 @@ const createCommandSet = (editor) => {
             name: "capital headcommands",
             count: true,
             keys: ["D", "C", "Y"],
-            run: (keys, context, allKeys = []) => {
+            run: (keys, { register = "" } = {}) => {
                 dispatch({
-                    "D": [["delete", moves["iden"], moves["$"], allKeys[0] || ""]],
-                    "C": [["change", moves["iden"], moves["$"], allKeys[0] || ""]],
-                    "Y": [["yank", moves["iden"], moves["$"], allKeys[0] || ""]],
+                    "D": [["delete", moves["iden"], moves["$"], register]],
+                    "C": [["change", moves["iden"], moves["$"], "", register]],
+                    "Y": [["yank", moves["iden"], moves["$"], register]],
                 }[keys[0]]);
             },
         },
@@ -747,10 +776,10 @@ const createCommandSet = (editor) => {
             name: "x, X",
             count: true,
             keys: ["x", "X"],
-            run: (keys, { count = 1 } = {}, allKeys = []) => {
+            run: (keys, { count = 1, register = "" } = {}) => {
                 dispatch({
-                    "x": [["delete", min(moves["iden"], moves["$"]), min(moves["l"](count - 1), moves["$"]), allKeys[0] || ""]],
-                    "X": [["delete", moves["h"](count), moves["h"](1), allKeys[0] || ""]],
+                    "x": [["delete", min(moves["iden"], moves["$"]), min(moves["l"](count - 1), moves["$"]), register]],
+                    "X": [["delete", moves["h"](count), moves["h"](1), register]],
                 }[keys[0]]);
             },
         },
@@ -879,18 +908,17 @@ const createCommandSet = (editor) => {
                         name: "paste",
                         count: true,
                         keys: ["p"],
-                        run: (keys, context, allKeys) => { dispatch([["pasteReg", pos => Math.min(pos.index + 1, pos.Line.to), allKeys[0] || ""], ["mode", "n"]]) },
+                        run: (keys, { register = "" } = {}) => { dispatch([["pasteReg", pos => Math.min(pos.index + 1, pos.Line.to), register], ["mode", "n"]]) },
                     },
                     { // Paste
                         name: "Paste",
                         count: true,
                         keys: ["P"],
-                        run: (keys, context, allKeys) => { dispatch([["pasteReg", pos => Math.min(pos.index, pos.Line.to), allKeys[0] || "", { belowIfLine: false }], ["mode", "n"]]) },
+                        run: (keys, { register = "" } = {}) => { dispatch([["pasteReg", pos => Math.min(pos.index, pos.Line.to), register, { belowIfLine: false }], ["mode", "n"]]) },
                     },
                 ],
                 run: (keys, { nexts, count = 1 } = {}) => {
-                    keys[0] = "+";
-                    runNext(keys, nexts, { count });
+                    runNext(keys, nexts, { count, register: "+" });
                 }
             },
             {
@@ -906,17 +934,18 @@ const createCommandSet = (editor) => {
                                 name: "paste",
                                 count: true,
                                 keys: ["p"],
-                                run: (keys, context, allKeys) => { dispatch([["pasteReg", pos => Math.min(pos.index + 1, pos.Line.to), allKeys[0] || ""], ["mode", "n"]]) },
+                                run: (keys, { register = "" } = {}) => { dispatch([["pasteReg", pos => Math.min(pos.index + 1, pos.Line.to), register], ["mode", "n"]]) },
                             },
                             { // Paste
                                 name: "Paste",
                                 count: true,
                                 keys: ["P"],
-                                run: (keys, context, allKeys) => { dispatch([["pasteReg", pos => Math.min(pos.index, pos.Line.to), allKeys[0] || "", { belowIfLine: false }], ["mode", "n"]]) },
+                                run: (keys, { register = "" } = {}) => { dispatch([["pasteReg", pos => Math.min(pos.index, pos.Line.to), register, { belowIfLine: false }], ["mode", "n"]]) },
                             },
                         ],
                         run: (keys, { nexts, count = 1 } = {}) => {
-                            runNext(keys, nexts, { count });
+                            console.log(keys);
+                            runNext(keys, nexts, { count, register: keys[0] });
                         },
                     }
                 ]
@@ -965,18 +994,18 @@ const createCommandSet = (editor) => {
         {
             name: "visual headcommands",
             keys: ["d", "x", "c", "y", "~", "u", "U"],
-            run: (keys, context, allKeys = []) => {
+            run: (keys, { register = "" } = {}) => {
                 // console.log(`running ${keys[0]} in visual mode`);
                 dispatch({
-                    "d": [["delete", moves["iden"], moves["fixedEnd"], allKeys[0] || ""], ["mode", "n"]],
-                    "x": [["delete", moves["iden"], moves["fixedEnd"], allKeys[0] || ""], ["mode", "n"]],
+                    "d": [["delete", moves["iden"], moves["fixedEnd"], register], ["mode", "n"]],
+                    "x": [["delete", moves["iden"], moves["fixedEnd"], register], ["mode", "n"]],
                     "c": curMode === "vLine"
                         ? [["change", pos => Math.min(pos.index, pos.caret.fixedEnd.index), pos => {
                             let eol = [pos.Line.number, pos.caret.fixedEnd.Line.number].includes(doc.lines - 1) ? 0 : -1;
                             return Math.max(pos.index, pos.caret.fixedEnd.index) + eol;
-                        }, allKeys[0] || ""], ["mode", "i"]] // in vLine mode, c should leave a blank line
-                        : [["change", moves["iden"], moves["fixedEnd"], allKeys[0] || ""], ["mode", "i"]],
-                    "y": [["yank", moves["iden"], moves["fixedEnd"], allKeys[0] || ""], ["mode", "n"]],
+                        }, "", register], ["mode", "i"]] // in vLine mode, c should leave a blank line
+                        : [["change", moves["iden"], moves["fixedEnd"], "", register], ["mode", "i"]],
+                    "y": [["yank", moves["iden"], moves["fixedEnd"], register], ["mode", "n"]],
                 }[keys[0]]);
             }
         },
@@ -1050,7 +1079,7 @@ const createCommandSet = (editor) => {
                             ...visualHeadcommands,
                         ],
                         run: (keys, { nexts, count = 1 } = {}) => {
-                            runNext(keys, nexts, { count });
+                            runNext(keys, nexts, { count, register: keys[0] });
                         },
                     }
                 ]

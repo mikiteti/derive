@@ -122,6 +122,7 @@ class Clipboard {
             let markElements = {
                 "bold": "b",
                 "italic": "i",
+                "underline": "u",
                 "math": 'span class="math" style="font-style: italic;"',
             }
 
