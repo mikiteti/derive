@@ -387,6 +387,7 @@ const createCommandSet = (editor) => {
             // console.log("yanked", registers[regName.toLowerCase()].content, `to ${regName || '""'}`, { text, from, to });
         },
         pasteReg: async (getAt, regName = "", { belowIfLine = true } = {}) => {
+            history.newChangeGroup();
             for (let sc of caret.carets) {
                 let index = getAt(sc.position);
                 await registers[regName].update();
@@ -395,7 +396,10 @@ const createCommandSet = (editor) => {
                     index = belowIfLine ? line.to + 1 : line.from;
                 }
                 registers[regName].paste(index);
+                let caretPos = index + Math.max(registers[regName].content.text.length - 1, 0);
+                queueMicrotask(() => { sc.placeAt(caretPos) })
             }
+            queueMicrotask(() => { history.newChangeGroup() });
         },
         replaceToReg: (getFrom, getTo, regName = "") => {
             let from = getFrom(caret.carets[0].position), to = getTo(caret.carets[0].position);

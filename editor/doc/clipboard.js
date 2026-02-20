@@ -68,7 +68,6 @@ class Clipboard {
     async paste(at, content = this.content, { from, to } = {}) {
         await this.update();
 
-        this.editor.doc.history.newChangeGroup();
         console.log(`pasted at ${at}`, content);
         if (at == undefined && (from == undefined || to == undefined) || content == undefined || content.text == undefined) return;
         if (at == undefined) {
@@ -93,7 +92,6 @@ class Clipboard {
             this.editor.doc.line(line1.number + i).unrenderedChanges.add("caret");
             this.editor.render.renderLine(this.editor.doc.line(line1.number + i));
         }
-        this.editor.doc.history.newChangeGroup();
     }
 
     compare(text, content = window.state.clipboard.content) {

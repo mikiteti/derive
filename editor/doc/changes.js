@@ -1,3 +1,5 @@
+import { Line } from "./classes.js";
+
 const merge = (node1, node2, removed) => {
     for (let child of node2.children) node1.addChild(child);
     removed.push(node2);
@@ -265,7 +267,7 @@ class Change {
         firstLine.update(strings[0]);
         strings.shift();
 
-        let Lines = strings.map(str => new firstLine.constructor({ editor: this.editor, text: str, parent: firstLine.parent }));
+        let Lines = strings.map(str => new Line({ editor: this.editor, text: str, parent: firstLine.parent }));
         let index = firstLine.parent.children.indexOf(firstLine) + 1;
         for (let Line of Lines) {
             Line.parent.addChild(Line, index);
