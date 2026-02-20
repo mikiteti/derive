@@ -11,6 +11,7 @@ class State {
         window.state = this;
         let savedState = localStorage.getItem("state");
         if (savedState != undefined) savedState = JSON.parse(savedState);
+        else savedState = {};
 
         this.highlight = new Highlight();
         CSS.highlights.set("selection", this.highlight);
