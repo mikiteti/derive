@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Desmos</title>
+
+    <!-- Step 1: include our secure javascript file -->
+    <script src="https://www.desmos.com/api/v1.11/calculator.js?apiKey=c6b271b52633435b8d5ee676896fc567"></script>
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/obsidian.css">
+
+    <style>
+        html {
+            background-color: rgb(40, 42, 54);
+        }
+
+        * {
+            --dcg-accent-color: #bb9188;
+            --dcg-accent-color-shaded-10: #8b6158;
+            --dcg-item-tab-background-color: #bb9188;
+            --dcg-custom-background-color: #d7d5c9;
+            --dcg-custom-background-color-shaded: #ddd;
+        }
+
+        #calculator {
+            /* border: 1px solid #aaa; */
+            position: absolute;
+            /* width: 600px; */
+            /* height: 400px; */
+            /* top: 50vh; */
+            /* left: 50vw; */
+            /* transform: translate(-50%, -50%); */
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* * { */
+        /*     --dcg-custom-background-color: rgb(40, 42, 54); */
+        /*     --dcg-custom-background-color-shaded: rgb(40, 42, 54); */
+        /*     --dcg-custom-text-color: white; */
+        /* } */
+        /**/
+        /* .dcg-graph-outer, */
+        /* .dcg-colored-icon, */
+        /* .dcg-colored-icon i, */
+        /* .dcg-color-swatch { */
+        /*     filter: invert(); */
+        /* } */
+        /**/
+        /* .dcg-keypad-btn.dcg-btn-light-gray, */
+        /* .dcg-keypad-btn.dcg-btn-light-on-gray { */
+        /*     background: transparent !important; */
+        /**/
+        /* } */
+        /**/
+        /* .dcg-keypad-btn.dcg-btn-light-gray { */
+        /*     border: 1px solid rgba(255, 255, 255, 0.1); */
+        /* } */
+    </style>
+</head>
+
+<body>
+    <!-- Step 2: add an element to the page -->
+    <div id="calculator"></div>
+
+    <!-- Step 3: add the following lines of javascript -->
+    <script>
+        let state = '{\"version\":11,\"randomSeed\":\"acc73318044f565f3145e4ce810c1b14\",\"graph\":{\"viewport\":{\"xmin\":-2.2085575600493312,\"ymin\":-2.018453721507033,\"xmax\":0.845188328551485,\"ymax\":2.019597482503059},\"__v12ViewportLatexStash\":{\"xmin\":\"-2.2085575600493312\",\"xmax\":\"0.845188328551485\",\"ymin\":\"-2.018453721507033\",\"ymax\":\"2.019597482503059\"}},\"expressions\":{\"list\":[{\"type\":\"expression\",\"id\":\"6\",\"color\":\"#0c2175\",\"latex\":\"f\\\\left(a,b,a_{0},b_{0},n\\\\right)=\\\\left\\\\{n=0:\\\\left(a_{0},b_{0}\\\\right),\\\\left(r\\\\left(f\\\\left(a,b,a_{0},b_{0},n-1\\\\right)\\\\right)+a_{0},i\\\\left(f\\\\left(a,b,a_{0},b_{0},n-1\\\\right)\\\\right)+b_{0}\\\\right)\\\\right\\\\}\"},{\"type\":\"expression\",\"id\":\"8\",\"color\":\"#0c2175\",\"latex\":\"r\\\\left(p\\\\right)=p.x^{2}-p.y^{2}\"},{\"type\":\"expression\",\"id\":\"9\",\"color\":\"#2264ae\",\"latex\":\"i\\\\left(p\\\\right)=2p.xp.y\"},{\"type\":\"expression\",\"id\":\"7\",\"color\":\"#6b4e00\",\"latex\":\"\\\\left|f\\\\left(0,0,x,y,10\\\\right)\\\\right|\\\\le2\"}]},\"includeFunctionParametersInRandomSeed\":true,\"doNotMigrateMovablePointStyle\":true}';
+
+        var elt = document.getElementById('calculator');
+        let colors = {blue: "#6b4e00", orange: "#0c2175", yellow: "#2264ae", olive: "#5d4175", green: "#a36b91", red: "#187d7b"}
+        var calculator = Desmos.GraphingCalculator(elt, {invertedColors: true, colors});
+        calculator.setState(JSON.parse(state));
+        window.calculator = calculator;
+    </script>
+</body>
+
+</html>
