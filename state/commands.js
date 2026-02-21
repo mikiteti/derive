@@ -81,8 +81,8 @@ const newCommands = (state) => {
         },
         {
             name: "Export to Markdown",
-            run: () => {
-                let text = exportToMD(state.editor);
+            run: async () => {
+                let text = await exportToMD(state.editor);
                 if (!text) {
                     state.alert("Error", "Something went wrong with the export");
                     return;

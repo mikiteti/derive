@@ -64,6 +64,11 @@ const createCommandSet = (editor) => {
                 render.renderLine(line);
             })
         },
+        "M+l": () => {
+            history.newChangeGroup();
+            doc.toggleMark("link");
+            history.newChangeGroup();
+        },
         "M+S+l": () => {
             history.newChangeGroup();
             caret.forAll(pos => {

@@ -245,6 +245,15 @@ html.lineNumbers .textarea p.math::before {
     font-size: calc(var(--font-size) * var(--link-font-size));
 }
 
+p .link {
+    text-decoration: underline;
+    pointer-events: initial;
+}
+
+p .link:active {
+    filter: brightness(80%);
+}
+
 .imgWrapper {
     text-align: center;
 }

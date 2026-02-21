@@ -64,7 +64,12 @@ class State {
         Object.defineProperty(window, "caret", { get() { return this.state.editor?.input?.caret; }, });
         Object.defineProperty(window, "snippets", { get() { return this.state.editor?.input?.snippets; }, });
 
-        document.addEventListener("click", _ => {
+        document.addEventListener("click", e => {
+            if (e.target.matches(".textarea p .link")) {
+                window.open(e.target.textContent.trim(), "_blank");
+                return;
+            }
+
             if (!this.editor.interactive) return;
             if (this.focus?.isEditor && !this.focus?.classList?.has("prompt")) document.getElementById("focus").focus();
         });

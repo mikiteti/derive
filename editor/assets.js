@@ -1,4 +1,5 @@
 import { Position } from "./doc/classes.js";
+import Environment from "../environment.js";
 
 const nodeSizes = {
     leaf: { min: 16, initial: 32, max: 64 },
@@ -355,7 +356,32 @@ const exportFile = (editor = window.editor) => {
 }
 window.exportFile = exportFile;
 
-const exportToMD = (editor = window.editor) => {
+const getDataUri = async (link) => {
+    // Use the proxy
+    const proxiedUrl = Environment.url + `proxy-image?url=${encodeURIComponent(link)}`;
+
+    // Load image in the DOM
+    const img = new Image();
+    img.crossOrigin = "anonymous"; // not strictly necessary for same-origin
+    img.src = proxiedUrl;
+
+    await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+    });
+
+    // Draw to canvas
+    const canvas = document.createElement("canvas");
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0);
+
+    // Get data URI
+    return canvas.toDataURL("image/png");
+}
+
+const exportToMD = async (editor = window.editor) => {
     let content = ["---"];
     let title = window.state.files.find(e => e.id == editor.fileId)?.name || editor.fileId;
     if (title) content.push(`title: ${title}`);
@@ -400,6 +426,7 @@ const exportToMD = (editor = window.editor) => {
         else if (decos.has("h5")) text = "##### " + text;
         else if (decos.has("h6")) text = "###### " + text;
         else if (decos.has("subtitle")) text = "\\begin{subtitle}" + text + "\\end{subtitle}";
+        else if (decos.has("link")) text = "![](" + (Environment.url + `proxy-image?url=${encodeURIComponent(line.text.trim())}`) + ")";
 
         if (["$"].includes(lastLine.charAt(lastLine.length - 1)) && !["$"].includes(lastLine.charAt(lastLine.length - 2))) insertEmptyLineInFront = true;
         text = text.split("$").map((e, j) => j % 2 ? e.trim() : e).join("$");
