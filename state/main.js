@@ -331,7 +331,7 @@ class State {
         document.title = file.name;
     }
 
-    async saveFile(editor) {
+    async saveFile(editor = this.editor) {
         let content = JSON.stringify(exportFile(editor));
 
         let res = await this.sendRequest("update_note", {

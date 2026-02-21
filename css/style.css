@@ -10,6 +10,7 @@
     --color-red: #e78284;
     --color-orange: #ef9f76;
     --color-math: var(--color-yellow);
+    --color-link: var(--color-green);
     --color-accent: var(--color-blue);
     --color-highlight-bg: var(--color-accent);
     --color-highlight: black;
@@ -27,6 +28,7 @@
     --bold-weight: 400;
     --Bold-weight: 600;
     --math-font-size: 0.8;
+    --link-font-size: 1;
     --small-font-size: 0.7;
     --large-font-size: 1.4;
     --DM-font-size: 0.85;
@@ -93,7 +95,7 @@
     font-weight: 900;
 }
 
-* {
+*:not(.dcg-dom-change-wrapper *) {
     user-select: text;
     touch-action: manipulation;
     -webkit-user-select: text;
@@ -103,7 +105,7 @@
     scrollbar-width: thin;
 }
 
-*:not(.DM *, .IM *) {
+*:not(.DM *, .IM *, .dcg-dom-change-wrapper *) {
     /* font-family: 'author', sans-serif; */
     /* font-family: 'tex', var(--font-face); */
     font-family: var(--font-face);
@@ -236,6 +238,20 @@ html.lineNumbers .textarea p.math::before {
 .math {
     color: var(--color-math) !important;
     font-size: calc(var(--font-size) * var(--math-font-size));
+}
+
+.link {
+    color: var(--color-link) !important;
+    font-size: calc(var(--font-size) * var(--link-font-size));
+}
+
+.imgWrapper {
+    text-align: center;
+}
+
+.editor img {
+    max-width: 80%;
+    max-height: 400px;
 }
 
 .underline .content,

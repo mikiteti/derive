@@ -70,7 +70,7 @@ class SingleCaret {
         if (index < 0 || index >= this.doc.chars) return;
 
         this.position.reassign(index);
-        if (hideMath && this.position.Line.decos.has("math")) this.editor.render.revealLine(this.position.Line);
+        if (hideMath && (this.position.Line.decos.has("math") || this.position.Line.decos.has("link"))) this.editor.render.revealLine(this.position.Line);
         this.position.Line.unrenderedChanges.add("caret");
         if (renderLines[0] !== this.position.Line) renderLines.push(this.position.Line);
         let promises = renderLines.map(line => this.editor.render.renderLine(line));
@@ -250,7 +250,7 @@ const checkOverlappingCarets = (editor) => {
 const hideMath = (editor, changedLines) => {
     let linesToReveal = editor.input.caret.carets.map(e => e.position.Line);
     for (let line of changedLines) {
-        linesToReveal.includes(line) || !line.decos.has("math") ? editor.render.revealLine(line) : editor.render.hideLine(line);
+        linesToReveal.includes(line) || !(line.decos.has("math") || line.decos.has("link")) ? editor.render.revealLine(line) : editor.render.hideLine(line);
     }
 }
 
@@ -280,8 +280,8 @@ class Caret {
             if (newPlace == undefined) newPlace = caret.position.index;
             newPositions.push(newPlace);
             let prevLine = caret.position.Line, newLine = this.editor.doc.lineAt(newPlace);
-            if (prevLine.decos.has("math")) this.editor.render.hideLine(prevLine);
-            if (newLine.decos.has("math")) this.editor.render.revealLine(newLine);
+            if (prevLine.decos.has("math") || prevLine.decos.has("link")) this.editor.render.hideLine(prevLine);
+            if (newLine.decos.has("math") || newLine.decos.has("link")) this.editor.render.revealLine(newLine);
         }
         for (let i in this.carets) this.carets[i].placeAt(newPositions[i], { updateScreenX, hideMath: false, keepFixedEnd });
     }

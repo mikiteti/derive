@@ -991,6 +991,25 @@ const createCommandSet = (editor) => {
                     },
                 ]
             },
+            { // TODO :commands
+                name: ": commands",
+                keys: [":"],
+                next: [
+                    {
+                        name: "save",
+                        keys: ["w"],
+                        next: [
+                            {
+                                name: "enter",
+                                keys: ["Enter"],
+                                run: () => {
+                                    window.state.saveFile(editor);
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
         ]
     };
 

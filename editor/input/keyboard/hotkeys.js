@@ -18,7 +18,8 @@ const createCommandSet = (editor) => {
             }
             window.state.clipboard.copy(from, to);
         },
-        "M+v": () => {
+        "M+v": async () => {
+            await window.state.clipboard.update();
             for (let sc of caret.carets) window.state.clipboard.paste(sc.position.index);
         },
         "M+s": () => {
@@ -30,7 +31,7 @@ const createCommandSet = (editor) => {
         "M+p": () => {
             window.state.openModal(window.state.commandPalette);
         },
-        "M+l": () => {
+        "M+n": () => {
             document.documentElement.classList.toggle("lineNumbers")
             queueMicrotask(() => {
                 caret.placeAllAt();
@@ -62,6 +63,15 @@ const createCommandSet = (editor) => {
                 line.setTabs("full", line.tabs.full - 1);
                 render.renderLine(line);
             })
+        },
+        "M+S+l": () => {
+            history.newChangeGroup();
+            caret.forAll(pos => {
+                pos.Line.toggleDeco("link");
+                render.renderLine(pos.Line);
+            });
+            caret.placeAllAt();
+            history.newChangeGroup();
         },
         "M+m": () => {
             history.newChangeGroup();
@@ -225,7 +235,7 @@ const createCommandSet = (editor) => {
     commands["M+S+v"] = commands["M+v"];
     commands["M+S+o"] = commands["M+o"];
     commands["M+S+p"] = commands["M+p"];
-    commands["M+S+l"] = commands["M+l"];
+    commands["M+S+n"] = commands["M+n"];
     commands["M+d"] = commands["M+S+m"];
 
     const command = (e) => {

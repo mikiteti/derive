@@ -46,7 +46,7 @@
     filter: brightness(0.8);
 }
 
-* {
+*:not(.dcg-dom-change-wrapper *) {
     /* text-decoration-thickness: initial; */
     text-shadow: none;
 }

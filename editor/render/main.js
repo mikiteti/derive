@@ -20,7 +20,7 @@ class Render {
             editor.doc.change.addCallback(renderCarets);
         });
 
-        this.decos = ["underline", "bold", "Bold", "italic", "highlight", "math", "center", "small", "large", "capital", "spin_border", "h1", "h2", "h3", "h4", "h5", "h6", "subtitle"];
+        this.decos = ["underline", "bold", "Bold", "italic", "highlight", "math", "center", "small", "large", "capital", "spin_border", "h1", "h2", "h3", "h4", "h5", "h6", "subtitle", "link"];
         this.selection = new Selection(editor);
     }
 
@@ -37,7 +37,7 @@ class Render {
 
     createLineElement(line) {
         let lineElement = document.createElement("p");
-        if (line.decos.has("math")) lineElement.classList.add("hidden");
+        if (line.decos.has("math") || line.decos.has("link")) lineElement.classList.add("hidden");
 
         lineElement.Line = line;
         line.assignElement(lineElement);
@@ -48,10 +48,19 @@ class Render {
             previousLine = previousLine.previousSibling;
         }
         if (previousLine) {
-            if (previousLine.element.DM) {
-                previousLine.element.DM.after(lineElement);
+            let DM = previousLine.element.DM, imgWrapper = previousLine.element.imgWrapper;
+            if (!document.contains(DM)) DM = undefined;
+            if (!document.contains(imgWrapper)) imgWrapper = undefined;
+
+            if (DM && (imgWrapper == undefined || imgWrapper.compareDocumentPosition(DM) == Node.DOCUMENT_POSITION_FOLLOWING)) {
+                DM.after(lineElement);
                 return;
             }
+            if (imgWrapper) {
+                imgWrapper.after(lineElement);
+                return;
+            }
+
             previousLine.element.after(lineElement);
             return;
         }
@@ -131,12 +140,45 @@ class Render {
         // window.MathJax._.mathjax.mathjax.handleRetriesFor(() => window.MathJax.startup.document.updateDocument());
     }
 
+    async handleLink(line) {
+        if (!line.decos.has("link") || line.deleted) {
+            if (!line.element.imgWrapper) return;
+            line.element.imgWrapper.remove();
+            queueMicrotask(_ => {
+                line.element.imgWrapper = undefined;
+            });
+
+            return;
+        }
+
+        if (!line.element.imgWrapper) { // create img element
+            let wrapper = document.createElement("div");
+            line.element.imgWrapper = wrapper;
+            wrapper.classList.add("imgWrapper");
+            let img = document.createElement("img");
+            wrapper.appendChild(img);
+            line.element.img = img;
+            img.Line = line;
+            img.element = line.element;
+            img.alt = "Link unavailable";
+            img.addEventListener("error", e => {
+                img.src = `img/404.png`;
+            });
+            img.src = line.text.trim();
+            line.element.after(wrapper);
+        } else {
+            if (line.text.trim() === line.element.img.src) return;
+            line.element.img.src = line.text.trim();
+        }
+    }
+
     renderLine(line) {
         let promises = [];
 
         if (line.deleted) {
             line.element.remove();
             if (line.element.DM) line.element.DM.remove();
+            if (line.element.imgWrapper) line.element.imgWrapper.remove();
             requestAnimationFrame(() => this.renderInfo());
             return;
         } else if (!line.element) {
@@ -211,9 +253,8 @@ class Render {
             endChar.classList.add("endChar");
             endChar.innerHTML = " ";
             (afterBullet || line.element).appendChild(endChar);
-            if (line.decos.has("math")) {
-                this.handleDM(line);
-            }
+            if (line.decos.has("math")) this.handleDM(line);
+            if (line.decos.has("link")) this.handleLink(line);
         }
 
         if (caretChanged && !marksChanged && !textChanged) {
@@ -228,7 +269,7 @@ class Render {
             }
         }
 
-        if (line.decos.has("math") && caretChanged) {
+        if ((line.decos.has("math") || line.decos.has("link")) && caretChanged) {
             let hide = true;
             for (let sc of this.editor.input?.caret?.carets || []) {
                 if (sc.position.index >= line.from && sc.position.index <= line.to) {
@@ -249,6 +290,7 @@ class Render {
                 else line.element.classList.remove(deco);
             }
             this.handleDM(line);
+            this.handleLink(line);
         }
 
         requestAnimationFrame(() => this.renderInfo());
