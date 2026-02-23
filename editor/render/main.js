@@ -1,4 +1,5 @@
 import Selection from "./selection.js";
+import { getUrl } from "../assets.js";
 
 const renderChangedLines = (editor, changedLines) => {
     for (let line of changedLines) editor.render.renderLine(line);
@@ -155,20 +156,31 @@ class Render {
             let wrapper = document.createElement("div");
             line.element.imgWrapper = wrapper;
             wrapper.classList.add("imgWrapper");
+
+            let editButton = document.createElement("button");
+            editButton.classList.add("editButton");
+            editButton.innerHTML = "Edit";
+            wrapper.appendChild(editButton);
+
             let img = document.createElement("img");
             wrapper.appendChild(img);
             line.element.img = img;
             img.Line = line;
             img.element = line.element;
             img.alt = "Link unavailable";
-            img.addEventListener("error", e => {
+            img.addEventListener("error", _ => {
                 img.src = `img/404.png`;
             });
-            img.src = line.text.trim();
+            let url = getUrl(line.text.trim());
+            img.src = url.href;
+            wrapper.setAttribute("url", url.attachmentUrl);
             line.element.after(wrapper);
         } else {
-            if (line.text.trim() === line.element.img.src) return;
-            line.element.img.src = line.text.trim();
+            let url = getUrl(line.text.trim());
+            if (url.href === line.element.img.src) return;
+            line.element.img.src = url.href;
+            line.element.imgWrapper.setAttribute("url", url.attachmentUrl);
+            line.element.imgWrapper.attachmentEditor?.destroy();
         }
     }
 

@@ -1,4 +1,34 @@
 import { exportToMD } from "../editor/assets.js";
+import Environment from "../environment.js";
+import AttachmentEditor from "./editAttachments.js";
+
+const createAttachment = async (type) => {
+    let res = await window.state.sendRequest("new_attachment", {
+        method: 'POST',
+        body: JSON.stringify({ type }),
+        headers: { "Content-Type": "application/json" },
+        credentials: 'include'
+    });
+    if (res == -1) return;
+    let url = (await res.json()).url;
+    let caret = window.state.editor.input.caret.carets[0], lineNum;
+    if (caret.position.Line.text.trim() == "") {
+        lineNum = caret.position.Line.number;
+        window.state.editor.doc.change.insert("view/" + url, caret.position.index);
+    } else {
+        lineNum = caret.position.Line.number + 1;
+        window.state.editor.doc.change.insert("\nview/" + url, caret.position.Line.to);
+    }
+
+    window.state.attachments.innerHTML = "";
+
+    window.state.editor.doc.line(lineNum).addDeco("link");
+    requestAnimationFrame(() => {
+        let wrapper = window.state.editor.doc.line(lineNum).element.imgWrapper;
+        wrapper.classList.add("notReady");
+        new AttachmentEditor({ type, url, wrapper, isNew: true });
+    });
+}
 
 const newCommands = (state) => {
     return [
@@ -133,6 +163,32 @@ const newCommands = (state) => {
                 state.saveFile(state.editor);
             }
         },
+        {
+            name: "New Desmos Graph",
+            run: () => { createAttachment("graph") }
+        },
+        {
+            name: "New Desmos Geometry",
+            run: () => { createAttachment("geometry") }
+        },
+        {
+            name: "List attachments",
+            run: async () => {
+                if (state.attachments.children.length == 0) {
+                    let res = await state.sendRequest("attachments", { credentials: 'include' });
+                    if (res == -1) return;
+                    let attachments = (await res.json());
+
+                    for (let i of attachments) {
+                        let img = document.createElement("img");
+                        img.src = Environment.url + "view/" + i.url;
+                        state.attachments.appendChild(img);
+                    }
+                }
+
+                state.openModal(state.attachments);
+            }
+        }
 
         // {
         //     name: "Restore file",

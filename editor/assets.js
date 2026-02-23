@@ -417,7 +417,7 @@ const exportToMD = async (editor = window.editor) => {
 
         if (decos.has("math") && text.trim() !== "") text = "$$" + text + "$$";
         let lastLine = content.at(-1);
-        if (lastLine != "" && decos.has("h1", "h2", "h3", "h4", "h5", "h6")) insertEmptyLineInFront = true;
+        if (lastLine != "" && decos.has("h1", "h2", "h3", "h4", "h5", "h6")) insertEmptyLineInFront = true; // TODO: check has multiple params use
         if (decos.has("h1")) text = "# " + text;
         // else if (decos.has("small")) text = "<small>" + text + "</small>";
         else if (decos.has("h2")) text = "## " + text;
@@ -426,7 +426,12 @@ const exportToMD = async (editor = window.editor) => {
         else if (decos.has("h5")) text = "##### " + text;
         else if (decos.has("h6")) text = "###### " + text;
         else if (decos.has("subtitle")) text = "\\begin{subtitle}" + text + "\\end{subtitle}";
-        else if (decos.has("link")) text = "![](" + (Environment.url + `proxy-image?url=${encodeURIComponent(line.text.trim())}`) + ")";
+        else if (decos.has("link")) {
+            let url = encodeURIComponent(getUrl(line.text.trim()).href);
+            text = "![](" + (Environment.url + `proxy-image?url=${url}`) + ")";
+            insertEmptyLineInFront = true;
+            text += "\n";
+        }
 
         if (["$"].includes(lastLine.charAt(lastLine.length - 1)) && !["$"].includes(lastLine.charAt(lastLine.length - 2))) insertEmptyLineInFront = true;
         text = text.split("$").map((e, j) => j % 2 ? e.trim() : e).join("$");
@@ -468,4 +473,10 @@ const saveState = () => {
     localStorage.setItem('state', JSON.stringify(state));
 }
 
-export { nodeSizes, checkTreeStructure, getColumnAt, findXIndicesInLine, getVisualLineAt, exportFile, nodeAt, exportToMD, isMac, key, saveState };
+const getUrl = (link) => {
+    let url = new URL(link, Environment.url);
+    if (Environment.url.includes(url.origin) && url.pathname.includes("view/")) url.attachmentUrl = url.pathname.split("/").at(-1);
+    return url;
+}
+
+export { nodeSizes, checkTreeStructure, getColumnAt, findXIndicesInLine, getVisualLineAt, exportFile, nodeAt, exportToMD, isMac, key, saveState, getUrl };

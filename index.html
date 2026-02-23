@@ -50,8 +50,21 @@
                 }
             }
         };
+
+
+        window.DesmosLoaded = {};
+        window.DesmosLoaded.promise = new Promise((res, rej) => {
+            window.DesmosLoaded.resolve = () => {
+                console.log("Desmos Loaded");
+                window.Desmos = Desmos;
+                res();
+            };
+            window.DesmosLoaded.reject = () => {rej()};
+        });
     </script>
     <script defer src="https://cdn.jsdelivr.net/npm/mathjax@4/startup.js"></script>
+    <script defer src="https://www.desmos.com/api/v1.11/calculator.js?apiKey=c6b271b52633435b8d5ee676896fc567"
+        onload="window.DesmosLoaded.resolve()"></script>
 </head>
 
 <body>
@@ -70,6 +83,8 @@
         <input class="fuzzyFinder" type="text" placeholder="Find or create notes..." />
         <div class="list"></div>
     </div>
+    <div id="attachments" class="modal"> </div>
+    <div id="attachmentEditor" class="modal"></div>
 
     <div id="alerts"></div>
     <div id="prompts"></div>

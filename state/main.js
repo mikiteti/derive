@@ -3,8 +3,9 @@ import newEditor from "../editor/main.js";
 import Environment from "../environment.js";
 import { exportFile } from "../editor/assets.js";
 import newCommands from "./commands.js";
-import { key, saveState } from "../editor/assets.js";
+import { key, saveState, getUrl } from "../editor/assets.js";
 import newClipboard from "../editor/doc/clipboard.js";
+import AttachmentEditor from "./editAttachments.js";
 
 class State {
     constructor() {
@@ -36,12 +37,15 @@ class State {
         });
         this.commandPalette = document.querySelector("#commandPalette");
         this.filePicker = document.querySelector("#filePicker");
+        this.attachments = document.querySelector("#attachments");
+        this.attachmentEditor = document.querySelector("#attachmentEditor");
         this.modalBg = document.querySelector("#modalBg");
         this.alerts = document.querySelector("#alerts");
         this.prompts = document.querySelector("#prompts");
         this.modalBg.addEventListener("click", () => {
             console.log("closing modal");
-            this.closeModal();
+            if (this.focus === this.attachmentEditor) this.editedAttachment.finishEditing();
+            else this.closeModal();
         });
 
         this.systemFiles = systemFiles;
@@ -66,7 +70,28 @@ class State {
 
         document.addEventListener("click", e => {
             if (e.target.matches(".textarea p .link")) {
-                window.open(e.target.textContent.trim(), "_blank");
+                window.open(getUrl(e.target.textContent.trim()).href, "_blank");
+                return;
+            }
+
+            if (e.target.matches(".imgWrapper .editButton")) {
+                let wrapper = e.target.parentElement;
+
+                if (wrapper.classList.contains("editing")) { // finishing edit
+                    wrapper.attachmentEditor?.finishEditing();
+                } else { // starting edit
+                    if (wrapper.attachmentEditor == undefined) new AttachmentEditor({
+                        url: wrapper.getAttribute("url"),
+                        wrapper
+                    });
+                    wrapper.attachmentEditor.startEditing();
+                }
+            }
+
+            if (e.target.matches("#attachments img")) {
+                navigator.clipboard.writeText("view" + e.target.src.split("view")[1]);
+                this.alert("Copied", "The link to the attachment is on your clipboard");
+
                 return;
             }
 
@@ -363,10 +388,13 @@ class State {
             { opacity: 1 }
         ], { duration: 100 });
 
-        modal.querySelector("input").focus();
-        modal.querySelector("input").value = "";
         this.focus = modal;
-        this.handleFuzzySearch(modal);
+        let input = modal.querySelector("input");
+        if (input) {
+            input.focus();
+            input.value = "";
+            this.handleFuzzySearch(modal);
+        }
     }
 
     closeModal() {
