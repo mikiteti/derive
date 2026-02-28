@@ -46,7 +46,6 @@ const splitNode = (node) => {
         nodeChildren.push(nextChildren);
         children -= nextChildren;
     }
-    // console.log({ nodeChildren });
 
     let childrenProcessed = 0;
     for (let i in nodeChildren) {
@@ -55,10 +54,6 @@ const splitNode = (node) => {
         nodeChildren[i] = children;
     }
 
-    // console.log(node);
-    // console.log([...node.children]);
-    // console.log([...nodeChildren]);
-    // console.log(nodeChildren.length);
     let newNodes = nodeChildren.slice(1).map(children => new node.constructor({ editor: node.editor, parent: node.parent, children }));
     node.children = node.children.slice(0, nodeChildren[0].length);
     let indexOfNode = node.parent.children.indexOf(node);

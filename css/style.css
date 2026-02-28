@@ -54,10 +54,10 @@
     /* unicode-range: U+2190, U+2192, U+2194, U+21A4, U+21A6, U+21D0, U+21D2, U+21D4; */
 }
 
-@font-face {
-    font-family: 'feijoa';
-    src: url("../fonts/Feijoa-Font/Feijoa Medium.otf");
-}
+/* @font-face { */
+/*     font-family: 'feijoa'; */
+/*     src: url("../fonts/Feijoa-Font/Feijoa Medium.otf"); */
+/* } */
 
 @font-face {
     font-family: 'author';
@@ -106,7 +106,6 @@
 }
 
 *:not(.DM *, .IM *, .dcg-dom-change-wrapper *) {
-    /* font-family: 'author', sans-serif; */
     /* font-family: 'tex', var(--font-face); */
     font-family: var(--font-face);
 }
@@ -199,10 +198,7 @@ html.lineNumbers .textarea p.math::before {
     pointer-events: none;
     mix-blend-mode: exclusion;
     border: 0px solid currentColor;
-    /* border: 0px solid white; */
     border-radius: 1px;
-    /* color: black; */
-    /* background-color: white; */
 }
 
 .smooth {
@@ -259,6 +255,7 @@ p .link:active,
 .imgWrapper {
     text-align: center;
     position: relative;
+    margin: 1rem 0;
 }
 
 img {
@@ -280,8 +277,6 @@ img {
     width: var(--width);
     height: calc(3/4*var(--width));
     top: calc(50vh - 3/8*var(--width));
-    padding: 0;
-    box-sizing: border-box;
 }
 
 #attachmentEditor .attachmentEditor {
@@ -421,10 +416,9 @@ img {
 }
 
 .IM {
-    /* color: var(--color-math) !important; */
     pointer-events: all !important;
     vertical-align: baseline;
-    font-size: calc(var(--IM-font-size) * var(--font-size));
+    font-size: calc(var(--IM-font-size) * 1em);
 }
 
 .wrapper.editingSource .IM {
@@ -473,18 +467,15 @@ img {
     top: 10vw;
     transform: translate(-50%, 0);
     padding: 10px;
-    /* border: 1px solid var(--color-accent); */
 }
 
 .modal input {
     background: transparent;
     outline: none;
-    /* border: 1px solid var(--color-accent); */
     border: none;
     display: block;
     box-sizing: border-box;
     width: 100%;
-    /* border-radius: 10px; */
     font-size: var(--font-size);
     color: var(--color-text);
     padding: 5px 10px;
@@ -498,7 +489,6 @@ img {
 }
 
 .modal .list {
-    /* border: 1px solid var(--color-accent); */
     border-radius: 10px;
     padding: 5px;
 }
@@ -563,11 +553,6 @@ img {
     margin-bottom: 5px;
 }
 
-/* #prompts { */
-/*     position: fixed; */
-/*     inset: 0; */
-/* } */
-
 .prompt {
     background-color: var(--color-bg);
     backdrop-filter: blur(5px);
@@ -614,9 +599,6 @@ img {
     outline: none;
     font-size: var(--font-size);
     padding: 5px 10px;
-    /* margin: 0; */
-    /* margin-bottom: calc(var(--font-size) / 2); */
-    /* margin-left: 10px; */
     border: 1px solid #ffffff33;
     border-radius: 5px;
     min-width: 0;

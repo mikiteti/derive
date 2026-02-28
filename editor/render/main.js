@@ -108,20 +108,6 @@ class Render {
             DM.classList.add("DM");
             DM.source = line.text;
             line.element.after(DM);
-            // try {
-            //     DM.replaceChildren(window.MathJax.tex2svg(line.text, { display: true })); // render sync on load
-            // } catch (error) {
-            // DM.innerHTML = line.text; // placeholder until async is done
-
-            // await window.MathJax.startup.document.outputJax.font.loadDynamicFiles(); // best i got
-            // DM.replaceChildren(window.MathJax.tex2svg(line.text, { display: true })); // async still didn't load fonts in time
-
-            // window.MathJax.tex2svgPromise(line.text, { display: true }).then(node => { // render async if something needs to be loaded
-            //     // console.log("retried", line, "got");
-            //     // console.log(node);
-            //     DM.replaceChildren(node);
-            // });
-            // }
 
             window.MathJax._.mathjax.mathjax.handleRetriesFor(async () => { // fantastic! the right solution.
                 DM.replaceChildren(window.MathJax.tex2svg(line.text, { display: true }));
@@ -131,14 +117,10 @@ class Render {
             if (line.text === line.element.DM.source) return;
             line.element.DM.source = line.text;
 
-            // let metrics = window.MathJax.getMetricsFor(line.element.DM, true);
-            // console.log({ metrics });
             window.MathJax.tex2svgPromise(line.text, { display: true }).then(node => { // render async on change
                 if (!window.renderErrors && !node.querySelector('[data-mjx-error], mjx-merror, [fill="red"], [stroke="red"]')) line.element.DM.replaceChildren(node);
             });
         }
-        // window.MathJax.startup.document.clear();
-        // window.MathJax._.mathjax.mathjax.handleRetriesFor(() => window.MathJax.startup.document.updateDocument());
     }
 
     async handleLink(line) {
@@ -248,8 +230,6 @@ class Render {
                     promises.push(promise);
                     promise.then(node => {
                         IM.replaceChildren(node);
-                        // window.MathJax.startup.document.clear();
-                        // window.MathJax._.mathjax.mathjax.handleRetriesFor(() => window.MathJax.startup.document.updateDocument());
                         el.after(IM);
                         let currentColor = getComputedStyle(node).getPropertyValue("color");
                         if (!node.matches(".wrapper.editingSource *")) for (let e of node.querySelectorAll("[fill]")) e.setAttribute("fill", currentColor);

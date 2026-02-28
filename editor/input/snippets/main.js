@@ -84,7 +84,6 @@ class Snippets {
                 match = text.match(snippet.from)
                 index = match?.index;
                 if (index != undefined) {
-                    // console.log(JSON.parse(JSON.stringify(tabstops)));
                     index += line.from + textStartColumn;
                     for (let i = 1; i < match.length; i++) {
                         let from = `[[${i - 1}]]`;
@@ -105,7 +104,6 @@ class Snippets {
                             }
                         }
                     }
-                    // console.log(JSON.parse(JSON.stringify(tabstops)));
                 }
             } else if (typeof snippet.from == "string") { // string 
                 if (text.endsWith(snippet.from)) {
@@ -123,7 +121,6 @@ class Snippets {
                 if (newChangeGroup) this.editor.doc.history?.newChangeGroup();
                 console.log({ to });
                 this.editor.doc.change.noCallback({ insert: to, from: index, to: at });
-                // console.log(JSON.parse(JSON.stringify(tabstops)));
                 for (let t of tabstops) for (let i in t.positions) t.positions[i] += index;
                 return tabstops;
             }
@@ -168,7 +165,6 @@ class Snippets {
         requestAnimationFrame(() => {
             this.editor.doc.history?.newChangeGroup();
             this.editor.input.caret.updateCarets(
-                // this.tabstops[0].positions.map(e => e.index)
                 this.tabstops[0].placeholder === "" ?
                     this.tabstops[0].positions.map(e => e.index) :
                     this.tabstops[0].positions.map(e => [e.index + this.tabstops[0].placeholder.length, e.index])

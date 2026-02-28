@@ -140,7 +140,7 @@ class Clipboard {
         return html;
     }
 
-    parseClipboardHTML(html) {
+    parseClipboardHTML(html) { // TODO
 
     }
 }

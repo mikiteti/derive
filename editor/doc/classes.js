@@ -215,25 +215,6 @@ class Doc extends Node {
     }
 
     linesBetween(line1, line2) { // ends excluded
-        // if (!line1.parent) {
-        //     line1 = this.line(line1);
-        //     line2 = this.line(line2);
-        // }
-        //
-        // let lines1 = [], lines2 = []; // lines from front and from end
-        // let node1 = line1, node2 = line2;
-        // while (node1.parent !== node2.parent) {
-        //     let Lines1 = node1.Lines, Lines2 = node2.Lines;
-        //     lines1.push(...Lines1.slice(Lines1.indexOf(line1) + 1));
-        //     lines2.push(...Lines2.slice(0, Lines2.indexOf(line2)));
-        //
-        //     node1 = node1.parent, node2 = node2.parent;
-        // }
-        //
-        // console.log({ node1 });
-        // let Lines = node1.parent.Lines;
-        // return lines1.concat(Lines.slice(Lines.indexOf(node1) + 1, Lines.indexOf(node2))).concat(lines2.reverse());
-
         let lines = [];
         for (let i = line1 + 1; i < line2; i++) lines.push(this.line(i));
         return lines;

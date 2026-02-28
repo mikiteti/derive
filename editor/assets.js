@@ -26,43 +26,12 @@ const checkTreeStructure = (doc) => {
     if (errorCounter === 0) console.log("%c Nothing to see here, everything is conducting themselves", "color: green; font-weight: bold");
 }
 
-// const showTreeStructure = (doc) => {
-//     function drawTree(node, prefix = "", isLast = true) {
-//         let output = "";
-//
-//         // Choose the proper branch connector
-//         const connector = prefix === ""
-//             ? ""                             // root has no connector
-//             : (isLast ? "└─ " : "├─ ");
-//
-//         // Print the current node
-//         output += prefix + connector + node.text + "\n";
-//
-//         // Prepare new prefix for children
-//         const newPrefix = prefix + (isLast ? "   " : "│  ");
-//
-//         // Recurse into children (if any)
-//         if (!node.isLine) {
-//             node.children.forEach((child, i) => {
-//                 const last = i === node.children.length - 1;
-//                 output += drawTree(child, newPrefix, last);
-//             });
-//         }
-//
-//         return output;
-//     }
-//
-//
-//     console.log(drawTree(doc));
-// }
-
 const checkSpeed = () => {
     let abc = "ABCDEFGHIJKLMNOPQRSTUVWXYZáéíóöőúüűzabcdefghijklmnopqrstuvwxyzÁÉÍÓÖŐÚÜŰ 1234567890!@#$%^&*()-=_+[]\\{}|;':.".split("").concat(Array(10).fill("\n"));
     const N = 100000;
     console.time();
     for (let i = 0; i < N; i++) {
         window.doc.change.insert(abc[Math.floor(Math.random() * abc.length)], Math.floor(Math.random() * window.doc.chars));
-        // window.input.keyboard.command({ key: abc[Math.floor(Math.random() * abc.length)] })();
     }
     console.log(`Time for ${N} Doc edits:`);
     console.timeEnd();
@@ -109,81 +78,6 @@ const getColumnAt = (element, x, y, { style = "bar" } = {}) => {
     return Math.max(0, index - 1 - (style !== "bar")); // not between any two characters, returning last possible position
 }
 
-// const findFirstRectBorder = (node, from = 0, to = node.textContent.length) => {
-//     let range = document.createRange();
-//     range.setStart(node, from);
-//     range.setEnd(node, to);
-//     let rects = range.getClientRects();
-//     if (rects.length < 2) return undefined;
-//
-//     let min = from, max = to;
-//     while (max - min > 1) {
-//         let current = Math.floor((min + max) / 2);
-//         range.setEnd(node, current);
-//         rects = range.getClientRects();
-//         rects.length > 1 ? max = current : min = current;
-//     }
-//
-//     return min;
-// }
-//
-// const findRectBorders = (node) => {
-//     let borders = [];
-//     let firstBorder = findFirstRectBorder(node, 0, node.textContent.length);
-//     while (firstBorder !== undefined) {
-//         borders.push(firstBorder);
-//         firstBorder = findFirstRectBorder(node, firstBorder + 1, node.textContent.length);
-//     }
-//
-//     return borders;
-// }
-//
-// const findXInRect = (x, node, from, to) => {
-//     const range = document.createRange();
-//     let min = from, max = to;
-//     range.setStart(node, min);
-//     range.setEnd(node, max);
-//     let rects = range.getClientRects(), rect = rects[rects.length - 1];
-//     while (max - min > 1) {
-//         let current = Math.floor((min + max) / 2);
-//         range.setStart(node, min);
-//         range.setEnd(node, current);
-//
-//         rects = range.getClientRects();
-//         rect = rects[rects.length - 1];
-//         (rect.left <= x && rect.right >= x) ? max = current : min = current;
-//     }
-//
-//     return rect.right - x > x - rect.left ? min : max;
-// }
-//
-// const getColumnsAtX = (element, x) => {
-//     const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
-//     let columns = [];
-//     let currentColumn = 0;
-//     while (walker.nextNode()) {
-//         const node = walker.currentNode;
-//         let rectBorders = findRectBorders(node);
-//         rectBorders.unshift(0);
-//         rectBorders.push(node.textContent.length);
-//         let range = document.createRange();
-//         range.setStart(node, 0);
-//         range.setEnd(node, node.textContent.length);
-//         let rects = range.getClientRects();
-//         console.log({ rects });
-//         for (let i = 0; i < rects.length; i++) {
-//             let rect = rects[i];
-//             if (rect.left <= x && rect.right >= x) {
-//                 columns.push(findXInRect(x, node, rectBorders[i], rectBorders[i + 1]) + currentColumn);
-//             }
-//         }
-//
-//         currentColumn += node.textContent.length;
-//     }
-//
-//     return columns;
-// }
-
 const getLineBreaks = (line, nodes) => {
     if (nodes == undefined) {
         const walker = document.createTreeWalker(line.element, NodeFilter.SHOW_TEXT);
@@ -213,20 +107,6 @@ const getLineBreaks = (line, nodes) => {
 
         prevRect = Rects[Rects.length - 1];
     }
-
-    // let counter = 0, prevRects = 1;
-    // for (let node of nodes) {
-    //     for (let i = 0; i < node.textContent.length; i++) {
-    //         range.setEnd(node, i);
-    //         let rects = range.getClientRects().length;
-    //         if (rects > prevRects) {
-    //             lineBreaks.push(counter - 1);
-    //             prevRects = rects;
-    //         }
-    //
-    //         counter++;
-    //     }
-    // }
 
     return lineBreaks; // relative to line.from
 }
@@ -261,7 +141,6 @@ const nodeAt = (pos) => {
 }
 
 const findXInVisualLine = (x, nodes, from, to) => { // TODO: check for edge cases
-    // console.log({ x, nodes, from, to });
     let min = from, max = to;
     let range = document.createRange();
     range.setStart(..._nodeAt(nodes, min));
@@ -281,13 +160,11 @@ const findXInVisualLine = (x, nodes, from, to) => { // TODO: check for edge case
         Rects = range.getClientRects();
         rects = [];
         for (let rect of Rects) if (rect.width !== 0) rects.push(rect);
-        // console.log(rects);
         if (rects.length && rects[0].left <= x
             && rects.at(-1).right >= x) max = current;
         else min = current;
     }
 
-    // console.log("no, did the whole binary search: ", (rects.at(-1)?.right - x > x - rects[0]?.left) ? min : Math.min(max, to - 1));
     return (rects.at(-1)?.right - x > x - rects[0]?.left)
         ? min
         : Math.min(max, to - 1);

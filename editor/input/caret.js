@@ -1,39 +1,5 @@
 import { Position, Range } from "../doc/classes.js";
 
-// const getCharIndexAt = (element, x, y) => {
-//     const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
-//     let index = 0;
-//
-//     while (walker.nextNode()) {
-//         const node = walker.currentNode;
-//         const text = node.nodeValue;
-//
-//         let prevX;
-//         for (let i = 0; i <= text.length; i++) {
-//             const range = document.createRange();
-//             range.setStart(node, i);
-//             range.setEnd(node, i);
-//
-//             const rect = range.getBoundingClientRect();
-//             if (!rect) continue;
-//             if (i == 0) {
-//                 prevX = rect.right;
-//                 continue;
-//             }
-//
-//             // Check if point is within this rect
-//             if (y >= rect.top && y <= rect.bottom && x <= rect.right) {
-//                 return index + i - (x - prevX < rect.right - x ? 1 : 0);
-//             }
-//             prevX = rect.right;
-//         }
-//         index += text.length;
-//     }
-//
-//     return -1;
-//     return index - 1; // not between any two characters, returning last possible position
-// }
-
 class SingleCaret {
     constructor(editor, position = 0, { element = this.createElement(editor), autoRender = true } = {}) {
         this.editor = editor;
@@ -56,13 +22,11 @@ class SingleCaret {
 
     async placeAt(index = this.position.index, { updateScreenX = true, hideMath = true, keepFixedEnd = false } = {}) {
         if (keepFixedEnd !== -1) keepFixedEnd ? this.addFixedEnd() : this.removeFixedEnd(); // -1: don't change, false: remove, true: add
-        // if (hideMath && this.position.Line.decos.has("math")) this.editor.render.hideLine(this.position.Line);
         let renderLines = [];
         if (index !== this.position.index) {
             this.position.Line.unrenderedChanges.add("caret");
             renderLines.push(this.position.Line);
         }
-        // this.editor.render.renderLine(this.position.Line);
         // if (index !== this.position.index && this.editor.input.caret.carets.map(c => c.position.index).includes(index)) {
         //     this.editor.input.caret.removeCaret(this.editor.input.caret.carets.indexOf(this));
         // }
@@ -117,12 +81,6 @@ class SingleCaret {
                             this.element.style.width = "1px";
                             break;
                         case "wide":
-                            // this.element.innerHTML = this.editor.doc.charAt(this.position.index);
-                            // let styles = getComputedStyle(line.element);
-                            // this.element.style.lineHeight = styles.getPropertyValue("line-height");
-                            // this.element.style.fontSize = styles.getPropertyValue("font-size");
-                            // this.element.style.fontWeight = styles.getPropertyValue("font-weight");
-                            // this.element.style.textTransform = styles.getPropertyValue("text-transform");
                             this.element.style.borderWidth = "0px";
                             this.element.style.backgroundColor = "currentColor";
                             this.element.style.top = rect.top + scrollY + "px";
@@ -166,8 +124,6 @@ class SingleCaret {
             if (scrollY - this.screenPosition.y > -200) this.editor.elements.editor.scrollTo({ behavior: "smooth", top: this.screenPosition.y - 200 });
             else if (scrollY + window.innerHeight - this.screenPosition.y - this.screenPosition.height < 200) this.editor.elements.editor.scrollTo({ behavior: "smooth", top: this.screenPosition.y + this.screenPosition.height - window.innerHeight + 200 });
         }
-
-        // this.element.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
 
     addFixedEnd(index = this.position.index) {
@@ -196,20 +152,6 @@ class SingleCaret {
         this.fixedEnd = pos;
         this.placeAt(this.position.index, { keepFixedEnd: true });
     }
-
-    // placeAtCoordinates(lineElement, x, y, updateScreenX = true, alternativeLineElement) {
-    //     let charIndex = getCharIndexAt(lineElement, x, y);
-    //     if (charIndex === -1) {
-    //         if (alternativeLineElement) {
-    //             this.placeAtCoordinates(alternativeLineElement, x, y, updateScreenX);
-    //             return;
-    //         }
-    //
-    //         charIndex = lineElement.innerText.length - 1;
-    //     }
-    //
-    //     this.placeAt(lineElement.Line.from + charIndex, updateScreenX, true);
-    // }
 
     delete() {
         let line = this.position.Line;
@@ -327,58 +269,6 @@ class Caret {
             }
         }
     }
-
-    // addTabStops(pos, index = 1, append = false) {
-    //     let positions = pos.map(e => new Position(e, this.doc));
-    //     if (append) {
-    //         this.tabstops[index].push(...positions);
-    //         return;
-    //     }
-    //     if (index === 0) this.tabstops.unshift(positions);
-    //     else if (index === -1) this.tabstops.push(positions);
-    //     else this.tabstops = [...this.tabstops.slice(0, index), positions, ...this.tabstops.slice(index)];
-    //     console.log("tabstops added", this.tabstops.map(e => e.map(b => b.index)));
-    // }
-    //
-    // removeTabStops() {
-    //     console.log("removing tabstops");
-    //     for (let tabstops of this.tabstops) {
-    //         for (let tabstop of tabstops) {
-    //             if (tabstop !== this.tabstops[0][0]) tabstop.delete();
-    //         }
-    //     }
-    //     this.tabstops = [[this.tabstops[0][0]]];
-    // }
-
-    // getCaretPositionAt(x, y) {
-    //     let node, offset;
-    //     if (document.caretPositionFromPoint) {
-    //         let pos = document.caretPositionFromPoint(x, y);
-    //         console.log({ pos });
-    //         node = pos.offsetNode;
-    //         offset = pos.offset;
-    //     } else if (document.caretRangeFromPoint) {
-    //         let range = document.caretRangeFromPoint(x, y);
-    //         console.log({ range });
-    //         node = range.startContainer;
-    //         offset = range.startOffset;
-    //     }
-    //
-    //     let lineElement = node;
-    //     while (lineElement.parentNode && lineElement.parentNode !== this.editor.input.textarea) lineElement = lineElement.parentNode;
-    //
-    //     let column = 0;
-    //     const walker = document.createTreeWalker(lineElement, NodeFilter.SHOW_TEXT);
-    //     while (walker.nextNode()) {
-    //         let current = walker.currentNode;
-    //         if (current === node) {
-    //             column += offset;
-    //             break;
-    //         } else column += current.textContent.length;
-    //     }
-    //
-    //     return { node, offset, line: lineElement.Line, column };
-    // }
 }
 
 export default Caret;

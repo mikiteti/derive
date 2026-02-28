@@ -346,7 +346,6 @@ class State {
             if (file.id === undefined) file = await this.createFile(file);
             file = this.files.find(e => e.id === file.id)
         }
-        console.log(file);
         // this.setNoteUrl(file.url);
 
         let editor = this.editors.filter(e => e.fileId != undefined).find(e => e.fileId === file.id);

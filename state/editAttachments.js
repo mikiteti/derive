@@ -90,23 +90,6 @@ class AttachmentEditor {
         window.state.closeModal();
     }
 
-    fullscreen() {
-        console.log("fullscreening");
-        this.wrapper.classList.add("fullscreen");
-        switch (this.type) {
-            case "graph":
-                this.calculator.resize();
-        }
-    }
-
-    exitFullscreen() {
-        this.wrapper.classList.remove("fullscreen");
-        switch (this.type) {
-            case "graph":
-                this.calculator.resize();
-        }
-    }
-
     async setState(state) {
         if (!state) return;
 

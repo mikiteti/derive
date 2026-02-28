@@ -150,9 +150,7 @@ const createCommandSet = (editor) => {
             if (indices.length) bestBet = indices[0];
         }
         if (indices.length >= count) return indices[count - 1];
-        // console.log("not in currentline, bestbet", bestBet);
         count -= indices.length;
-        // console.log(count);
 
         let number = pos.Line.number;
         while (count > 0) {
@@ -178,9 +176,7 @@ const createCommandSet = (editor) => {
             if (indices.length) bestBet = indices.at(-1);
         }
         if (indices.length >= count) return indices[indices.length - count];
-        // console.log("not in currentline, bestbet", bestBet);
         count -= indices.length;
-        // console.log(count);
 
         let number = pos.Line.number;
         while (count > 0) {
@@ -234,11 +230,6 @@ const createCommandSet = (editor) => {
         "B": (count = 1) => (pos => { return findStartOfWORD(parsePosition(pos.index - 1), count) }),
         "W": (count = 1) => (pos => { return findStartOfWORD(parsePosition(findEndOfWORD(pos, (blank.includes(doc.charAt(pos.index)) ? 0 : 1) + count)), 1) }),
         "E": (count = 1) => (pos => { return findEndOfWORD(parsePosition(pos.index + 1), count) }),
-        // "j": (count = 1) => (pos => {
-        //     let line = doc.line(pos.Line.number + count);
-        //     return Math.min(line.from + pos.index - pos.Line.from, line.to - 1);
-        // }),
-        // "k": (count = 1) => moves["j"](-count),
         "j": (count = 1) => (pos => { return curMode === "vLine" ? doc.line(pos.Line.number + count).to : findNextVisualLine(pos, count) }),
         "k": (count = 1) => (pos => { return curMode === "vLine" ? doc.line(pos.Line.number - count).from : findPreviousVisualLine(pos, count) }),
         "$": (pos) => pos.Line.to - 1,
@@ -264,7 +255,6 @@ const createCommandSet = (editor) => {
             if (pair.index < pos.index) return [pair.Line.from, Math.min(pos.Line.to, doc.chars - 2)];
             return [Math.min(pair.Line.to, doc.chars - 2), pos.Line.from];
         }
-        // ...
     }
 
     const functions = {
@@ -338,10 +328,8 @@ const createCommandSet = (editor) => {
         },
         runSnippets: () => {
             let jump;
-            // if (doc.change.callbackList.changedLines.size === 1) jump = snippets.multiHandle(caret.carets.map(e => e.position));
             jump = snippets.multiHandle(caret.carets.map(e => e.position));
             doc.change.runCallbacks();
-            // if (jump) snippets.jumpToNextTabStops();
 
             let lines = new Set(caret.carets.map(e => e.position.Line));
             for (let line of lines) snippets.features.autoEnlarge(line);
@@ -1164,16 +1152,13 @@ const createCommandSet = (editor) => {
             }
 
             for (let branch of nextBranches) {
-                // console.log("checking if branch", (branch.node.name || "no name"), "has a command to run");
                 if (branch.node.next == undefined && branch.node.run !== undefined && (branch.node.keys.includes(key) || key.length === 1 && branch.node.keys == "any")) {
-                    // console.log(branch);
                     let outerMostRun = branch.trace.find(e => e.run);
                     if (outerMostRun == undefined) {
                         console.error("compromised command tree: no outermost run found for", command);
                         return 1;
                     }
                     let index = branch.trace.indexOf(outerMostRun);
-                    // console.log("will run", outerMostRun, "with", command.slice(0, keyCount).slice(index), branch.trace.slice(index + 1).map(e => e.run));
                     let count;
                     if (outerMostRun.count && !Number.isNaN(parseInt(command[index]))) {
                         count = parseInt(command[index]);

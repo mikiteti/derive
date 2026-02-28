@@ -35,7 +35,6 @@ const newCommands = (state) => {
         {
             name: "Create user",
             run: async () => {
-                // let data = prompt('Input your email, name and password separated by spaces to create an account.').split(' ');
                 let [email, name, password] = await state.prompt("Create user", "Input your email, name and password to create an account", { Email: 1, Name: 1, Password: 1 });
                 let res = await state.sendRequest("new_user", {
                     method: 'POST',
@@ -54,7 +53,6 @@ const newCommands = (state) => {
         {
             name: "Login",
             run: async (email, password) => {
-                // if (email == undefined || password == undefined) [email, password] = prompt('Input your email and password separated by a space to login.').split(' ');
                 if (email == undefined || password == undefined) [email, password] =
                     await state.prompt("Login", 'Input your email and password to log in', { "Email": 1, "Password": 1 });
                 console.log(email, password);

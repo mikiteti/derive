@@ -11,7 +11,6 @@ const createCommandSet = (editor) => {
             if (!caret.carets[0].fixedEnd) {
                 from = caret.carets[0].position.Line.from;
                 to = caret.carets[0].position.Line.to + 1;
-                // text = caret.carets[0].position.Line.text + "\n";
             } else {
                 from = caret.carets[0].from;
                 to = caret.carets[0].to;
@@ -234,6 +233,16 @@ const createCommandSet = (editor) => {
             caret.placeAllAt();
             history.newChangeGroup();
         },
+        "M+S+g": () => {
+            history.newChangeGroup();
+            caret.forAll(pos => {
+                pos.Line.removeDeco(render.decos);
+                pos.Line.addDeco("h4");
+                render.renderLine(pos.Line);
+            });
+            caret.placeAllAt();
+            history.newChangeGroup();
+        },
     };
 
     // commands["M+S+c"] = commands["M+c"];
@@ -242,6 +251,7 @@ const createCommandSet = (editor) => {
     commands["M+S+p"] = commands["M+p"];
     commands["M+S+n"] = commands["M+n"];
     commands["M+d"] = commands["M+S+m"];
+    commands["M+S+0"] = commands["M+0"];
 
     const command = (e) => {
         let keyName = (key.metaKey(e) ? "M+" : "")

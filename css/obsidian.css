@@ -12,17 +12,16 @@
     --font-size: 22px;
     --font-weight: 300;
 
-    /* --bold-weight: 900; */
-    /* --Bold-weight: 600; */
     --math-font-size: 1;
     --small-font-size: 0.67;
     --large-font-size: 1.17;
     --DM-font-size: 1;
-    --IM-font-size: 1.1;
+    /* fira */
+    /* --IM-font-size: 1.1; */
+    /* stix-2 */
+    --IM-font-size: 1.05;
     --IM-editing-font-size: 1.15;
-    /* --line-height: 1.25; */
     --line-height: 1.2;
-    /* --line-padding: 2px; */
 
     /* CSS HEX */
     --baby-blue-ice: #94b1ffff;
@@ -34,8 +33,6 @@
     --color-accent: var(--baby-blue-ice);
     --color-bg: var(--shadow-grey);
     --color-math: var(--light-gold);
-
-    /* --font-face: "neuton"; */
 }
 
 .dim {
@@ -113,6 +110,12 @@
     line-height: calc(var(--font-size) * 1.4) !important;
     font-weight: var(--bold-weight);
     color: var(--color-accent);
+}
+
+.h4 {
+    font-size: calc(var(--font-size) * 1.15) !important;
+    line-height: calc(var(--font-size) * 1.4) !important;
+    font-weight: var(--bold-weight);
 }
 
 .noisy::before {
