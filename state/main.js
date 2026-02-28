@@ -6,6 +6,7 @@ import newCommands from "./commands.js";
 import { key, saveState, getUrl } from "../editor/assets.js";
 import newClipboard from "../editor/doc/clipboard.js";
 import AttachmentEditor from "./editAttachments.js";
+import Settings from "./settings.js";
 
 class State {
     constructor() {
@@ -13,6 +14,7 @@ class State {
         let savedState = localStorage.getItem("state");
         if (savedState != undefined) savedState = JSON.parse(savedState);
         else savedState = {};
+        this.settings = savedState.settings ? { ...Settings, ...savedState.settings } : Settings;
 
         this.highlight = new Highlight();
         CSS.highlights.set("selection", this.highlight);
@@ -268,7 +270,7 @@ class State {
         await window.MathJax.startup.promise;
 
         // const editor = newEditor({ file: file, layout: "vim", interactive: !matchMedia('(pointer: coarse)').matches });
-        const editor = newEditor({ file: file, layout: "vim", interactive: true });
+        const editor = newEditor({ file: file, interactive: true });
         this.editors.push(editor);
         if (main) {
             this.editor = editor;

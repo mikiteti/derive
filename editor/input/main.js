@@ -5,7 +5,7 @@ import Caret from "./caret.js"
 import { getColumnAt } from "../assets.js";
 
 class Input {
-    constructor(editor, layout = "regular") {
+    constructor(editor, layout = window.state.settings.keyboard) {
         this.editor = editor;
         this.textarea = editor.elements.textarea;
         this.snippets = newSnippets({ editor, snippets: (new DefaultSnippets(editor)).snippets, snippetVariables: (new DefaultSnippetVariables()).snippetVariables });
@@ -45,7 +45,7 @@ class Input {
         });
 
         document.addEventListener("keydown", (e) => {
-            if (window.state.focus !== this.editor || !this.editor.interactive) return;
+            if (window.state.focus !== this.editor || !this.editor.interactive || e.target.matches(".modal input")) return;
             let command = this.keyboard.command(e);
 
             if (command) e.preventDefault();

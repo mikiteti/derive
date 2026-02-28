@@ -186,6 +186,15 @@ const newCommands = (state) => {
 
                 state.openModal(state.attachments);
             }
+        },
+        {
+            name: "Toggle Vim Mode",
+            run: () => {
+                let currentMode = window.state.settings.keyboard;
+                let goalMode = currentMode == "vim" ? "regular" : "vim";
+                window.state.settings.keyboard = goalMode;
+                window.state.alert("Mode switched", "Reload for the changes to take place.");
+            }
         }
 
         // {

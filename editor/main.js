@@ -22,7 +22,7 @@ class Editor {
     }
 }
 
-const newEditor = ({ file, wrapper = document.querySelector("main"), layout = "regular", interactive = true } = {}) => {
+const newEditor = ({ file, wrapper = document.querySelector("main"), layout = window.state.settings.keyboard, interactive = true } = {}) => {
     let editor = new Editor({ wrapper, interactive, file });
 
     editor.doc = newDoc({ editor, file });

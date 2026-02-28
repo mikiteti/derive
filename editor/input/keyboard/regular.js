@@ -6,7 +6,6 @@ const abc = "ABCDEFGHIJKLMNOPQRSTUVWXYZáéíóöőúüűzabcdefghijklmnopqrstuv
 const createCommandSet = (editor) => {
     let currentEvent;
     const doc = editor.doc, render = editor.render, caret = editor.input.caret, snippets = editor.input.snippets;
-    console.log({ snippets });
 
     const findStartOfPreviousWord = (pos) => {
         let line = pos.Line, currentPos = pos.index;
@@ -25,6 +24,7 @@ const createCommandSet = (editor) => {
         let line = pos.Line, currentPos = pos.index;
         if (currentPos == line.to) {
             line = doc.line(line.number + 1);
+            if (line == undefined) return currentPos;
             currentPos = line.from;
         }
         let text = line.text.substring(currentPos + 1 - line.from);

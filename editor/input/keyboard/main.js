@@ -7,13 +7,13 @@ class Keyboard {
         import("./hotkeys.js").then(hotkey => {
             this.commandSets.push(hotkey.createCommandSet(this.editor));
 
-            if (layout === "regular") {
-                import("./regular.js").then(regular => {
-                    this.commandSets.push(regular.createCommandSet(this.editor));
-                });
-            } else if (layout === "vim") {
+            if (layout === "vim") {
                 import("./vim.js").then(vim => {
                     this.commandSets.push(vim.createCommandSet(this.editor));
+                });
+            } else {
+                import("./regular.js").then(regular => {
+                    this.commandSets.push(regular.createCommandSet(this.editor));
                 });
             }
         })
@@ -27,7 +27,7 @@ class Keyboard {
     }
 }
 
-const newKeyboard = ({ editor, layout = "regular" } = {}) => {
+const newKeyboard = ({ editor, layout = window.state.settings.keyboard } = {}) => {
     return new Keyboard(editor, layout);
 }
 

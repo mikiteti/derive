@@ -258,18 +258,18 @@ class Doc extends Node {
                 if (mark.to.index === from) { // toggle end's stickLeftOnInsert
                     mark.to.stickLeftOnInsert = !mark.to.stickLeftOnInsert;
                     line.unrenderedChanges.add("marks");
-                    if (mark.to.index - (mark.to.stickLeftOnInsert ? 1 : 0) <= mark.from.index - (mark.from.stickLeftOnInsert ? 1 : 0)) {
+                    if (mark.to.index == mark.from.index && (mark.to.stickLeftOnInsert || !mark.from.stickLeftOnInsert))
+                        // if (mark.to.index - (mark.to.stickLeftOnInsert ? 1 : 0) <= mark.from.index - (mark.from.stickLeftOnInsert ? 1 : 0)) 
                         line.deleteMark(mark);
-                    }
                     handled = true;
                     break;
                 }
                 if (mark.from.index === from) { // toggle start's stickLeftOnInsert
                     mark.from.stickLeftOnInsert = !mark.from.stickLeftOnInsert;
                     line.unrenderedChanges.add("marks");
-                    if (mark.to.index - (mark.to.stickLeftOnInsert ? 1 : 0) <= mark.from.index - (mark.from.stickLeftOnInsert ? 1 : 0)) {
+                    if (mark.to.index == mark.from.index && (mark.to.stickLeftOnInsert || !mark.from.stickLeftOnInsert))
+                        // if (mark.to.index - (mark.to.stickLeftOnInsert ? 1 : 0) <= mark.from.index - (mark.from.stickLeftOnInsert ? 1 : 0)) 
                         line.deleteMark(mark);
-                    }
                     handled = true;
                     break;
                 }

@@ -118,7 +118,8 @@ class Render {
             line.element.DM.source = line.text;
 
             window.MathJax.tex2svgPromise(line.text, { display: true }).then(node => { // render async on change
-                if (!window.renderErrors && !node.querySelector('[data-mjx-error], mjx-merror, [fill="red"], [stroke="red"]')) line.element.DM.replaceChildren(node);
+                if (window.state.settings.renderErrors || !node.querySelector('[data-mjx-error], mjx-merror, [fill="red"], [stroke="red"]'))
+                    line.element.DM.replaceChildren(node);
             });
         }
     }

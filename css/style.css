@@ -15,10 +15,10 @@
     --color-highlight-bg: var(--color-accent);
     --color-highlight: black;
 
-    --tab-full-width: 3rem;
     --buffer-width: 30px;
     --editor-width: min(700px, 90vw);
     --font-size: calc(var(--editor-width) / 25);
+    --tab-full-width: calc(2 * var(--font-size));
     --font-face: 'author';
     --font-weight: 200;
     --text-decoration-thickness: 0.07rem;
