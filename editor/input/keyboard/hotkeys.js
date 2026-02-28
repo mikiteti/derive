@@ -24,12 +24,12 @@ const createCommandSet = (editor) => {
         "M+s": () => {
             window.state.saveFile(editor);
         },
-        "M+o": () => {
-            window.state.openModal(window.state.filePicker);
-        },
-        "M+p": () => {
-            window.state.openModal(window.state.commandPalette);
-        },
+        // "M+o": () => {
+        //     window.state.openModal(window.state.filePicker);
+        // },
+        // "M+p": () => {
+        //     window.state.openModal(window.state.commandPalette);
+        // },
         "M+n": () => {
             document.documentElement.classList.toggle("lineNumbers")
             queueMicrotask(() => {

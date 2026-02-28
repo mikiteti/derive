@@ -119,6 +119,19 @@ class State {
                 for (let i of inputs) if (i.value == "") return;
                 this.focus.querySelector(".submit").click();
             }
+
+            if (key.metaKey(e) && ["o", "p"].includes(e.key)) {
+                if (e.key === "o") {
+                    e.preventDefault();
+                    this.openModal(this.filePicker);
+                    return;
+                }
+                if (e.key === "p") {
+                    e.preventDefault();
+                    this.openModal(this.commandPalette);
+                    return;
+                }
+            }
         });
 
         document.addEventListener("visibilitychange", () => {
@@ -276,7 +289,7 @@ class State {
             this.focus = editor;
         }
         // setTimeout(() => { // probably solved by renderLine returning a promise that placeAt awaits
-        editor.input.caret?.placeAllAt();
+        editor.input?.caret?.placeAllAt();
         // }, 200);
         queueMicrotask(() => {
             editor.render.textarea.animate([
