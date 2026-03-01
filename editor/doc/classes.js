@@ -406,6 +406,7 @@ class Line {
         this.unrenderedChanges.add("deco");
         for (let deco of this.decos) if (!decos.includes(deco)) this.decos.delete(deco);
         for (let deco of decos) this.decos.add(deco);
+        console.log(this.number, decos, this.decos);
         let endState = { line: this.number, decos: Array.from(this.decos) };
         if (addToHistory) this.editor.doc.history.addChange({ from: startState, to: endState });
     }

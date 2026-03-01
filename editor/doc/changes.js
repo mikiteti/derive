@@ -153,10 +153,8 @@ class Change {
         );
 
         let linesToRemove = this.editor.doc.linesBetween(line1.number, line2.number).concat([line2]);
-        for (let line of linesToRemove) {
-            line.setDecos([], { addToHistory });
-            line.delete();
-        }
+        for (let line of linesToRemove) line.setDecos([], { addToHistory });
+        for (let line of linesToRemove) line.delete();
 
         let removedChildren = linesToRemove;
         while (removedChildren[0]?.parent?.parent) { // deleting empty ancestors
