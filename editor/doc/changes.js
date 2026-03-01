@@ -142,12 +142,6 @@ class Change {
             if (to < line2.to) line1.addDeco([...line2.decos], { addToHistory }); // if last line is not deleted completely, let first line have its decos
         }
 
-        let linesToRemove = this.editor.doc.linesBetween(line1.number, line2.number).concat([line2]);
-        for (let line of linesToRemove) {
-            line.setDecos([], { addToHistory });
-            line.delete();
-        }
-
         line1.update(newText);
 
         for (let p of positionsAffected.filter(e => !e.range?.isMark && e.index < to && !e.stickWhenDeleted)) p.delete();
@@ -157,6 +151,12 @@ class Change {
             positionsAffected.includes(m.to) ? newPositions.find(e => e[0] === m.to)[1] : undefined,
             { changedTo: to }
         );
+
+        let linesToRemove = this.editor.doc.linesBetween(line1.number, line2.number).concat([line2]);
+        for (let line of linesToRemove) {
+            line.setDecos([], { addToHistory });
+            line.delete();
+        }
 
         let removedChildren = linesToRemove;
         while (removedChildren[0]?.parent?.parent) { // deleting empty ancestors

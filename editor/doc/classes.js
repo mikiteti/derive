@@ -416,6 +416,7 @@ class Line {
     }
 
     addMark(Mark, { addToHistory = true } = {}) {
+        if (this.marks.includes(Mark)) return;
         let startState = { line: this.number, marks: this.exportMarks() };
         this.marks.push(Mark);
         this.unrenderedChanges.add("marks");
@@ -436,6 +437,8 @@ class Line {
         let startState = { line: this.number, marks: this.exportMarks() };
         let index = this.marks.indexOf(Mark);
         if (index === -1) return;
+        this.removePosition(Mark.from);
+        this.removePosition(Mark.to);
         this.marks = [...this.marks.slice(0, index), ...this.marks.slice(index + 1)];
         let endState = { line: this.number, marks: this.exportMarks() };
         if (addToHistory) this.editor.doc.history.addChange({ from: startState, to: endState });
@@ -458,6 +461,7 @@ class Line {
 
     setMarks(marks, { addToHistory = true } = {}) {
         let startState = { line: this.number, marks: this.exportMarks() };
+        for (let mark of this.marks) this.removeMark(mark, { addToHistory });
         this.marks = marks.map(e => new Mark(this.editor, e));
         this.unrenderedChanges.add("marks");
         let endState = { line: this.number, marks: this.exportMarks() };

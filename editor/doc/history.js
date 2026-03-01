@@ -62,6 +62,13 @@ class History {
                         });
                     }
                 }
+                // let lines = Array.from(new Set([...from.lines, ...to.lines].map(e => e.line)));
+                // for (let line of lines) {
+                //     let lineTo = to.lines.find(e => e.line === line);
+                //     steps.push(() => {
+                //         this.editor.doc.line(line).setMarks(lineTo?.marks || [], { addToHistory: false });
+                //     });
+                // }
             }
         }
 

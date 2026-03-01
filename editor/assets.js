@@ -282,19 +282,27 @@ const exportToMD = async (editor = window.editor) => {
         }
 
         let decos = line.decos;
-        let marks = line.marks.filter(e => e.role === "math").sort((a, b) => a.from.index - b.from.index).map(e => [e.start.column, e.end.column]);
-        for (let i = 0; i < marks.length - 1; i++) for (let j = i + 1; j < marks.length; j++) {
-            let m1 = marks[i], m2 = marks[j];
-            if (m1[1] >= m2[0]) m2.push("eliminate");
+        let markSigns = {
+            math: ["$", "$"],
+            italic: ["*", "*"],
+            bold: ["**", "**"],
         }
-        marks = marks.filter(e => e[2] == undefined);
-        marks = marks.flat();
-        marks = marks.filter((e, f) => !(marks[f + 1] === e || marks[f - 1] === e));
-        for (let j = 0; j < marks.length; j++) text = text.slice(0, marks[j] + j) + "$" + text.slice(marks[j] + j);
+        let marks = line.marks.sort((a, b) => a.from.index - b.from.index).map(e => [e.start.column, e.end.column, e.role]);
+        let offset = 0;
+        for (let mark of marks) {
+            if (markSigns[mark[2]] == undefined) continue;
+            text = text.slice(0, mark[0] + offset)
+                + markSigns[mark[2]][0]
+                + text.slice(mark[0] + offset, mark[1] + offset)
+                + markSigns[mark[2]][1]
+                + text.slice(mark[1] + offset);
+            offset += markSigns[mark[2]][0].length + markSigns[mark[2]][1].length;
+        }
 
         if (decos.has("math") && text.trim() !== "") text = "$$" + text + "$$";
         let lastLine = content.at(-1);
-        if (lastLine != "" && decos.has("h1", "h2", "h3", "h4", "h5", "h6")) insertEmptyLineInFront = true; // TODO: check has multiple params use
+        if (lastLine != "" && (decos.has("h1") || decos.has("h2") || decos.has("h3") || decos.has("h4") || decos.has("h5") || decos.has("h6")))
+            insertEmptyLineInFront = true;
         if (decos.has("h1")) text = "# " + text;
         // else if (decos.has("small")) text = "<small>" + text + "</small>";
         else if (decos.has("h2")) text = "## " + text;
@@ -314,7 +322,9 @@ const exportToMD = async (editor = window.editor) => {
         text = text.split("$").map((e, j) => j % 2 ? e.trim() : e).join("$");
 
         // for (let j = 0; j < editor.doc.line(i).tabs.full || 0; j++) text = "\t" + text;
+
         if (text[0] == "#") insertEmptyLineInFront = true;
+        for (let j = 0; j < line.tabs.full || 0; j++) text = "\t" + text;
         if (insertEmptyLineInFront && lastLine.trim() != "") text = "\n" + text;
 
         content.push(text);
