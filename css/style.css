@@ -155,7 +155,8 @@ html {
     padding: var(--line-padding) 0;
 }
 
-html.lineNumbers .textarea p {
+html.lineNumbers .textarea p,
+html.lineNumbers .DM {
     position: relative;
     margin-left: var(--buffer-width);
 }
@@ -173,6 +174,17 @@ html.lineNumbers .textarea p::before {
     transform: translate(-100%, 0);
     font-weight: var(--font-weight);
 }
+
+/* html.lineNumbers .textarea p.hidden+.DM::before { */
+/*     content: counter(lineNumber); */
+/*     color: inherit; */
+/*     opacity: 0.8; */
+/*     font-size: var(--font-size); */
+/*     position: absolute; */
+/*     left: -30px; */
+/*     transform: translate(-100%, 0); */
+/*     font-weight: var(--font-weight); */
+/* } */
 
 html.lineNumbers .textarea p.math::before {
     color: var(--color-math);

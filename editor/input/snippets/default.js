@@ -3,7 +3,6 @@ class DefaultSnippets {
         this.editor = editor;
 
         this.snippets = [
-            // { from: /^(?:.*[+\-= ,])?([^+\-= ,]+)\/$/, to: "\\frac{[[0]]}{${0}}${1}", in: "m" },
             { from: ";a", to: "• ", in: "tA" },
             { from: ";s", to: "– ", in: "tA" },
             { from: ";d", to: "∘ ", in: "tA" },
@@ -27,12 +26,11 @@ class DefaultSnippets {
             { from: "\\longleftarrow >", to: "\\longleftrightarrow ", in: "mA", priority: 1 },
             // { from: "<=>", to: "\\longleftrightarrow ", in: "mA", priority: 1 },
             // { from: "\\leq >", to: "\\longleftrightarrow ", in: "mA", priority: 1 },
-            { from: "equiv", to: "\\Longleftrightarrow ", in: "mA", priority: 1 },
             // {from: "<=", to: "\\impliedby ", in: "mA"},
             { from: "<-", to: "\\longleftarrow ", in: "mA" }, // ←
             { from: "!>", to: "\\mapsto", in: "mA" },
 
-            //Experimental
+            // Awesome
             { from: ";j", to: "(${0})${1}", in: "mtA" },
             { from: ";u", to: "-", in: "mtA" },
             { from: ";i", to: "=", in: "mtA" },
@@ -65,7 +63,7 @@ class DefaultSnippets {
             { from: ";r", to: "\\rho", in: "mA" },
             { from: ";s", to: "\\sigma", in: "mA" },
             { from: ";S", to: "\\Sigma", in: "mA" },
-            // \tau
+            // \tau ?
             // {from: ";u", to: "\\upsilon", in: "mA"},
             // {from: ";U", to: "\\Upsilon", in: "mA"},
             { from: ";f", to: "\\varphi", in: "mA" },
@@ -78,13 +76,13 @@ class DefaultSnippets {
 
             // Basic operations
             { from: "abs", to: "|${0}|${1}", in: "mA" },
-            { from: /\\(${GREEK}|${SYMBOL}) sr/, to: "\\[[0]]^2", in: "rmA" },
+            { from: /\\(${OBJECT_SYMBOL}) sr/, to: "\\[[0]]^2", in: "rmA" },
             { from: "sr", to: "^2", in: "mA" },
-            { from: /\\(${GREEK}|${SYMBOL}) cb/, to: "\\[[0]]^3", in: "rmA" },
+            { from: /\\(${OBJECT_SYMBOL}) cb/, to: "\\[[0]]^3", in: "rmA" },
             { from: "cb", to: "^3", in: "mA" },
-            { from: /\\(${GREEK}|${SYMBOL}) inv/, to: "\\[[0]]^{-1}", in: "rmA" },
+            { from: /\\(${OBJECT_SYMBOL}) inv/, to: "\\[[0]]^{-1}", in: "rmA" },
             { from: "inv", to: "^{-1}", in: "mA" },
-            { from: /\\(${GREEK}|${SYMBOL}) \"/, to: "\\[[0]]^{${0}}${1}", in: "rmA" },
+            { from: /\\(${OBJECT_SYMBOL}) \"/, to: "\\[[0]]^{${0}}${1}", in: "rmA" },
             { from: "\"", to: "^{${0}}${1}", in: "mA" },
             { from: /([^ ]):/, to: "[[0]]_{${0}}${1}", in: "rmA", priority: -1 },
             { from: "_{:", to: "_\\text{${0}", in: "mA", priority: 1 },
@@ -104,20 +102,21 @@ class DefaultSnippets {
 
             // Aftercare
             { from: /([A-Za-z])(\d)/, to: "[[0]]_{[[1]]}", in: "rmA", description: "Auto letter subscript", priority: -1 },
+            { from: /\\(${OBJECT_SYMBOL})(\d)/, to: "\\[[0]]_{[[1]]}", in: "rmA", description: "Auto letter subscript", priority: 1 },
             { from: /(\d)deg/, to: "[[0]]^\\circ", in: "rmA", description: "Degrees" },
 
-            { from: /\\(${GREEK}|${SYMBOL}) hat/, to: "\\hat{\\[[0]]}", in: "rmA" },
-            { from: /\\(${GREEK}|${SYMBOL}) bar/, to: "\\bar{\\[[0]]}", in: "rmA" },
-            { from: /\\(${GREEK}|${SYMBOL}) ring/, to: "\\mathring{\\[[0]]}", in: "rmA" },
-            { from: /\\(${GREEK}|${SYMBOL}) dot/, to: "\\dot{\\[[0]]}", in: "rmA" },
-            { from: /\\(${GREEK}|${SYMBOL}) \\mathrm{d}ot/, to: "\\ddot{\\[[0]]}", in: "rmA" },
-            { from: /\\(${GREEK}|${SYMBOL}) tilde/, to: "\\tilde{\\[[0]]}", in: "rmA" },
-            { from: /\\(${GREEK}|${SYMBOL}) und/, to: "\\underline{\\[[0]]}", in: "rmA" },
-            { from: /\\(${GREEK}|${SYMBOL}) vec/, to: "\\vec{\\[[0]]}", in: "rmA" },
-            { from: /\\(${SUBSCRIPTABLE}){\\(${GREEK})},\./, to: "\\vec{\\[[0]]{\\[[1]]}}", in: "rmA" },
-            { from: /\\(${SUBSCRIPTABLE}){\\(${GREEK})}\.,/, to: "\\vec{\\[[0]]{\\[[1]]}}", in: "rmA" },
-            { from: /\\(${GREEK}|${SYMBOL}),\./, to: "\\vec{\\[[0]]}", in: "rmA", priority: 1 },
-            { from: /\\(${GREEK}|${SYMBOL})\.,/, to: "\\vec{\\[[0]]}", in: "rmA" },
+            { from: /\\(${OBJECT_SYMBOL}) hat/, to: "\\hat{\\[[0]]}", in: "rmA" },
+            { from: /\\(${OBJECT_SYMBOL}) bar/, to: "\\bar{\\[[0]]}", in: "rmA" },
+            { from: /\\(${OBJECT_SYMBOL}) ring/, to: "\\mathring{\\[[0]]}", in: "rmA" },
+            { from: /\\(${OBJECT_SYMBOL}) dot/, to: "\\dot{\\[[0]]}", in: "rmA" },
+            { from: /\\(${OBJECT_SYMBOL}) \\mathrm{d}ot/, to: "\\ddot{\\[[0]]}", in: "rmA" },
+            { from: /\\(${OBJECT_SYMBOL}) tilde/, to: "\\tilde{\\[[0]]}", in: "rmA" },
+            { from: /\\(${OBJECT_SYMBOL}) und/, to: "\\underline{\\[[0]]}", in: "rmA" },
+            { from: /\\(${OBJECT_SYMBOL}) vec/, to: "\\vec{\\[[0]]}", in: "rmA" },
+            { from: /\\(${SUBSCRIPTABLE}){\\(${OBJECT_SYMBOL})},\./, to: "\\vec{\\[[0]]{\\[[1]]}}", in: "rmA" },
+            { from: /\\(${SUBSCRIPTABLE}){\\(${OBJECT_SYMBOL})}\.,/, to: "\\vec{\\[[0]]{\\[[1]]}}", in: "rmA" },
+            { from: /\\(${OBJECT_SYMBOL}),\./, to: "\\vec{\\[[0]]}", in: "rmA", priority: 1 },
+            { from: /\\(${OBJECT_SYMBOL})\.,/, to: "\\vec{\\[[0]]}", in: "rmA" },
 
             { from: /([a-zA-Z])hat/, to: "\\hat{[[0]]}", in: "rmA" },
             { from: /([a-zA-Z])bar/, to: "\\bar{[[0]]}", in: "rmA" },
@@ -163,7 +162,7 @@ class DefaultSnippets {
             // More auto letter subscript
             { from: /([A-Za-z])_(\d\d)/, to: "[[0]]_{[[1]]}", in: "rmA" },
             { from: /\\(${SUBSCRIPTABLE}){([A-Za-z])}(\d)/, to: "\\[[0]]{[[1]]}_{[[2]]}", in: "rmA" },
-            { from: /\\(${SUBSCRIPTABLE}){\\(${GREEK})}(\d)/, to: "\\[[0]]{\\[[1]]}_{[[2]]}", in: "rmA" },
+            { from: /\\(${SUBSCRIPTABLE}){\\(${OBJECT_SYMBOL})}(\d)/, to: "\\[[0]]{\\[[1]]}_{[[2]]}", in: "rmA" },
 
             // Symbols
             { from: "oo", to: "\\infty", in: "mA" },
@@ -222,11 +221,11 @@ class DefaultSnippets {
 
             // Handle spaces and backslashes
             // Insert space after Greek letters and symbols
-            { from: /([^\\])(${AUTOGREEK}|${SYMBOL}|${TRIG}|${FUNC})/, to: "[[0]]\\[[1]]", in: "rmA", description: "Add backslash before what needs one", priority: 2 },
-            { from: /^(${AUTOGREEK}|${SYMBOL}|${TRIG}|${FUNC})/, to: "\\[[0]]", in: "rmA", description: "Add backslash before what needs one", priority: 1 },
-            { from: /\\(${GREEK}|${SYMBOL}|${MORE_SYMBOLS}|${TRIGH})([A-Za-z])/, to: "\\[[0]] [[1]]", in: "rmA", description: "Add space after what needs one", priority: 3 },
+            { from: /([^\\])(${OBJECT_SYMBOL}|${RELATION_SYMBOL}|${TRIG}|${FUNC})/, to: "[[0]]\\[[1]]", in: "rmA", description: "Add backslash before what needs one", priority: 2 },
+            { from: /^(${OBJECT_SYMBOL}|${RELATION_SYMBOL}|${TRIG}|${FUNC})/, to: "\\[[0]]", in: "rmA", description: "Add backslash before what needs one", priority: 1 },
+            { from: /\\(${OBJECT_SYMBOL}|${RELATION_SYMBOL}|${MORE_SYMBOLS}|${TRIGH})([A-Za-z])/, to: "\\[[0]] [[1]]", in: "rmA", description: "Add space after what needs one", priority: 3 },
             { from: /\\(${TRIG})([A-Za-gi-z])/, to: "\\[[0]] [[1]]", in: "rmA", description: "Add space after trig funcs. Skips letter h to allow sinh, cosh, etc." },
-            { from: /\\(${SYMBOL}|${MORE_SYMBOLS}|${TRIG}|${TRIGH}|${FUNC})([0-9])/, to: "\\[[0]] [[1]]", in: "rmA", priority: 10 },
+            { from: /\\(${RELATION_SYMBOL}|${MORE_SYMBOLS}|${TRIG}|${TRIGH}|${FUNC})([0-9])/, to: "\\[[0]] [[1]]", in: "rmA", priority: 10 },
 
             // Derivatives and integrals
             { from: "pard", to: "\\frac{ \\partial ${0:y} }{ \\partial ${1:x} } ${2}", in: "mA" },
@@ -447,11 +446,10 @@ class DefaultSnippets {
 class DefaultSnippetVariables {
     constructor() {
         this.snippetVariables = {
-            "${GREEK}": "alpha|Alpha|beta|Beta|gamma|Gamma|delta|Delta|epsilon|varepsilon|zeta|eta|theta|vartheta|Theta|iota|kappa|lambda|Lambda|mu|nu|xi|omicron|pi|rho|varrho|sigma|Sigma|tau|upsilon|Upsilon|phi|varphi|Phi|chi|psi|Psi|omega|Omega",
-            "${AUTOGREEK}": "alpha|Alpha|beta|Beta|gamma|Gamma|delta|Delta|epsilon|varepsilon|zeta|eta|theta|vartheta|Theta|iota|kappa|lambda|Lambda|omicron|pi|rho|varrho|sigma|Sigma|tau|upsilon|Upsilon|phi|varphi|Phi|chi|psi|Psi|omega|Omega",
-            "${SYMBOL}": "parallel|perp|partial|nabla|hbar|ell|infty|oplus|ominus|otimes|oslash|square|star|dagger|vee|wedge|subseteq|subset|supseteq|supset|emptyset|exists|nexists|forall|implies|impliedby|iff|setminus|neg|lor|land|bigcup|bigcap|cdot|times|simeq|approx|uparrow|downarrow|circ|not|neq",
-            "${MORE_SYMBOLS}": "leq|geq|neq|gg|ll|equiv|sim|propto|rightarrow|leftarrow|Rightarrow|Leftarrow|leftrightarrow|to|mapsto|cap|cup|in|sum|prod|exp|ln|log|det|dots|vdots|ddots|pm|mp|int|iint|iiint|oint|min|max",
-            "${SUBSCRIPTABLE}": "vec|dot|ddot|mathbb|mathcal|mathscr|hat|bar|tilde|underline|mathbf|mathfrak",
+            "${OBJECT_SYMBOL}": "partial|nabla|hbar|ell|square|alpha|Alpha|beta|Beta|gamma|Gamma|delta|Delta|epsilon|varepsilon|zeta|eta|theta|vartheta|Theta|iota|kappa|lambda|Lambda|mu|nu|xi|omicron|pi|rho|varrho|sigma|Sigma|tau|upsilon|Upsilon|phi|varphi|Phi|chi|psi|Psi|omega|Omega", // can have \dot{}, \vec{}, ..., _{2}, _{\text{center}}, ...
+            "${RELATION_SYMBOL}": "parallel|perp|equiv|infty|oplus|ominus|otimes|oslash|star|dagger|vee|wedge|subseteq|subset|supseteq|supset|emptyset|exists|nexists|forall|implies|impliedby|iff|setminus|neg|lor|land|bigcup|bigcap|cdot|times|simeq|approx|uparrow|downarrow|circ|not|neq|mid", // can't have accents, but should get \ in front when typed
+            "${MORE_SYMBOLS}": "leq|geq|neq|gg|ll|sim|propto|rightarrow|leftarrow|Rightarrow|Leftarrow|leftrightarrow|to|mapsto|cap|cup|in|sum|prod|exp|ln|log|det|dots|vdots|ddots|pm|mp|int|iint|iiint|oint|min|max", // just make sure there's a space after them once they are in the document
+            "${SUBSCRIPTABLE}": "vec|dot|ddot|mathbb|mathcal|mathscr|hat|bar|tilde|underline|mathbf|mathfrak", // subscripts and ,.-s will work on these
             "${TRIG}": "arcsin|sin|arccos|cos|arctan|tan|csc|sec|cot",
             "${TRIGH}": "sinh|cosh|tanh|coth",
             "${FUNC}": "exp|log|ln|min|max",

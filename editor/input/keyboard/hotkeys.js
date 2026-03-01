@@ -31,9 +31,11 @@ const createCommandSet = (editor) => {
         //     window.state.openModal(window.state.commandPalette);
         // },
         "M+n": () => {
-            document.documentElement.classList.toggle("lineNumbers")
+            window.state.settings.lineNumbers = !window.state.settings.lineNumbers;
+            if (window.state.settings.lineNumbers) document.documentElement.classList.add("lineNumbers");
+            else document.documentElement.classList.remove("lineNumbers");
             queueMicrotask(() => {
-                caret.placeAllAt();
+                caret?.placeAllAt();
             });
         },
         "Tab": () => {

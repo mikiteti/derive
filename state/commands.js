@@ -190,19 +190,43 @@ const newCommands = (state) => {
         {
             name: "Toggle Vim Mode",
             run: () => {
-                let currentMode = window.state.settings.keyboard;
+                let currentMode = state.settings.keyboard;
                 let goalMode = currentMode == "vim" ? "regular" : "vim";
-                window.state.settings.keyboard = goalMode;
-                window.state.alert("Mode switched", "Reload for the changes to take place.");
+                state.settings.keyboard = goalMode;
+                if (goalMode == "vim")
+                    state.alert("Vim mode switched on", "Reload for the changes to take place.");
+                else state.alert("Vim mode switched off", "Reload for the changes to take place.");
             }
         },
         {
             name: "Toggle Reading Mode",
             run: () => {
-                window.state.settings.interactive = !window.state.settings.interactive;
-                window.state.alert("Mode switched", "Reload for the changes to take place.");
+                state.settings.interactive = !state.settings.interactive;
+                if (state.settings.interactive)
+                    state.alert("Reading mode switched off", "Reload for the changes to take place.");
+                else state.alert("Reading mode switched on", "Reload for the changes to take place.");
             }
-        }
+        },
+        {
+            name: "Toggle Welcome Message",
+            run: () => {
+                state.settings.welcomeMessage = !state.settings.welcomeMessage;
+                if (state.settings.welcomeMessage)
+                    state.alert("Welcome message turned on", "Reload for the changes to take place.");
+                else state.alert("Welcome message turned off", "Reload for the changes to take place.");
+            }
+        },
+        {
+            name: "Toggle Line Numbers",
+            run: () => {
+                state.settings.lineNumbers = !state.settings.lineNumbers;
+                if (state.settings.lineNumbers) document.documentElement.classList.add("lineNumbers");
+                else document.documentElement.classList.remove("lineNumbers");
+                queueMicrotask(() => {
+                    state.editor?.caret?.placeAllAt();
+                });
+            }
+        },
 
         // {
         //     name: "Restore file",

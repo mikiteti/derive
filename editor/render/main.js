@@ -107,6 +107,7 @@ class Render {
             DM.element = line.element;
             DM.classList.add("DM");
             DM.source = line.text;
+            DM.onscroll = () => { window.state.touchStart = undefined; };
             line.element.after(DM);
 
             window.MathJax._.mathjax.mathjax.handleRetriesFor(async () => { // fantastic! the right solution.

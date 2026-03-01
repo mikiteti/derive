@@ -16,6 +16,9 @@ class State {
         else savedState = {};
         this.settings = savedState.settings ? { ...Settings, ...savedState.settings } : Settings;
 
+        if (this.settings.lineNumbers) document.documentElement.classList.add("lineNumbers");
+        else document.documentElement.classList.remove("lineNumbers");
+
         this.highlight = new Highlight();
         CSS.highlights.set("selection", this.highlight);
         this.clipboard = newClipboard("window");
@@ -52,6 +55,10 @@ class State {
 
         this.systemFiles = systemFiles;
         this.URL = new URL(window.location);
+        if (this.settings.welcomeMessage) {
+            this.URL.searchParams.delete("note");
+            history.replaceState({}, "", this.URL);
+        }
         this.note_url = this.URL.searchParams.get("note");
 
         this.initFuzzyFinders().then(() => {
@@ -388,7 +395,7 @@ class State {
             if (file.id === undefined) file = await this.createFile(file);
             file = this.files.find(e => e.id === file.id)
         }
-        // this.setNoteUrl(file.url);
+        if (!this.settings.welcomeMessage) this.setNoteUrl(file.url);
 
         let editor = this.editors.filter(e => e.fileId != undefined).find(e => e.fileId === file.id);
         if (editor == undefined) {

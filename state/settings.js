@@ -1,7 +1,9 @@
 const Settings = {
-    keyboard: "vim",
+    keyboard: "regular",
     renderErrors: false,
     interactive: true,
+    welcomeMessage: true,
+    lineNumbers: false,
 }
 
 export default Settings;
