@@ -197,6 +197,8 @@ html.relNumbers .textarea p::before {
 html.relNumbers .textarea p.caretInside::before {
     opacity: 1;
     content: attr(lineNum);
+    left: calc(-25px - var(--buffer-width));
+    transform: none;
 }
 
 html.relNumbers .textarea p.caretInside~p::before {
