@@ -27,50 +27,45 @@ const createCommandSet = (editor) => {
     }
 
     const findStartOfWORD = (pos, count = 1) => {
-        const getType = (char) => {
-            return blank.includes(char) ? 0 : 1;
+        let line = pos.Line.number;
+        let text = pos.Line.text.slice(0, pos.column);
+        let wordsInText = text.split(" ").length;
+
+        while (count > 0) {
+            if (wordsInText >= count) { // last line we need to visit
+                let wordIndex = wordsInText - count;
+                return doc.line(line).from + text.split(" ").filter((_, i) => i < wordIndex).join(" ").length + (wordIndex ? 1 : 0);
+            } else {
+                count -= wordsInText;
+                line--;
+                if (line < 0) return 0;
+                text = doc.line(line).text;
+                wordsInText = text.split(" ").length;
+            }
         }
-
-        let textBefore = pos.Line.text.slice(0, pos.index - pos.Line.from);
-        let c = 0, prevType = getType(doc.charAt(pos.index)); // 0: blank, 1: key/other
-        for (let i = textBefore.length - 1; i >= 0; i--) {
-            let char = textBefore[i];
-            let curType = getType(char);
-            if (curType !== prevType && prevType !== 0) c++;
-            prevType = curType;
-            if (c >= count) return pos.Line.from + i + 1;
-        }
-
-        let curType = 0; // count start of line as blank space
-        if (curType !== prevType && prevType !== 0) c++;
-        if (c >= count) return pos.Line.from;
-
-        return findStartOfWord(parsePosition(pos.Line.from - 1), count - c);
     }
 
     const findEndOfWORD = (pos, count = 1) => {
-        const getType = (char) => {
-            return blank.includes(char) ? 0 : 1;
+        let line = pos.Line.number;
+        let text = pos.Line.text.slice(pos.column);
+        let wordsInText = text.split(" ").length;
+        let from = pos.column;
+
+        while (count > 0) {
+            if (wordsInText >= count) {
+                return doc.line(line).from + from + text.split(" ").filter((_, i) => i < count).join(" ").length - (wordsInText == count ? 0 : 1);
+            } else {
+                count -= wordsInText;
+                line++;
+                if (line >= doc.lines) return doc.chars - 1;
+                text = doc.line(line).text;
+                from = 0;
+                wordsInText = text.split(" ").length;
+            }
         }
-
-        let textAfter = pos.Line.text.slice(pos.index - pos.Line.from);
-        let c = 0, prevType = getType(doc.charAt(pos.index)); // 0: blank, 1: key, 2: other
-        for (let i = 0; i < textAfter.length; i++) {
-            let char = textAfter[i];
-            let curType = getType(char);
-            if (curType !== prevType && prevType !== 0) c++;
-            prevType = curType;
-            if (c >= count) return pos.index + i - 1;
-        }
-
-        let curType = 0; // count end of line as blank space
-        if (curType !== prevType && prevType !== 0) c++;
-        if (c >= count) return pos.Line.to - 1;
-
-        return findEndOfWord(parsePosition(pos.Line.to + 1), count - c);
     }
 
-    const findStartOfWord = (pos, count = 1) => {
+    const findStartOfWord = (pos, count = 1) => { // TODO: rewrite like findStartOfWORD
         const getType = (char) => {
             return keyChars.includes(char) ? 1 : (blank.includes(char) ? 0 : 2);
         }
@@ -226,10 +221,10 @@ const createCommandSet = (editor) => {
         "l!": (count = 1) => (pos => pos.index + count),
         "b": (count = 1) => (pos => { return findStartOfWord(parsePosition(pos.index - 1), count) }),
         "w": (count = 1) => (pos => { return findStartOfWord(parsePosition(findEndOfWord(pos, (blank.includes(doc.charAt(pos.index)) ? 0 : 1) + count)), 1) }),
-        "e": (count = 1) => (pos => { return findEndOfWord(parsePosition(pos.index + 1), count) }),
+        "e": (count = 1) => (pos => { return findEndOfWord(parsePosition(pos.index + 1), count) }), // idk why, but this works...
         "B": (count = 1) => (pos => { return findStartOfWORD(parsePosition(pos.index - 1), count) }),
         "W": (count = 1) => (pos => { return findStartOfWORD(parsePosition(findEndOfWORD(pos, (blank.includes(doc.charAt(pos.index)) ? 0 : 1) + count)), 1) }),
-        "E": (count = 1) => (pos => { return findEndOfWORD(parsePosition(pos.index + 1), count) }),
+        "E": (count = 1) => (pos => { return findEndOfWORD(parsePosition(pos.index + 2), count) }), // ...and this does too...
         "j": (count = 1) => (pos => { return curMode === "vLine" ? doc.line(pos.Line.number + count).to : findNextVisualLine(pos, count) }),
         "k": (count = 1) => (pos => { return curMode === "vLine" ? doc.line(pos.Line.number - count).from : findPreviousVisualLine(pos, count) }),
         "$": (pos) => pos.Line.to - 1,

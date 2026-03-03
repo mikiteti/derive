@@ -406,7 +406,6 @@ class Line {
         this.unrenderedChanges.add("deco");
         for (let deco of this.decos) if (!decos.includes(deco)) this.decos.delete(deco);
         for (let deco of decos) this.decos.add(deco);
-        console.log(this.number, decos, this.decos);
         let endState = { line: this.number, decos: Array.from(this.decos) };
         if (addToHistory) this.editor.doc.history.addChange({ from: startState, to: endState });
     }
@@ -552,7 +551,7 @@ class Position {
 
     assign(pos) {
         if (!Array.isArray(pos)) { // pos is absolute index
-            let index = pos;
+            let index = Math.max(0, Math.min(pos, this.doc.chars - 1));
 
             let sum = 0, currentNode = this.doc, counter = 0;
             while (!currentNode.isLine) {

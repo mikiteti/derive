@@ -259,7 +259,6 @@ class DefaultSnippets {
             { from: "dag", to: "^{\\dagger}", in: "mA" },
             { from: "o+", to: "\\oplus ", in: "mA" },
             { from: "ox", to: "\\otimes ", in: "mA" },
-            { from: "Box", to: "\\Box", in: "mA", priority: 1 },
             { from: "bra", to: "\\bra{${0}}${1}", in: "mA" },
             { from: "ket", to: "\\ket{${0}}${1}", in: "mA" },
             { from: "brk", to: "\\braket{${0}|${1}}${2}", in: "mA" },
@@ -446,7 +445,7 @@ class DefaultSnippets {
 class DefaultSnippetVariables {
     constructor() {
         this.snippetVariables = {
-            "${OBJECT_SYMBOL}": "partial|nabla|hbar|ell|square|alpha|Alpha|beta|Beta|gamma|Gamma|delta|Delta|epsilon|varepsilon|zeta|eta|theta|vartheta|Theta|iota|kappa|lambda|Lambda|mu|nu|xi|omicron|pi|rho|varrho|sigma|Sigma|tau|upsilon|Upsilon|phi|varphi|Phi|chi|psi|Psi|omega|Omega", // can have \dot{}, \vec{}, ..., _{2}, _{\text{center}}, ...
+            "${OBJECT_SYMBOL}": "partial|nabla|hbar|ell|square|Box|alpha|Alpha|beta|Beta|gamma|Gamma|delta|Delta|epsilon|varepsilon|zeta|eta|theta|vartheta|Theta|iota|kappa|lambda|Lambda|mu|nu|xi|omicron|pi|rho|varrho|sigma|Sigma|tau|upsilon|Upsilon|phi|varphi|Phi|chi|psi|Psi|omega|Omega", // can have \dot{}, \vec{}, ..., _{2}, _{\text{center}}, ...
             "${RELATION_SYMBOL}": "parallel|perp|equiv|infty|oplus|ominus|otimes|oslash|star|dagger|vee|wedge|subseteq|subset|supseteq|supset|emptyset|exists|nexists|forall|implies|impliedby|iff|setminus|neg|lor|land|bigcup|bigcap|cdot|times|simeq|approx|uparrow|downarrow|circ|not|neq|mid", // can't have accents, but should get \ in front when typed
             "${MORE_SYMBOLS}": "leq|geq|neq|gg|ll|sim|propto|rightarrow|leftarrow|Rightarrow|Leftarrow|leftrightarrow|to|mapsto|cap|cup|in|sum|prod|exp|ln|log|det|dots|vdots|ddots|pm|mp|int|iint|iiint|oint|min|max", // just make sure there's a space after them once they are in the document
             "${SUBSCRIPTABLE}": "vec|dot|ddot|mathbb|mathcal|mathscr|hat|bar|tilde|underline|mathbf|mathfrak", // subscripts and ,.-s will work on these
