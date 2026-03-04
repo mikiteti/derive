@@ -14,7 +14,9 @@ class Input {
 
         let yCoord = this.editor.elements.editor.scrollTop;
         this.editor.elements.editor.addEventListener("scroll", (e) => {
-            if (Math.abs(this.editor.elements.editor.scrollTop - yCoord) > window.innerHeight / 2) {
+            let delta = Math.abs(this.editor.elements.editor.scrollTop - yCoord);
+            if (window.scrollByCaret) return;
+            if (delta > window.innerHeight / 2) {
                 this.editor.render.renderAll();
                 yCoord = this.editor.elements.editor.scrollTop;
             }

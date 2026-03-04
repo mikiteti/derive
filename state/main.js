@@ -21,8 +21,6 @@ class State {
         if (this.settings.lineNumbers && this.settings.relNumbers) document.documentElement.classList.add("relNumbers");
         else document.documentElement.classList.remove("relNumbers");
 
-        this.highlight = new Highlight();
-        CSS.highlights.set("selection", this.highlight);
         this.clipboard = newClipboard("window");
         this.registers = {};
         for (let regName of ["", ..."_0123456789abcdefghijklmnopqrstuvwxyz|"]) this.registers[regName] = newClipboard(regName);

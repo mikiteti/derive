@@ -1,5 +1,5 @@
 import Selection from "./selection.js";
-import { getUrl, isLineInViewport } from "../assets.js";
+import { getUrl, isLineInViewport, nodeAt, getViewportMargins } from "../assets.js";
 
 const renderChangedLines = (editor, changedLines) => {
     for (let line of changedLines) editor.render.renderLine(line);
@@ -97,31 +97,57 @@ class Render {
         return lineElement;
     }
 
-    renderAll(scrollY) {
+    renderAll(scrollY = this.editorElement.scrollTop) {
         const doc = this.editor.doc;
-        if (scrollY == undefined) scrollY = this.editorElement.scrollTop;
 
-        let firstLine = doc.lineAtHeight(scrollY - window.innerHeight);
+        let firstRenderedLine = [...this.renderedLines].reduce((a, b) => a.number < b.number ? a : b, 0);
+        let initialOffset = firstRenderedLine.verticalOffset, initialScrollTop = this.editorElement.scrollTop;
+        let firstLine = doc.lineAtHeight(scrollY - getViewportMargins());
 
-        for (let line of this.renderedLines) if (!isLineInViewport(line)) this.unrenderLine(line);
-        if (this.editor.elements.spacer.style.height != firstLine.verticalOffset + "px")
-            this.editor.elements.spacer.style.height = firstLine.verticalOffset + "px";
-        if (this.textarea.style.height != (doc.height - firstLine.verticalOffset) + "px")
-            this.textarea.style.height = (doc.height - firstLine.verticalOffset) + "px";
-
+        for (let line of this.renderedLines) if (!isLineInViewport(line, scrollY)) this.unrenderLine(line);
+        this.editor.elements.spacer.style.height = firstLine.verticalOffset + "px";
+        this.textarea.style.height = (doc.height - firstLine.verticalOffset) + "px";
+        document.documentElement.style.setProperty("--firstRenderedLine", firstLine.number);
 
         let i = firstLine.number, promises = [];
-        while (i < doc.lines && isLineInViewport(doc.line(i))) {
+        while (i < doc.lines && isLineInViewport(doc.line(i), scrollY)) {
             let line = doc.line(i);
             if (!this.renderedLines.has(line)) {
-                let promise = this.renderLine(line);
-                if (promise !== undefined) promises.push(promise);
+                let promise = this.renderLine(line, { scrollY });
+                if (promise !== undefined) {
+                    promises.push(promise);
+                }
             }
+
             i++;
         }
+        console.error(`rendering from ${firstLine.number} to ${i}`);
 
         requestAnimationFrame(() => this.renderInfo());
 
+        // promises.forEach(p => {
+        //     p.then(() => {
+        //         let delta = firstRenderedLine.verticalOffset - initialOffset;
+        //         requestAnimationFrame(() => {
+        //             this.editorElement.scrollTo({ top: delta + initialScrollTop, behavior: "" });
+        //         });
+        //     })
+        // });
+        Promise.all(promises).then(() => {
+            console.log("rendering done");
+            window.renderPromises = undefined;
+            let delta = firstRenderedLine.verticalOffset - initialOffset;
+            window.scrollAdjustmentPromise = new Promise(res => {
+                queueMicrotask(() => {
+                    if (delta) this.editorElement.scrollBy(0, delta, { behavior: "auto" });
+                    console.log("renderAll scrolling", delta);
+                    requestAnimationFrame(res);
+                });
+            });
+        });
+
+        window.renderPromises = promises;
+        console.log({ renderPromises: promises });
         return promises;
     }
 
@@ -147,7 +173,7 @@ class Render {
             DM.onscroll = () => { window.state.touchStart = undefined; };
             line.element.after(DM);
 
-            window.MathJax._.mathjax.mathjax.handleRetriesFor(async () => { // fantastic! the right solution.
+            return window.MathJax._.mathjax.mathjax.handleRetriesFor(async () => { // fantastic! the right solution.
                 DM.replaceChildren(window.MathJax.tex2svg(line.text, { display: true }));
                 line.visualUpdate();
                 await window.MathJax.startup.document.outputJax.font.loadDynamicFiles(); // without this, weird glyphs are rendered in another font 
@@ -156,7 +182,7 @@ class Render {
             if (line.text === line.element.DM.source) return;
             line.element.DM.source = line.text;
 
-            window.MathJax.tex2svgPromise(line.text, { display: true }).then(node => { // render async on change
+            return window.MathJax.tex2svgPromise(line.text, { display: true }).then(node => { // render async on change
                 if (window.state.settings.renderErrors || !node.querySelector('[data-mjx-error], mjx-merror, [fill="red"], [stroke="red"]')) {
                     line.element.DM.replaceChildren(node);
                     line.visualUpdate();
@@ -195,19 +221,24 @@ class Render {
             img.addEventListener("error", _ => {
                 img.src = `img/404.png`;
             });
-            img.addEventListener("load", _ => {
-                line.visualUpdate();
-            });
             let url = getUrl(line.text.trim());
             img.src = url.href;
             wrapper.setAttribute("url", url.attachmentUrl);
             line.element.after(wrapper);
+
+            return new Promise(res => {
+                img.addEventListener("load", res);
+            });
         } else {
             let url = getUrl(line.text.trim());
             if (url.href === line.element.img.src) return;
             line.element.img.src = url.href;
             line.element.imgWrapper.setAttribute("url", url.attachmentUrl);
             line.element.imgWrapper.attachmentEditor?.destroy();
+
+            return new Promise(res => {
+                line.element.img.addEventListener("load", res);
+            });
         }
     }
 
@@ -216,13 +247,15 @@ class Render {
         line.element?.remove();
         line.element?.DM?.remove();
         line.element?.imgWrapper?.remove();
+        line.element?.selection?.remove();
+        if (line.element) line.element.selection = undefined;
 
         line.isRendered = true;
         this.renderedLines.delete(line);
     }
 
-    renderLine(line) {
-        if (!isLineInViewport(line)) return;
+    renderLine(line, { scrollY } = {}) {
+        if (!isLineInViewport(line, scrollY)) return;
 
         let promises = [];
 
@@ -285,13 +318,14 @@ class Render {
                     IM.mark = mark;
                     IM.source = source;
                     let promise = window.MathJax.tex2svgPromise(source, { display: false });
-                    promises.push(promise);
-                    promise.then(node => {
+                    promises.push(new Promise(async res => {
+                        let node = await promise;
                         IM.replaceChildren(node);
                         el.after(IM);
                         let currentColor = getComputedStyle(node).getPropertyValue("color");
                         if (!node.matches(".wrapper.editingSource *")) for (let e of node.querySelectorAll("[fill]")) e.setAttribute("fill", currentColor);
-                    });
+                        res();
+                    }));
                 }
 
                 index = mark.end.index - line.from;
@@ -303,8 +337,20 @@ class Render {
             endChar.classList.add("endChar");
             endChar.innerHTML = " ";
             (afterBullet || line.element).appendChild(endChar);
-            if (line.decos.has("math")) this.handleDM(line);
-            if (line.decos.has("link")) this.handleLink(line);
+            if (line.decos.has("math")) {
+                let promise = new Promise(async res => {
+                    await this.handleDM(line);
+                    res();
+                });
+                promises.push(promise);
+            }
+            if (line.decos.has("link")) {
+                let promise = new Promise(async res => {
+                    await this.handleLink(line);
+                    res();
+                });
+                promises.push(promise);
+            }
         }
 
         if (caretChanged) {
@@ -350,30 +396,30 @@ class Render {
                 if (line.decos.has(deco)) line.element.classList.add(deco);
                 else line.element.classList.remove(deco);
             }
-            this.handleDM(line);
-            this.handleLink(line);
+            let promise = new Promise(async res => {
+                await this.handleDM(line);
+                res();
+            });
+            promises.push(promise);
+            promise = new Promise(async res => {
+                await this.handleLink(line);
+                res();
+            });
+            promises.push(promise);
         }
 
-        line.isRendered = true;
         line.visualUpdate();
-        this.renderedLines.add(line);
+        Promise.all(promises).then(() => {
+            line.isRendered = true;
+            line.visualUpdate();
+            this.renderedLines.add(line);
+        });
 
         requestAnimationFrame(() => this.renderInfo());
 
-        if (promises.length > 0) {
-            return new Promise((res, _) => {
-                Promise.all(promises).then(_ => {
-                    requestAnimationFrame(() => {
-                        res();
-                    });
-                });
-            });
-        }
-
-        return new Promise((res, _) => {
-            requestAnimationFrame(() => {
-                res();
-            });
+        return new Promise(async res => {
+            await Promise.all(promises);
+            res();
         });
     }
 

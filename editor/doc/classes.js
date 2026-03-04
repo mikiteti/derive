@@ -700,11 +700,12 @@ class Position {
     }
 
     reassign(pos) {
+        let lastIndex = this.index
         if (pos === this.index) return this;
         if (this.Line) this.Line.removePosition(this);
         this.assign(pos);
 
-        if (this.range && !this.range.isMark && !this.range.deleted) this.range.reassignCallback();
+        if (this.range && this.range.role === "selection") this.range.reassignCallback(this, lastIndex);
 
         return this;
     }
@@ -738,22 +739,18 @@ class Range {
         this.role = role;
         from.addToRange(this, to);
         to.addToRange(this, from);
+        this.reassignCallback();
     }
 
-    reassignCallback() {
+    reassignCallback(pos, lastIndex) {
         if (this.role !== "selection") return;
-        if (!this.Range) return;
-        let maybeReveal = this.Range.collapsed;
-        let startNode = nodeAt(this.start);
-        let endNode = nodeAt(this.end);
-        if (startNode == undefined || endNode == undefined) return;
-        this.Range.setStart(...startNode);
-        this.Range.setEnd(...endNode);
-        if (maybeReveal && !this.Range.collapsed) {
-            this.editor.render.selection.revealRange(this);
-        } if (!maybeReveal && this.Range.collapsed) {
-            this.editor.render.selection.hideRange(this);
-        }
+        let lines = pos === undefined
+            ? [this.start.Line.number, this.end.Line.number]
+            : [pos.Line.number, this.editor.doc.lineAt(lastIndex).number];
+        requestAnimationFrame(async () => {
+            await Promise.all(window.renderPromises || []);
+            for (let i = Math.min(...lines); i <= Math.max(...lines); i++) this.editor.render.selection.renderRanges(this.editor.doc.line(i));
+        });
     }
 
     get collapsed() {

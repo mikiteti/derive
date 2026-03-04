@@ -22,8 +22,8 @@ const createCommandSet = (editor) => {
     const min = (...funcs) => {
         return (...args) => (Math.min(...funcs.map(func => func(...args))));
     }
-    const dispatch = (commands) => {
-        for (let c of commands) functions[c[0]](...c.slice(1));
+    const dispatch = async (commands) => {
+        for (let c of commands) functions[c[0]](...c.slice(1))
     }
 
     const findStartOfWORD = (pos, count = 1) => {
@@ -303,7 +303,6 @@ const createCommandSet = (editor) => {
             if (regName == "" && writeTo0) registers["0"].copy(undefined, undefined, { clipboard: registers[""] });
         },
         move: (getNewPos, { updateScreenX = true } = {}) => {
-            // console.log(`moving carets with the rule ${getNewPos}, ${updateScreenX}`)
             for (let sc of caret.carets) {
                 let newPos = getNewPos(sc.position);
                 // if (caret.style !== "bar" && doc.lineAt(newPos).to === newPos) newPos--;

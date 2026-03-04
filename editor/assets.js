@@ -68,9 +68,12 @@ const getColumnAt = (element, x, y, { style = "bar" } = {}) => {
             }
 
             // Check if point is within this rect
-            if (y >= rect.top && y <= rect.bottom && x <= rect.right) {
+            if (y >= rect.top - 4 && y <= rect.bottom + 2 && x <= rect.right) { // characters' boxes don't reach the top of the element
                 return index + i - ((x - prevX < rect.right - x || style !== "bar") ? 1 : 0);
             }
+            // if (y >= rect.top && y <= rect.bottom && x <= rect.right) {
+            //     return index + i - ((x - prevX < rect.right - x || style !== "bar") ? 1 : 0);
+            // }
             prevX = rect.right;
         }
         index += text.length;
@@ -369,7 +372,7 @@ const getUrl = (link) => {
 }
 
 const estimateHeight = (line) => {
-    return 26;
+    return 35;
 }
 
 const measureHeight = (line) => {
@@ -380,12 +383,12 @@ const measureHeight = (line) => {
     return height;
 }
 
-const isLineInViewport = (line) => {
-    if (line.verticalOffset + line.height >= line.editor.elements.editor.scrollTop - window.innerHeight
-        && line.verticalOffset < line.editor.elements.editor.scrollTop + window.innerHeight * 2) return true;
-    // if (line.verticalOffset + line.height >= line.editor.elements.editor.scrollTop
-    //     && line.verticalOffset < line.editor.elements.editor.scrollTop + window.innerHeight / 2) return true;
+const getViewportMargins = () => window.innerHeight;
+
+const isLineInViewport = (line, scrollY = line.editor.elements.editor.scrollTop) => {
+    if (line.verticalOffset + line.height >= scrollY - getViewportMargins()
+        && line.verticalOffset < scrollY + window.innerHeight + getViewportMargins()) return true;
     return false;
 }
 
-export { nodeSizes, checkTreeStructure, getColumnAt, findXIndicesInLine, getVisualLineAt, exportFile, nodeAt, exportToMD, isMac, key, saveState, getUrl, estimateHeight, measureHeight, isLineInViewport };
+export { nodeSizes, checkTreeStructure, getColumnAt, findXIndicesInLine, getVisualLineAt, exportFile, nodeAt, exportToMD, isMac, key, saveState, getUrl, estimateHeight, measureHeight, isLineInViewport, getViewportMargins };

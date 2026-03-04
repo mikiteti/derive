@@ -1,4 +1,5 @@
 import { Position, Range } from "../doc/classes.js";
+import { getViewportMargins } from "../assets.js";
 
 class SingleCaret {
     constructor(editor, position = 0, { element = this.createElement(editor), autoRender = true } = {}) {
@@ -21,6 +22,10 @@ class SingleCaret {
     }
 
     async placeAt(index = this.position.index, { updateScreenX = true, hideMath = true, keepFixedEnd = false } = {}) {
+        for (let i = 0; i < 10; i++) if (window.renderPromises) {
+            await Promise.all(window.renderPromises);
+        }
+
         if (keepFixedEnd !== -1) keepFixedEnd ? this.addFixedEnd() : this.removeFixedEnd(); // -1: don't change, false: remove, true: add
         let renderLines = [];
         if (index !== this.position.index) {
@@ -40,15 +45,23 @@ class SingleCaret {
         let promises = renderLines.map(line => this.editor.render.renderLine(line));
         await Promise.all(promises);
         let line = this.position.Line;
+        let scrollBehavior = "smooth";
         if (!line.element?.isConnected) { // if line is not rendered, scroll there, render everything close to it and only then continue
-            this.editor.elements.editor.scrollTo({ top: line.verticalOffset - window.innerHeight / 2 });
-            await new Promise((res, _) => {
-                Promise.all(this.editor.render.renderAll(line.verticalOffset - window.innerHeight / 2)).then(_ => {
-                    requestAnimationFrame(() => {
-                        res();
-                    });
-                });
-            });
+            scrollBehavior = "auto";
+            window.scrollByCaret = true;
+            console.log("scrollbycaret set to true, scrolling to", line.verticalOffset - window.innerHeight / 2);
+            this.editor.render.renderAll(line.verticalOffset - window.innerHeight / 2);
+            console.log(window.renderPromises);
+            await Promise.all(window.renderPromises);
+            console.log("renderpromises awaited");
+            await new Promise(res => requestAnimationFrame(res));
+            this.editor.elements.editor.scrollTo({ behavior: "auto", top: Math.max(0, line.verticalOffset - window.innerHeight / 2) });
+            requestAnimationFrame(() => {
+                console.log("scrollbycaret set to false");
+                window.scrollByCaret = false;
+            })
+            // await new Promise(res => setTimeout(res, 100)); // TODO: get to the bottom of why this is needed
+            // await new Promise(res => requestAnimationFrame(res));
         }
 
         const walker = document.createTreeWalker(line.element, NodeFilter.SHOW_TEXT);
@@ -131,8 +144,12 @@ class SingleCaret {
         }
 
         if (this === this.editor.input.caret.carets[0]) {
-            if (scrollY - this.screenPosition.y > -200) this.editor.elements.editor.scrollTo({ behavior: "smooth", top: this.screenPosition.y - 200 });
-            else if (scrollY + window.innerHeight - this.screenPosition.y - this.screenPosition.height < 200) this.editor.elements.editor.scrollTo({ behavior: "smooth", top: this.screenPosition.y + this.screenPosition.height - window.innerHeight + 200 });
+            Promise.all(window.renderPromises || []).then(async () => {
+                if (window.scrollAdjustmentPromise) await window.scrollAdjustmentPromise;
+                scrollY = this.editor.elements.editor.scrollTop;
+                if (scrollY - this.screenPosition.y > -200) this.editor.elements.editor.scrollTo({ behavior: scrollBehavior, top: this.screenPosition.y - 200 });
+                else if (scrollY + window.innerHeight - this.screenPosition.y - this.screenPosition.height < 200) this.editor.elements.editor.scrollTo({ behavior: scrollBehavior, top: this.screenPosition.y + this.screenPosition.height - window.innerHeight + 200 });
+            });
         }
     }
 
@@ -158,7 +175,7 @@ class SingleCaret {
         if (!this.fixedEnd) return;
 
         let pos = this.position;
-        this.position = this.fixedEnd;
+        this.position = this.fixedEnd; // TODO: render ranges on lines suddenly visible
         this.fixedEnd = pos;
         this.placeAt(this.position.index, { keepFixedEnd: true });
     }

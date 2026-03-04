@@ -12,12 +12,14 @@ class Editor {
         this.elements.editor.classList.add("editor");
         this.elements.editor.innerHTML = `<div class="spacer"></div>
         <div class="textarea"></div>
+        <div class="selectionLayer"></div>
         <div class="placeholder" onclick="window.caret.updateCarets([window.editor.doc.chars-1])"></div> 
         <div class="leftInfo info noisy"></div> 
         <div class="rightInfo info noisy"></div>`;
         this.wrapper.appendChild(this.elements.editor);
         this.elements.spacer = this.elements.editor.querySelector(".spacer");
         this.elements.textarea = this.elements.editor.querySelector(".textarea");
+        this.elements.selectionLayer = this.elements.editor.querySelector(".selectionLayer");
         this.elements.placeholder = this.elements.editor.querySelector(".placeholder");
         this.elements.leftInfo = this.elements.editor.querySelector(".leftInfo");
         this.elements.rightInfo = this.elements.editor.querySelector(".rightInfo");
@@ -33,7 +35,7 @@ const newEditor = ({ file, wrapper = document.querySelector("main"), layout = wi
     editor.doc = newDoc({ editor, file });
     editor.doc.parseMarks();
     editor.render = newRender({ editor }); // editor.doc is already defined
-    editor.render.renderAll(editor.doc);
+    editor.render.renderAll();
     if (interactive) editor.input = newInput({ editor, layout }); // editor.doc & editor.render are already defined
 
     return editor;
