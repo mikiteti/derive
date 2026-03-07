@@ -203,8 +203,12 @@ html.relNumbers .textarea p::before {
 html.relNumbers .textarea p.caretInside::before {
     opacity: 1;
     content: attr(lineNum);
-    left: calc(-25px - var(--buffer-width));
-    transform: none;
+    /* left: calc(-25px - var(--buffer-width)); */
+    /* transform: none; */
+}
+
+html.relNumbers .textarea p.caretInside+* {
+    counter-reset: relLineNumber 0;
 }
 
 html.relNumbers .textarea p.caretInside~p::before {
@@ -458,7 +462,7 @@ img {
 }
 
 .wrapper:not(.editingSource) .math {
-    /* display: none !important; */
+    display: none !important;
     opacity: 0;
     position: absolute;
 }
@@ -514,7 +518,7 @@ img {
     display: none;
     flex-direction: column;
     position: fixed;
-    min-width: max(40vw, 300px);
+    /* min-width: max(40vw, 300px); */
     border-radius: 20px;
     left: 50vw;
     top: 10vw;
@@ -677,7 +681,6 @@ img {
 #attachments img {
     display: block;
     width: 100%;
-    margin: 10px 0;
 }
 
 #attachments {
@@ -685,6 +688,8 @@ img {
     height: calc(100vh - 20vw);
     width: min(90vw, 600px);
     max-width: 90vw;
-    padding: 10%;
+    padding: min(10%, 50px);
     box-sizing: border-box;
+    flex-direction: column;
+    gap: 20px;
 }

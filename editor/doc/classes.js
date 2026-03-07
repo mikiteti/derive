@@ -195,6 +195,7 @@ class Doc extends Node {
 
         this.change = newChange({ editor: this.editor });
         this.size = { min: 0, max: Infinity };
+        this.trackedPositions = 0;
     }
 
     parseMarks() {
@@ -406,7 +407,7 @@ class Line {
     }
 
     get number() {
-        if (!this.parent) return;
+        if (this.deleted || !this.parent) return;
 
         let line = this.parent.children.indexOf(this);
 
@@ -553,7 +554,7 @@ class Line {
     }
 
     get from() {
-        if (!this.parent) return;
+        if (this.deleted || !this.parent) return;
 
         let sum = 0;
         let currentNode = this;
@@ -576,7 +577,7 @@ class Line {
     }
 
     get verticalOffset() {
-        if (!this.parent) return;
+        if (this.deleted || !this.parent) return;
 
         let sum = 0;
         let currentNode = this;
@@ -634,6 +635,8 @@ class Position {
         if (caret) this.caret = caret;
         this.track = track;
         this.assign(pos);
+
+        if (track) this.doc.trackedPositions++;
     }
 
     assign(pos) {
@@ -717,6 +720,8 @@ class Position {
             this.range.delete();
             this.range = undefined;
         }
+
+        if (this.track) this.doc.trackedPositions--;
     }
 
     addToRange(range, pair) {

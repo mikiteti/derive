@@ -49,17 +49,15 @@ class SingleCaret {
         if (!line.element?.isConnected) { // if line is not rendered, scroll there, render everything close to it and only then continue
             scrollBehavior = "auto";
             window.scrollByCaret = true;
-            console.log("scrollbycaret set to true, scrolling to", line.verticalOffset - window.innerHeight / 2);
             this.editor.render.renderAll(line.verticalOffset - window.innerHeight / 2);
-            console.log(window.renderPromises);
-            await Promise.all(window.renderPromises);
-            console.log("renderpromises awaited");
+            await Promise.all(window.renderPromises || []);
+            if (window.scrollAdjustmentPromise) await window.scrollAdjustmentPromise;
             await new Promise(res => requestAnimationFrame(res));
             this.editor.elements.editor.scrollTo({ behavior: "auto", top: Math.max(0, line.verticalOffset - window.innerHeight / 2) });
+            // console.log("grand caret scrolling");
             requestAnimationFrame(() => {
-                console.log("scrollbycaret set to false");
                 window.scrollByCaret = false;
-            })
+            });
             // await new Promise(res => setTimeout(res, 100)); // TODO: get to the bottom of why this is needed
             // await new Promise(res => requestAnimationFrame(res));
         }
@@ -146,9 +144,11 @@ class SingleCaret {
         if (this === this.editor.input.caret.carets[0]) {
             Promise.all(window.renderPromises || []).then(async () => {
                 if (window.scrollAdjustmentPromise) await window.scrollAdjustmentPromise;
+                if (window.scrollByCaret) return;
                 scrollY = this.editor.elements.editor.scrollTop;
                 if (scrollY - this.screenPosition.y > -200) this.editor.elements.editor.scrollTo({ behavior: scrollBehavior, top: this.screenPosition.y - 200 });
                 else if (scrollY + window.innerHeight - this.screenPosition.y - this.screenPosition.height < 200) this.editor.elements.editor.scrollTo({ behavior: scrollBehavior, top: this.screenPosition.y + this.screenPosition.height - window.innerHeight + 200 });
+                // console.log("smooth caret scrolling");
             });
         }
     }

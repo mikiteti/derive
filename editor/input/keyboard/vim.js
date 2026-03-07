@@ -23,7 +23,7 @@ const createCommandSet = (editor) => {
         return (...args) => (Math.min(...funcs.map(func => func(...args))));
     }
     const dispatch = async (commands) => {
-        for (let c of commands) functions[c[0]](...c.slice(1))
+        for (let c of commands) functions[c[0]](...c.slice(1));
     }
 
     const findStartOfWORD = (pos, count = 1) => {
@@ -913,7 +913,7 @@ const createCommandSet = (editor) => {
                 next: [
                     {
                         name: "register name",
-                        keys: ["any"],
+                        keys: "any",
                         next: [
                             ...headCommands,
                             { // paste
@@ -1078,7 +1078,7 @@ const createCommandSet = (editor) => {
                 next: [
                     {
                         name: "register name",
-                        keys: ["any"],
+                        keys: "any",
                         next: [
                             ...visualHeadcommands,
                         ],

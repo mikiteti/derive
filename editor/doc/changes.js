@@ -210,7 +210,6 @@ class Change {
             at: at,
         };
 
-        // console.log(`inserting "${string}" at ${at}`);
         let line = this.editor.doc.lineAt(at);
         startState.lines = [{ line: line.number, marks: line.exportMarks() }];
         let positionsAffected = line.positions.filter(e => {

@@ -1,57 +1,38 @@
 import { nodeAt } from "../assets.js";
 import { Position } from "../doc/classes.js";
 
-function createTextWalker(root) {
-    return document.createTreeWalker(
-        root,
-        NodeFilter.SHOW_TEXT,
-        {
-            acceptNode(node) {
-                // if (!node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
-                // if (node.parentElement.matches(".mjx-container *")) return NodeFilter.FILTER_REJECT;
+const filterRects = (Rects) => {
+    console.log({ Rects });
+    let rects = [];
+    for (let rect of Rects) rects.push(rect);
+    rects = rects.filter(e => e.height > 0 && e.width > 0);
+    if (rects.length == 0) return rects;
+    let minHeight = rects.reduce((a, b) => b.height < a.height ? b : a).height;
+    rects = rects.filter(e => e.height < minHeight * 1.5);
 
-                return NodeFilter.FILTER_ACCEPT;
+    let newRects = [];
+    console.log({ rects });
+    for (let i = 0; i < rects.length; i++) {
+        let overlaps = false;
+        let a = rects[i];
+        for (let j = 0; j < i; j++) {
+            let b = rects[j];
+            if (!(a.left + a.width - 2 <= b.left || b.left + b.width - 2 <= a.left || a.top + a.height - 2 <= b.top || b.top + b.height - 2 <= a.top)) {
+                overlaps = true;
+                console.log(`${i} and ${j} overlap`, a, b);
+                break;
             }
         }
-    );
-}
-
-function getRectsFromIndices(root, startIndex, endIndex) {
-    const walker = createTextWalker(root);
-
-    let currentIndex = 0;
-    const results = [];
-    let node;
-
-    while (node = walker.nextNode()) {
-        const length = node.nodeValue.length;
-        const nodeStart = currentIndex;
-        const nodeEnd = currentIndex + length;
-
-        // skip nodes outside selection
-        if (nodeEnd <= startIndex) {
-            currentIndex += length;
-            continue;
+        if (!overlaps) {
+            newRects.push(a);
+            console.log(`copying ${i} to newrects`);
         }
-        if (nodeStart >= endIndex) break;
-
-        const range = document.createRange();
-
-        const startOffset =
-            startIndex > nodeStart ? startIndex - nodeStart : 0;
-
-        const endOffset =
-            endIndex < nodeEnd ? endIndex - nodeStart : length;
-
-        range.setStart(node, startOffset);
-        range.setEnd(node, endOffset);
-
-        results.push(...range.getClientRects());
-
-        currentIndex += length;
     }
+    rects = newRects;
+    console.log({ newRects });
 
-    return results;
+
+    return rects;
 }
 
 class Selection {
@@ -106,10 +87,9 @@ class Selection {
 
                 let visualRange = new Range();
                 visualRange.setStart(...nodeAt(range.start.index < line.from ? this.parsePosition(line.from) : range.start));
-                visualRange.setEnd(...nodeAt(range.end.index > line.to ? this.parsePosition(line.to) : range.end));
-                let rects = visualRange.getClientRects();
+                visualRange.setEnd(...nodeAt(range.end.index > line.to + 1 ? this.parsePosition(line.to + 1) : range.end));
+                let rects = filterRects(visualRange.getClientRects());
                 let lineRect = line.element.getBoundingClientRect();
-                // let rects = getRectsFromIndices(line.element, Math.max(0, range.start.index - line.from), Math.min(line.chars, range.start.index - line.from));
                 for (let rect of rects) {
                     let sel = document.createElement("div");
                     sel.classList.add("selection");
