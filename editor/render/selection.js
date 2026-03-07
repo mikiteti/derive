@@ -1,17 +1,16 @@
-import { nodeAt } from "../assets.js";
-import { Position } from "../doc/classes.js";
+import { nodeInLineAtColumn } from "../assets.js";
 
 const filterRects = (Rects) => {
-    console.log({ Rects });
+    // console.log({ Rects });
     let rects = [];
-    for (let rect of Rects) rects.push(rect);
+    for (let rect of Rects) rects.push({ left: rect.left, top: rect.top, height: rect.height, width: rect.width });
     rects = rects.filter(e => e.height > 0 && e.width > 0);
     if (rects.length == 0) return rects;
     let minHeight = rects.reduce((a, b) => b.height < a.height ? b : a).height;
     rects = rects.filter(e => e.height < minHeight * 1.5);
 
     let newRects = [];
-    console.log({ rects });
+    // console.log({ rects });
     for (let i = 0; i < rects.length; i++) {
         let overlaps = false;
         let a = rects[i];
@@ -19,17 +18,26 @@ const filterRects = (Rects) => {
             let b = rects[j];
             if (!(a.left + a.width - 2 <= b.left || b.left + b.width - 2 <= a.left || a.top + a.height - 2 <= b.top || b.top + b.height - 2 <= a.top)) {
                 overlaps = true;
-                console.log(`${i} and ${j} overlap`, a, b);
+                // console.log(`${i} and ${j} overlap`, a, b);
                 break;
             }
         }
         if (!overlaps) {
             newRects.push(a);
-            console.log(`copying ${i} to newrects`);
+            // console.log(`copying ${i} to newrects`);
         }
     }
     rects = newRects;
-    console.log({ newRects });
+    // console.log({ newRects });
+
+    let heights = rects.map(e => e.height), commonHeights = {};
+    for (let height of heights) commonHeights[height] ? commonHeights[height]++ : commonHeights[height] = 1;
+    let commonHeight = heights[0];
+    for (let height of heights) if (commonHeights[height] > commonHeights[commonHeight]) commonHeight = height;
+    for (let rect of rects) {
+        rect.top = (rect.top + rect.height / 2) - commonHeight / 2;
+        rect.height = commonHeight;
+    }
 
 
     return rects;
@@ -42,10 +50,6 @@ class Selection {
         this.doc = editor.doc;
 
         this.ranges = new Set();
-    }
-
-    parsePosition(pos) {
-        return new Position(pos, this.editor.doc, { track: false })
     }
 
     setRanges(ranges = []) {
@@ -75,19 +79,23 @@ class Selection {
     renderRanges(line) {
         if (!line.element?.isConnected) return;
         if (line.element.selection) line.element.selection.innerHTML = "";
-        for (let range of this.editor.render.selection.ranges) {
+        for (let range of this.ranges) {
+            if (range.deleted) {
+                this.ranges.delete(range);
+                continue;
+            }
             let from = range.start.index, to = range.end.index;
-            if (!(to < line.from || from > line.to)) { // range is to be rendered
+            if (to > line.from && from <= line.to) { // range is to be rendered
                 if (line.element.selection == undefined) {
                     let sel = document.createElement("div");
+                    sel.classList.add("selectionWrapper");
                     line.element.selection = sel;
                 }
-                // this.editor.elements.selectionLayer.appendChild(line.element.selection);
                 line.element.appendChild(line.element.selection);
 
                 let visualRange = new Range();
-                visualRange.setStart(...nodeAt(range.start.index < line.from ? this.parsePosition(line.from) : range.start));
-                visualRange.setEnd(...nodeAt(range.end.index > line.to + 1 ? this.parsePosition(line.to + 1) : range.end));
+                visualRange.setStart(...nodeInLineAtColumn(line, Math.max(range.start.index - line.from, 0)));
+                visualRange.setEnd(...nodeInLineAtColumn(line, Math.min(range.end.index - line.from, line.chars)));
                 let rects = filterRects(visualRange.getClientRects());
                 let lineRect = line.element.getBoundingClientRect();
                 for (let rect of rects) {

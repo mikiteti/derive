@@ -1,6 +1,6 @@
 import newChange from "./changes.js";
 import { nodeSizes } from "../assets.js";
-import { nodeAt, estimateHeight, measureHeight } from "../assets.js";
+import { measureHeight } from "../assets.js";
 import newHistory from "./history.js";
 
 const previousSibling = (obj) => {

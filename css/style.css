@@ -166,6 +166,7 @@ html.relNumbers {
     margin: 0;
     line-height: calc(var(--line-height) * var(--font-size));
     padding: var(--line-padding) 0;
+    position: relative;
 }
 
 html.lineNumbers .textarea p,
@@ -390,9 +391,13 @@ img {
 }
 
 .capital {
-    /* ATARAXIA */
     /* font-variant: small-caps; */
     text-transform: uppercase;
+}
+
+.selectionWrapper {
+    position: absolute;
+    top: 0;
 }
 
 .selection {

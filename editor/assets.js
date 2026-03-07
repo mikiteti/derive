@@ -126,8 +126,8 @@ const _nodeAt = (nodes, index) => {
     return [nodes.at(-1), nodes.at(-1).textContent.length];
 }
 
-const nodeAt = (pos) => {
-    let nodes = [], index = pos.index - pos.Line.from;
+const nodeAt = (pos) => { // takes in only a pos, so always stays before endChar
+    let nodes = [], column = pos.column;
     if (!pos.Line.element?.isConnected) return;
     const walker = document.createTreeWalker(pos.Line.element, NodeFilter.SHOW_TEXT);
     nodes = [];
@@ -139,7 +139,27 @@ const nodeAt = (pos) => {
 
     let i = 0;
     for (let node of nodes) {
-        if (node.textContent.length + i > index) return [node, index - i];
+        if (node.textContent.length + i > column) return [node, column - i];
+        i += node.textContent.length;
+    }
+
+    return [nodes.at(-1), nodes.at(-1).textContent.length];
+}
+
+const nodeInLineAtColumn = (line, column) => { // takes in a line and a column, so it can return with endChar included
+    let nodes = [];
+    if (!line.element?.isConnected) return;
+    const walker = document.createTreeWalker(line.element, NodeFilter.SHOW_TEXT);
+    nodes = [];
+    while (walker.nextNode()) {
+        let textNode = walker.currentNode;
+        if (textNode.parentNode.matches("mjx-container *, .IM, .IM *")) continue;
+        nodes.push(textNode);
+    }
+
+    let i = 0;
+    for (let node of nodes) {
+        if (node.textContent.length + i > column) return [node, column - i];
         i += node.textContent.length;
     }
 
@@ -391,4 +411,4 @@ const isLineInViewport = (line, scrollY = line.editor.elements.editor.scrollTop)
     return false;
 }
 
-export { nodeSizes, checkTreeStructure, getColumnAt, findXIndicesInLine, getVisualLineAt, exportFile, nodeAt, exportToMD, isMac, key, saveState, getUrl, estimateHeight, measureHeight, isLineInViewport, getViewportMargins };
+export { nodeSizes, checkTreeStructure, getColumnAt, findXIndicesInLine, getVisualLineAt, exportFile, nodeAt, exportToMD, isMac, key, saveState, getUrl, estimateHeight, measureHeight, isLineInViewport, getViewportMargins, nodeInLineAtColumn };
