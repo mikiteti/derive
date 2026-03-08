@@ -166,8 +166,10 @@ class Render {
     }
 
     async handleDM(line) {
+        await window.MathJax.startup.promise;
+
         if (!line.decos.has("math") || line.deleted) {
-            if (!line.element.DM) return;
+            if (!line.element?.DM) return;
             line.element.DM.remove();
             queueMicrotask(_ => {
                 line.element.DM = undefined;
@@ -175,8 +177,6 @@ class Render {
 
             return;
         }
-
-        await window.MathJax.startup.promise;
 
         if (!line.element.DM) { // create DM element
             let DM = document.createElement("div");
