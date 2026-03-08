@@ -18,6 +18,7 @@
     --buffer-width: 30px;
     --editor-width: min(700px, 90vw);
     --font-size: calc(var(--editor-width) / 25);
+    --linenum-font-size: 18px;
     --tab-full-width: calc(2 * var(--font-size));
     --font-face: 'author';
     --font-weight: 200;
@@ -183,7 +184,7 @@ html.relNumbers .textarea p::before {
     /* filter: brightness(80%); */
     /* color: var(--color-accent); */
     opacity: 0.8;
-    font-size: var(--font-size);
+    font-size: var(--linenum-font-size);
     position: absolute;
     left: -30px;
     transform: translate(-100%, 0);
@@ -468,8 +469,10 @@ img {
 
 .wrapper:not(.editingSource) .math {
     display: none !important;
-    opacity: 0;
-    position: absolute;
+    /* height: 0; */
+    /* transform: scaleY(0); */
+    /* opacity: 0; */
+    /* position: absolute; */
 }
 
 .wrapper.editingSource {

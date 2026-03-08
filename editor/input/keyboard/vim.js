@@ -379,7 +379,9 @@ const createCommandSet = (editor) => {
                 }
                 registers[regName].paste(index);
                 let caretPos = index + Math.max(registers[regName].content.text.length - 1, 0);
-                queueMicrotask(() => { sc.placeAt(caretPos) })
+                Promise.all(window.renderPromises || []).then(() => {
+                    queueMicrotask(() => { sc.placeAt(caretPos) })
+                });
             }
             queueMicrotask(() => { history.newChangeGroup() });
         },

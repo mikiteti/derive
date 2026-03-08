@@ -134,6 +134,7 @@ class Clipboard {
             charsBeforeLine += lines[i].length + 1;
         }
 
+        console.log(html);
         return html;
     }
 

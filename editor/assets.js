@@ -1,4 +1,3 @@
-import { Position } from "./doc/classes.js";
 import Environment from "../environment.js";
 
 const nodeSizes = {
