@@ -230,7 +230,7 @@ const createCommandSet = (editor) => {
         "$": (pos) => pos.Line.to - 1,
         "0": (pos) => pos.Line.from,
         "_": (pos) => pos.Line.from,
-        "G": (pos) => doc.chars - 2,
+        "G": (pos) => doc.chars - 1,
         "gg": (pos) => 0,
         // ...
 
@@ -246,9 +246,9 @@ const createCommandSet = (editor) => {
         "position": (pos) => pos.index,
         "vLine": (pos) => {
             let pair = pos.caret.fixedEnd;
-            if (pair == undefined) return [pos.Line.from, Math.min(pos.Line.to, doc.chars - 2)];
-            if (pair.index < pos.index) return [pair.Line.from, Math.min(pos.Line.to, doc.chars - 2)];
-            return [Math.min(pair.Line.to, doc.chars - 2), pos.Line.from];
+            if (pair == undefined) return [pos.Line.from, Math.min(pos.Line.to, doc.chars - 1)];
+            if (pair.index < pos.index) return [pair.Line.from, Math.min(pos.Line.to, doc.chars - 1)];
+            return [Math.min(pair.Line.to, doc.chars - 1), pos.Line.from];
         }
     }
 
@@ -403,7 +403,7 @@ const createCommandSet = (editor) => {
                 name: "Escape",
                 keys: ["Escape", "\\Cc"],
                 run: (keys) => {
-                    functions.mode("n");
+                    dispatch([["move", moves["h"](1)], ["mode", "n"]])
                 },
             },
             {
@@ -474,7 +474,7 @@ const createCommandSet = (editor) => {
                 if (count == undefined) dispatch([["move", moves["G"]]]);
                 else dispatch([["move", pos => {
                     let line = doc.line(count - 1);
-                    return line.from + Math.min(pos.column, Math.max(line.chars - 2, 0));
+                    return line.from + Math.min(pos.column, Math.max(line.chars - 1, 0));
                 }]]);
             }
         },
