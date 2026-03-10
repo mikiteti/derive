@@ -326,6 +326,7 @@ img {
     --width: min(90vw, 1200px, 120vh);
     width: var(--width);
     height: calc(3/4*var(--width));
+    max-height: unset;
     top: calc(50vh - 3/8*var(--width));
 }
 
