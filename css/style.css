@@ -344,6 +344,7 @@ img {
 .imgWrapper .editButton {
     color: white;
     font-size: 12pt;
+    font-weight: inherit;
     position: absolute;
     right: 0;
     bottom: 0;
