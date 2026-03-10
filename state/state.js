@@ -55,13 +55,14 @@ class State {
 
         this.systemFiles = systemFiles;
         this.URL = new URL(window.location);
-        if (this.settings.welcomeMessage) {
-            this.URL.searchParams.delete("note");
-            history.replaceState({}, "", this.URL);
-        }
         this.note_url = this.URL.searchParams.get("note");
+        // if (this.settings.welcomeMessage) {
+        //     this.URL.searchParams.delete("note");
+        //     history.replaceState({}, "", this.URL);
+        // }
 
         this.initFuzzyFinders().then(() => {
+            console.log(this.note_url);
             if (this.note_url != undefined && this.files.find(e => e.url == this.note_url).content) {
                 console.log({ note_url: this.note_url });
                 console.log(this.files.find(e => e.url == this.note_url));
@@ -474,7 +475,10 @@ class State {
         }
 
         let currentFile;
-        if (this.note_url != undefined) currentFile = await this.getFile({ url: this.note_url });
+        if (this.note_url != undefined) {
+            console.log(this.note_url);
+            currentFile = await this.getFile({ url: this.note_url });
+        }
         if (currentFile != undefined && currentFile != -1) {
             (json.find(e => e.url == this.note_url) == undefined)
                 ? json.push(currentFile)
