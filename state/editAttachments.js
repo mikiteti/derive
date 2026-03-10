@@ -35,6 +35,7 @@ class AttachmentEditor {
                     // colors: { blue: "#6b4e00", orange: "#0c2175", yellow: "#2264ae", olive: "#5d4175", green: "#a36b91", red: "#187d7b" },
                     // expressionsCollapsed: true,
                     border: false,
+                    advancedStyling: true
                 });
                 break;
             case "geometry":
@@ -42,6 +43,7 @@ class AttachmentEditor {
                 this.calculator = window.Desmos.Geometry(this.element, {
                     border: false,
                     expressionsCollapsed: true,
+                    advancedStyling: true
                 });
                 break;
             case "sketch":
@@ -128,7 +130,7 @@ class AttachmentEditor {
                 await window.DesmosLoaded.promise;
                 let preview;
                 await new Promise(async (res, rej) => {
-                    await this.calculator.asyncScreenshot({ format: 'svg' }, (svg) => {
+                    await this.calculator.asyncScreenshot({ format: 'svg', showLabels: true }, (svg) => {
                         preview = svg;
                         res();
                     });

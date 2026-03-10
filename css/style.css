@@ -95,7 +95,13 @@
     font-weight: 900;
 }
 
-*:not(.dcg-dom-change-wrapper *) {
+
+/* *:not(.dcg-dom-change-wrapper *) { */
+#alerts,
+#prompts,
+.editor .textarea,
+.editor .info,
+.modal {
     user-select: text;
     touch-action: manipulation;
     -webkit-user-select: text;
@@ -525,6 +531,7 @@ img {
     box-sizing: border-box;
     width: 100%;
     font-size: var(--font-size);
+    font-weight: inherit;
     color: var(--color-text);
     padding: 5px 10px;
     margin: 0;
