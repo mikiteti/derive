@@ -27,6 +27,7 @@
     --text-decoration-thickness: 0.07rem;
     --shadow: 2px 4px 3px rgba(0, 0, 0, 0.3);
     --shadow-lg: 0px 1.8px 7.3px rgba(0, 0, 0, 0.071), 0px 6.3px 24.7px rgba(0, 0, 0, 0.112), 0px 30px 90px rgba(0, 0, 0, 0.2);
+    --shadow-lg-inset: inset 0px 1.8px 7.3px rgba(0, 0, 0, 0.071), inset 0px 6.3px 24.7px rgba(0, 0, 0, 0.112), inset 0px 30px 90px rgba(0, 0, 0, 0.2);
 
     --bold-weight: 400;
     --Bold-weight: 600;
@@ -115,6 +116,10 @@
 
 *:not(.DM *, .IM *, .dcg-dom-change-wrapper *) {
     /* font-family: 'tex', var(--font-face); */
+    /* font-family: var(--font-face); */
+}
+
+html {
     font-family: var(--font-face);
 }
 
@@ -392,11 +397,10 @@ img {
     font-weight: var(--bold-weight) !important;
 }
 
-/* TODO: decide about this */
 .italic {
     font-style: italic;
     font-family: 'Crimson Pro', serif;
-    font-size: 1.1em;
+    font-size: 1.05em;
 }
 
 .highlight {
@@ -557,7 +561,7 @@ img {
     border: none;
     display: block;
     box-sizing: border-box;
-    width: 100%;
+    /* width: 100%; */
     font-size: var(--font-size);
     font-weight: inherit;
     color: var(--color-text);
@@ -586,10 +590,20 @@ img {
     transition: border 0.1s, background-color 0.1s;
 }
 
+.modal .list div:hover {
+    border: 1px solid var(--color-accent);
+    background-color: #ffffff05;
+    box-shadow: var(--shadow-lg);
+}
+
 .modal .list div.active {
     border: 1px solid var(--color-accent);
     background-color: #fff1;
     box-shadow: var(--shadow-lg);
+}
+
+.modal .list div:active {
+    box-shadow: var(--shadow-lg-inset);
 }
 
 #curMode,
@@ -633,7 +647,7 @@ img {
 }
 
 .alert .title {
-    font-weight: 500;
+    font-weight: 500 !important;
     font-size: var(--font-size);
     margin-bottom: 5px;
 }
@@ -699,6 +713,15 @@ img {
     width: 100px;
     margin: 20px auto 0 auto;
     border: 1px solid var(--color-accent);
+    box-shadow: var(--shadow-lg);
+}
+
+.prompt .submit:hover {
+    background-color: #fff2;
+}
+
+.prompt .submit:active {
+    box-shadow: var(--shadow-lg-inset);
 }
 
 #attachments img {

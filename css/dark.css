@@ -118,6 +118,15 @@
     font-weight: var(--bold-weight);
 }
 
+.h1,
+.h2,
+.h3,
+.h4,
+.h5,
+.h6 {
+    letter-spacing: -3%;
+}
+
 .noisy::before {
     content: unset;
 }

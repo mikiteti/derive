@@ -429,7 +429,9 @@ class State {
         return text;
     }
 
-    openModal(modal) {
+    async openModal(modal) {
+        if (this.focus.isConnected && this.focus?.matches(".modal")) await this.closeModal();
+
         modal.style.display = "flex";
         modal.animate([
             { opacity: 0, transform: "translate(-50%, 3px)" },
@@ -450,7 +452,7 @@ class State {
         }
     }
 
-    closeModal() {
+    async closeModal() {
         this.focus.style.display = "none";
         this.focus.animate([
             { opacity: 1, transform: "translate(-50%, 0px)", display: "flex" },
@@ -464,6 +466,12 @@ class State {
 
         document.getElementById("focus").focus();
         this.focus = this.editor;
+
+        return new Promise(res => {
+            setTimeout(() => {
+                requestAnimationFrame(res);
+            }, 100)
+        });
     }
 
     focusEditor() {

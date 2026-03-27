@@ -322,6 +322,7 @@ const exportToMD = async (editor = window.editor) => {
         let offset = 0;
         for (let mark of marks) {
             if (markSigns[mark[2]] == undefined) continue;
+            if (mark[0] == mark[1]) continue;
             text = text.slice(0, mark[0] + offset)
                 + markSigns[mark[2]][0]
                 + text.slice(mark[0] + offset, mark[1] + offset)

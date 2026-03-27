@@ -1,4 +1,5 @@
 import { DefaultSnippets, DefaultSnippetVariables } from "./snippets/default.js";
+// import { DefaultSnippets, DefaultSnippetVariables } from "./snippets/unicode.js";
 import newSnippets from "./snippets/snippets.js";
 import newKeyboard from "./keyboard/keyboard.js";
 import Caret from "./caret.js"

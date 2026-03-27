@@ -93,6 +93,7 @@ class Render {
 
     createLineElement(line) {
         let lineElement = document.createElement("p");
+        lineElement.classList.add("line");
         if (line.decos.has("math") || line.decos.has("link")) lineElement.classList.add("hidden");
 
         lineElement.Line = line;
