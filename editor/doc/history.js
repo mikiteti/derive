@@ -44,13 +44,15 @@ class History {
 
             if (from.decos != undefined) {
                 steps.push(() => {
-                    this.editor.doc.line(from.line).setDecos(to.decos, { addToHistory: false });
+                    let line = this.editor.doc.line(from.line);
+                    line.setDecos(to.decos, { addToHistory: false });
                 });
             }
 
             if (from.marks != undefined) {
                 steps.push(() => {
-                    this.editor.doc.line(from.line).setMarks(to.marks, { addToHistory: false });
+                    let line = this.editor.doc.line(from.line);
+                    line.setMarks(to.marks, { addToHistory: false });
                 });
             }
 
@@ -58,7 +60,8 @@ class History {
                 for (let line of to.lines) {
                     if (line.marks != undefined) {
                         steps.push(() => {
-                            this.editor.doc.line(line.line).setMarks(line.marks, { addToHistory: false });
+                            let l = this.editor.doc.line(line.line);
+                            l.setMarks(line.marks, { addToHistory: false });
                         });
                     }
                 }

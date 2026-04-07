@@ -273,7 +273,6 @@ class Render {
 
     renderLine(line, { scrollY } = {}) {
         if (!line.deleted && !isLineInViewport(line, scrollY)) return;
-        console.error(`rendering line`, line);
 
         let promises = [];
 
@@ -414,6 +413,7 @@ class Render {
                 if (line.decos.has(deco)) line.element.classList.add(deco);
                 else line.element.classList.remove(deco);
             }
+            if (!line.decos.has("math")) line.element.classList.remove("hidden");
             let promise = new Promise(async res => {
                 await this.handleDM(line);
                 res();

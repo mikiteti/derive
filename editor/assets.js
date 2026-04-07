@@ -416,4 +416,8 @@ const isLineInViewport = (line, scrollY = line.editor.elements.editor.scrollTop)
     return false;
 }
 
-export { nodeSizes, checkTreeStructure, getColumnAt, findXIndicesInLine, getVisualLineAt, exportFile, nodeAt, exportToMD, isMac, key, saveState, getUrl, estimateHeight, measureHeight, isLineInViewport, getViewportMargins, nodeInLineAtColumn };
+const snapshotCarets = (editor) => {
+    return editor.input.caret.carets.map(e => e.fixedEnd != undefined ? [e.position.index, e.fixedEnd.index] : e.position.index)
+}
+
+export { nodeSizes, checkTreeStructure, getColumnAt, findXIndicesInLine, getVisualLineAt, exportFile, nodeAt, exportToMD, isMac, key, saveState, getUrl, estimateHeight, measureHeight, isLineInViewport, getViewportMargins, nodeInLineAtColumn, snapshotCarets };

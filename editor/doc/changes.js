@@ -1,3 +1,4 @@
+import { snapshotCarets } from "../assets.js";
 import { Line } from "./classes.js";
 
 const merge = (node1, node2, removed) => {
@@ -95,7 +96,7 @@ class Change {
 
 
         const startState = {
-            carets: this.editor.input.caret.carets.map(e => e.fixedEnd != undefined ? [e.position.index, e.fixedEnd.index] : e.position.index),
+            carets: snapshotCarets(this.editor),
             text: this.editor.doc.textBetween(from, to),
             at: from,
         };
@@ -127,7 +128,7 @@ class Change {
             if (!noCallback) this.runCallbacks({ changedLines });
             else this.completeCallbackList({ changedLines });
             const endState = {
-                carets: this.editor.input.caret.carets.map(e => e.fixedEnd != undefined ? [e.position.index, e.fixedEnd.index] : e.position.index),
+                carets: snapshotCarets(this.editor),
                 text: "",
                 at: from,
                 lines: [{ line: line1.number, marks: line1.exportMarks() }]
@@ -191,7 +192,7 @@ class Change {
         if (!noCallback) this.runCallbacks({ changedLines });
         else this.completeCallbackList({ changedLines });
         const endState = {
-            carets: this.editor.input.caret.carets.map(e => e.fixedEnd != undefined ? [e.position.index, e.fixedEnd.index] : e.position.index),
+            carets: snapshotCarets(this.editor),
             text: "",
             at: from,
             lines: [{ line: line1.number, marks: line1.exportMarks() }]
@@ -205,7 +206,7 @@ class Change {
         if (at.index) at = at.index;
 
         const startState = {
-            carets: this.editor.input.caret.carets.map(e => e.fixedEnd != undefined ? [e.position.index, e.fixedEnd.index] : e.position.index),
+            carets: snapshotCarets(this.editor),
             text: "",
             at: at,
         };
@@ -238,7 +239,7 @@ class Change {
             if (!noCallback) this.runCallbacks({ changedLines });
             else this.completeCallbackList({ changedLines });
             const endState = {
-                carets: this.editor.input.caret.carets.map(e => e.fixedEnd != undefined ? [e.position.index, e.fixedEnd.index] : e.position.index),
+                carets: snapshotCarets(this.editor),
                 text: string,
                 at: at,
                 lines: [{ line: line.number, marks: line.exportMarks() }]
@@ -295,7 +296,7 @@ class Change {
         if (!noCallback) this.runCallbacks({ changedLines });
         else this.completeCallbackList({ changedLines });
         const endState = {
-            carets: this.editor.input.caret.carets.map(e => e.fixedEnd != undefined ? [e.position.index, e.fixedEnd.index] : e.position.index),
+            carets: snapshotCarets(this.editor),
             text: string,
             at: at,
             lines: [{ line: line.number, marks: line.exportMarks() }]
