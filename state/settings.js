@@ -5,7 +5,7 @@ const Settings = {
     welcomeMessage: true,
     lineNumbers: false,
     relNumbers: false,
-    caretMargin: 50,
+    caretMargin: 200,
 }
 
 export default Settings;

@@ -273,6 +273,7 @@ class Render {
 
     renderLine(line, { scrollY } = {}) {
         if (!line.deleted && !isLineInViewport(line, scrollY)) return;
+        console.error(`rendering line`, line);
 
         let promises = [];
 

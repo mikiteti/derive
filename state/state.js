@@ -106,6 +106,7 @@ class State {
                 return;
             }
 
+            if (this.editor == undefined) return;
             if (!this.editor.interactive) return;
             if (this.focus?.isEditor && !this.focus?.classList?.has("prompt")) document.getElementById("focus").focus();
         });
