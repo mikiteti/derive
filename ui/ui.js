@@ -1,4 +1,4 @@
-import { getUrl, key, saveState } from "../editor/assets.js";
+import { getUrl, key, parseHotkey, saveState } from "../editor/assets.js";
 import newCommands from "../state/commands.js";
 import AttachmentEditor from "../state/editAttachments.js";
 
@@ -144,7 +144,14 @@ class UI {
         this.filePicker.querySelector(".list").innerHTML = this.filePicker.entries.concat(this.state.systemFiles).map(e => `<div item-id="${e.id}">${e.name}</div>`).join("");
         this.state.commands = newCommands(this.state).map((e, f) => ({ ...e, id: f + 1 }));
         this.commandPalette.entries = this.state.commands;
-        this.commandPalette.querySelector(".list").innerHTML = this.commandPalette.entries.map(e => `<div item-id="${e.id}">${e.name}</div>`).join("");
+        this.commandPalette.querySelector(".list").innerHTML = this.commandPalette.entries.map(e =>
+            `<div class="item" item-id="${e.id}">
+                <span>${e.name.includes(":")
+                ? `<span class="">${e.name.slice(0, e.name.indexOf(":") + 1)}</span><span>${e.name.slice(e.name.indexOf(":") + 1)}</span>`
+                : e.name}</span>
+                ${e.hotkey ? `<span class="hotkey">${parseHotkey(e.hotkey)}</span>` : ``}
+            </div>`
+        ).join("");
 
         window.addEventListener("keydown", (e) => {
             if ([this.filePicker, this.commandPalette].includes(this.focus) && e.key === "Escape") {

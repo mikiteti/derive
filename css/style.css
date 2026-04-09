@@ -4,6 +4,7 @@
 :root {
     --color-bg: #282c34;
     --color-text: #c6d0f5;
+    --color-text-unsaturated: rgb(160, 160, 160);
     /* --color-blue: #8caaee; */
     --color-blue: rgb(148, 177, 255);
     --color-green: #a6d189;
@@ -573,10 +574,6 @@ img {
     border-bottom: 1px solid #ffffff33;
 }
 
-.nodisplay {
-    display: none;
-}
-
 .modal .list {
     border-radius: 10px;
     padding: 5px;
@@ -740,4 +737,26 @@ img {
     box-sizing: border-box;
     flex-direction: column;
     gap: 20px;
+}
+
+.hotkey {
+    text-align: right;
+    color: var(--color-text-unsaturated);
+    font-size: 0.8em;
+    vertical-align: center;
+}
+
+.unsaturated {
+    color: var(--color-text-unsaturated);
+}
+
+.item {
+    display: grid;
+    grid-template-columns: auto auto;
+    gap: 10px;
+    align-items: center;
+}
+
+.nodisplay {
+    display: none;
 }

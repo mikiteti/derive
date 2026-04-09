@@ -420,4 +420,69 @@ const snapshotCarets = (editor) => {
     return editor.input.caret.carets.map(e => e.fixedEnd != undefined ? [e.position.index, e.fixedEnd.index] : e.position.index)
 }
 
-export { nodeSizes, checkTreeStructure, getColumnAt, findXIndicesInLine, getVisualLineAt, exportFile, nodeAt, exportToMD, isMac, key, saveState, getUrl, estimateHeight, measureHeight, isLineInViewport, getViewportMargins, nodeInLineAtColumn, snapshotCarets };
+const _parseHotkey = (hotkey) => {
+    const parts = hotkey.split("+");
+
+    const result = [];
+
+    const macMap = {
+        M: "⌘",
+        A: "⌥",
+        C: "⌃",
+        S: "⇧"
+    };
+
+    const winMap = {
+        M: "Ctrl",   // meta → ctrl on windows
+        A: "Alt",
+        C: "Ctrl",
+        S: "Shift"
+    };
+
+    const keyMapMac = {
+        Enter: "↩",
+        Tab: "⇥",
+        Backspace: "⌫",
+        Escape: "⎋",
+        ArrowUp: "↑",
+        ArrowDown: "↓",
+        ArrowLeft: "←",
+        ArrowRight: "→",
+        Space: "␣"
+    };
+
+    const keyMapWin = {
+        Enter: "Enter",
+        Tab: "Tab",
+        Backspace: "Backspace",
+        Escape: "Esc",
+        ArrowUp: "↑",
+        ArrowDown: "↓",
+        ArrowLeft: "←",
+        ArrowRight: "→",
+        Space: "Space"
+    };
+
+    for (let part of parts) {
+        // modifier
+        if (["M", "A", "C", "S"].includes(part)) {
+            result.push(isMac ? macMap[part] : winMap[part]);
+            continue;
+        }
+
+        // key
+        const key = isMac
+            ? (keyMapMac[part] || part)
+            : (keyMapWin[part] || part);
+
+        result.push(key.toUpperCase());
+    }
+
+    return result.join("");
+}
+
+const parseHotkey = (hotkey) => {
+    return Array.isArray(hotkey) ? hotkey.map(e => _parseHotkey(e)).join(", ") : _parseHotkey(hotkey);
+}
+
+export { nodeSizes, checkTreeStructure, getColumnAt, findXIndicesInLine, getVisualLineAt, exportFile, nodeAt, exportToMD, isMac, key, saveState, getUrl, estimateHeight, measureHeight, isLineInViewport, getViewportMargins, nodeInLineAtColumn, snapshotCarets, parseHotkey };
