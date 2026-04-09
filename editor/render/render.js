@@ -94,7 +94,7 @@ class Render {
     createLineElement(line) {
         let lineElement = document.createElement("p");
         lineElement.classList.add("line");
-        if (line.decos.has("math") || line.decos.has("link")) lineElement.classList.add("hidden");
+        if (line.decos.has("math") || line.decos.has("link")) this.hideLine(line);
 
         lineElement.Line = line;
         line.assignElement(lineElement);
@@ -146,7 +146,7 @@ class Render {
 
             queueMicrotask(() => {
                 if (delta) this.editorElement.scrollBy(0, delta, { behavior: "auto" });
-                // console.log("tiny render scrolling");
+                console.log("tiny render scrolling", delta);
                 requestAnimationFrame(res);
             });
         });
@@ -211,8 +211,8 @@ class Render {
     async handleLink(line) {
         if (!line.decos.has("link") || line.deleted) {
             if (!line.element.imgWrapper) return;
-            line.element.imgWrapper.remove();
             queueMicrotask(_ => {
+                line.element.imgWrapper.remove();
                 line.element.imgWrapper = undefined;
             });
 
@@ -277,9 +277,9 @@ class Render {
         let promises = [];
 
         if (line.deleted) {
-            line.element?.remove();
             if (line.element?.DM) line.element.DM.remove();
             if (line.element?.imgWrapper) line.element.imgWrapper.remove();
+            line.element?.remove();
             requestAnimationFrame(() => this.renderInfo());
             return;
         } else if (!line.element) {
@@ -413,7 +413,7 @@ class Render {
                 if (line.decos.has(deco)) line.element.classList.add(deco);
                 else line.element.classList.remove(deco);
             }
-            if (!line.decos.has("math")) line.element.classList.remove("hidden");
+            if (!line.decos.has("math") && !line.decos.has("link")) this.revealLine(line); // TODO: check
             let promise = new Promise(async res => {
                 await this.handleDM(line);
                 res();
@@ -442,10 +442,12 @@ class Render {
 
     hideLine(line) {
         line.element?.classList.add("hidden");
+        line.visualUpdate();
     }
 
     revealLine(line) {
         line.element?.classList.remove("hidden");
+        line.visualUpdate();
     }
 }
 

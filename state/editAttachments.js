@@ -5,7 +5,7 @@ class AttachmentEditor {
         wrapper.attachmentEditor = this;
         let editorElement = document.createElement("div");
         editorElement.classList.add("attachmentEditor");
-        window.state.attachmentEditor.appendChild(editorElement);
+        window.state.UI.attachmentEditor.appendChild(editorElement);
         this.element = editorElement;
         this.wrapper = wrapper;
         this.isNew = isNew;
@@ -58,12 +58,13 @@ class AttachmentEditor {
     startEditing() {
         this.wrapper.classList.add("editing");
         this.wrapper.querySelector(".editButton").innerHTML = "Done";
-        let children = window.state.attachmentEditor.children;
+        let children = window.state.UI.attachmentEditor.children;
         for (let child of children) child.style.display = "none";
         this.element.style.display = "block";
-        window.state.focus = window.state.attachmentEditor;
+        window.state.UI.focus = window.state.UI.attachmentEditor;
         window.state.editedAttachment = this;
-        window.state.openModal(window.state.attachmentEditor);
+        window.state.UI.openModal(window.state.UI.attachmentEditor);
+        document.documentElement.requestFullscreen();
 
         this.calculator?.updateSettings({ expressionsCollapsed: false });
     }
@@ -88,8 +89,9 @@ class AttachmentEditor {
             this.wrapper.classList.remove("notReady");
             img.onload = undefined;
         }
+        document.exitFullscreen();
 
-        window.state.closeModal();
+        window.state.UI.closeModal();
     }
 
     async setState(state) {

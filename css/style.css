@@ -1,4 +1,5 @@
 @import url('https://api.fontshare.com/v2/css?f[]=crimson-pro@2&display=swap');
+/* @import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,200..900;1,200..900&display=swap'); */
 
 :root {
     --color-bg: #282c34;
@@ -322,7 +323,8 @@ p .link:active,
 .imgWrapper {
     text-align: center;
     position: relative;
-    margin: 1rem 0;
+    padding: 1rem 0;
+    /* margin makes viewport jump */
 }
 
 img {
@@ -361,7 +363,7 @@ img {
     font-weight: inherit;
     position: absolute;
     right: 0;
-    bottom: 0;
+    bottom: 1rem;
     pointer-events: initial;
     background-color: rgba(0, 0, 0, 0.5);
     border: none;

@@ -428,49 +428,49 @@ class Line {
         this.element = element;
     }
 
+    snapshotDecos() {
+        return { line: this.number, decos: Array.from(this.decos), carets: snapshotCarets(this.editor) };
+    }
+
     addDeco(deco, { addToHistory = true } = {}) {
-        let startState = { line: this.number, decos: Array.from(this.decos), carets: snapshotCarets(this.editor) };
+        let startState = this.snapshotDecos();
         let decos = Array.isArray(deco) ? deco : [deco];
         for (let deco of decos) {
             this.unrenderedChanges.add("deco");
             this.decos.add(deco)
         }
-        let endState = { line: this.number, decos: Array.from(this.decos), carets: snapshotCarets(this.editor) };
-        if (addToHistory) this.editor.doc.history.addChange({ from: startState, to: endState });
+        if (addToHistory) this.editor.doc.history.addChange({ from: startState, to: this.snapshotDecos() });
         this.visualUpdate();
     }
 
     removeDeco(deco, { addToHistory = true } = {}) {
-        let startState = { line: this.number, decos: Array.from(this.decos), carets: snapshotCarets(this.editor) };
+        let startState = this.snapshotDecos();
         let decos = Array.isArray(deco) ? deco : [deco];
         for (let deco of decos) {
             this.unrenderedChanges.add("deco");
             this.decos.delete(deco);
         }
-        let endState = { line: this.number, decos: Array.from(this.decos), carets: snapshotCarets(this.editor) };
-        if (addToHistory) this.editor.doc.history.addChange({ from: startState, to: endState });
+        if (addToHistory) this.editor.doc.history.addChange({ from: startState, to: this.snapshotDecos() });
         this.visualUpdate();
     }
 
     toggleDeco(deco, { addToHistory = true } = {}) {
-        let startState = { line: this.number, decos: Array.from(this.decos), carets: snapshotCarets(this.editor) };
+        let startState = this.snapshotDecos();
         let decos = Array.isArray(deco) ? deco : [deco];
         for (let deco of decos) {
             this.unrenderedChanges.add("deco");
             this.decos.has(deco) ? this.decos.delete(deco) : this.decos.add(deco);
         }
-        let endState = { line: this.number, decos: Array.from(this.decos), carets: snapshotCarets(this.editor) };
-        if (addToHistory) this.editor.doc.history.addChange({ from: startState, to: endState });
+        if (addToHistory) this.editor.doc.history.addChange({ from: startState, to: this.snapshotDecos() });
         this.visualUpdate();
     }
 
     setDecos(decos, { addToHistory = true } = {}) {
-        let startState = { line: this.number, decos: Array.from(this.decos), carets: snapshotCarets(this.editor) };
+        let startState = this.snapshotDecos();
         this.unrenderedChanges.add("deco");
         for (let deco of this.decos) if (!decos.includes(deco)) this.decos.delete(deco);
         for (let deco of decos) this.decos.add(deco);
-        let endState = { line: this.number, decos: Array.from(this.decos), carets: snapshotCarets(this.editor) };
-        if (addToHistory) this.editor.doc.history.addChange({ from: startState, to: endState });
+        if (addToHistory) this.editor.doc.history.addChange({ from: startState, to: this.snapshotDecos() });
         this.visualUpdate();
     }
 
@@ -480,37 +480,42 @@ class Line {
         this.visualUpdate();
     }
 
+    exportMarks() {
+        return this.marks.map(e => ({ from: e.from.index, to: e.to.index, role: e.role, stickLeft: [e.from.stickLeftOnInsert, e.to.stickLeftOnInsert] }));
+    }
+
+    snapshotMarks() {
+        return { line: this.number, marks: this.exportMarks(), carets: snapshotCarets(this.editor) };
+    }
+
     addMark(Mark, { addToHistory = true } = {}) {
         if (this.marks.includes(Mark)) return;
-        let startState = { line: this.number, marks: this.exportMarks(), carets: snapshotCarets(this.editor) };
+        let startState = this.snapshotMarks();
         this.marks.push(Mark);
         this.unrenderedChanges.add("marks");
-        let endState = { line: this.number, marks: this.exportMarks(), carets: snapshotCarets(this.editor) };
-        if (addToHistory) this.editor.doc.history.addChange({ from: startState, to: endState });
+        if (addToHistory) this.editor.doc.history.addChange({ from: startState, to: this.snapshotMarks() });
     }
 
     addNewMark(mark, { addToHistory = true } = {}) {
-        let startState = { line: this.number, marks: this.exportMarks(), carets: snapshotCarets(this.editor) };
+        let startState = this.snapshotMarks();
         let marks = Array.isArray(mark) ? mark : [mark];
         for (let mark of marks) this.marks.push(new Mark(this.editor, mark));
         this.unrenderedChanges.add("marks");
-        let endState = { line: this.number, marks: this.exportMarks(), carets: snapshotCarets(this.editor) };
-        if (addToHistory) this.editor.doc.history.addChange({ from: startState, to: endState });
+        if (addToHistory) this.editor.doc.history.addChange({ from: startState, to: this.snapshotMarks() });
     }
 
     removeMark(Mark, { addToHistory = true } = {}) {
-        let startState = { line: this.number, marks: this.exportMarks(), carets: snapshotCarets(this.editor) };
+        let startState = this.snapshotMarks();
         let index = this.marks.indexOf(Mark);
         if (index === -1) return;
         this.removePosition(Mark.from);
         this.removePosition(Mark.to);
         this.marks = [...this.marks.slice(0, index), ...this.marks.slice(index + 1)];
-        let endState = { line: this.number, marks: this.exportMarks(), carets: snapshotCarets(this.editor) };
-        if (addToHistory) this.editor.doc.history.addChange({ from: startState, to: endState });
+        if (addToHistory) this.editor.doc.history.addChange({ from: startState, to: this.snapshotMarks() });
     }
 
     deleteMark(mark, { addToHistory = true } = {}) {
-        let startState = { line: this.number, marks: this.exportMarks(), carets: snapshotCarets(this.editor) };
+        let startState = this.snapshotMarks();
         let marks = Array.isArray(mark) ? mark : [mark];
         for (let mark of marks) {
             if (!this.marks.includes(mark)) continue;
@@ -520,21 +525,15 @@ class Line {
             mark.delete();
         }
         this.unrenderedChanges.add("marks");
-        let endState = { line: this.number, marks: this.exportMarks(), carets: snapshotCarets(this.editor) };
-        if (addToHistory) this.editor.doc.history.addChange({ from: startState, to: endState });
+        if (addToHistory) this.editor.doc.history.addChange({ from: startState, to: this.snapshotMarks() });
     }
 
     setMarks(marks, { addToHistory = true } = {}) {
-        let startState = { line: this.number, marks: this.exportMarks(), carets: snapshotCarets(this.editor) };
+        let startState = this.snapshotMarks();
         for (let mark of this.marks) this.removeMark(mark, { addToHistory });
         this.marks = marks.map(e => new Mark(this.editor, e));
         this.unrenderedChanges.add("marks");
-        let endState = { line: this.number, marks: this.exportMarks(), carets: snapshotCarets(this.editor) };
-        if (addToHistory) this.editor.doc.history.addChange({ from: startState, to: endState });
-    }
-
-    exportMarks() {
-        return this.marks.map(e => ({ from: e.from.index, to: e.to.index, role: e.role, stickLeft: [e.from.stickLeftOnInsert, e.to.stickLeftOnInsert] }));
+        if (addToHistory) this.editor.doc.history.addChange({ from: startState, to: this.snapshotMarks() });
     }
 
     checkMarks() {

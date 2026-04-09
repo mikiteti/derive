@@ -24,7 +24,7 @@ class Input {
         });
 
         this.textarea.addEventListener("mousedown", (e) => {
-            if (window.state.focus !== this.editor || !this.editor.interactive) return;
+            if (window.state.UI.focus !== this.editor || !this.editor.interactive) return;
             e.preventDefault(); // no selections
             document.querySelector("#focus").focus();
 
@@ -51,7 +51,7 @@ class Input {
                 ignoreNextMouseMove = false;
                 return;
             }
-            if (window.state.focus !== this.editor || !this.editor.interactive) return;
+            if (window.state.UI.focus !== this.editor || !this.editor.interactive) return;
             if (!e.buttons || e.target.Line == undefined) return;
             e.preventDefault();
 
@@ -66,7 +66,7 @@ class Input {
         });
 
         document.addEventListener("keydown", (e) => {
-            if (window.state.focus !== this.editor || !this.editor.interactive || e.target.matches(".modal input")) return;
+            if (window.state.UI.focus !== this.editor || !this.editor.interactive || e.target.matches(".modal input")) return;
             let command = this.keyboard.command(e);
 
             if (command) e.preventDefault();

@@ -35,7 +35,7 @@ const newCommands = (state) => {
         {
             name: "Create user",
             run: async () => {
-                let [email, name, password] = await state.prompt("Create user", "Input your email, name and password to create an account", { Email: 1, Name: 1, Password: 1 });
+                let [email, name, password] = await state.UI.prompt("Create user", "Input your email, name and password to create an account", { Email: 1, Name: 1, Password: 1 });
                 let res = await state.sendRequest("new_user", {
                     method: 'POST',
                     body: JSON.stringify({ email, name, password }),
@@ -45,7 +45,7 @@ const newCommands = (state) => {
                 if (res === -1) return;
                 let text = await res.text();
                 console.log(text);
-                state.alert(text);
+                state.UI.alert(text);
 
                 state.commands.find(e => e.name === "Login").run(email, password);
             }
@@ -54,7 +54,7 @@ const newCommands = (state) => {
             name: "Login",
             run: async (email, password) => {
                 if (email == undefined || password == undefined) [email, password] =
-                    await state.prompt("Login", 'Input your email and password to log in', { "Email": 1, "Password": 1 });
+                    await state.UI.prompt("Login", 'Input your email and password to log in', { "Email": 1, "Password": 1 });
                 console.log(email, password);
                 localStorage.setItem('email', email);
                 localStorage.setItem('password', password);
@@ -67,7 +67,7 @@ const newCommands = (state) => {
                 if (res === -1) return;
                 let text = await res.text();
                 console.log(text);
-                state.alert("Welcome", `You are now logged in`);
+                state.UI.alert("Welcome", `You are now logged in`);
                 state.reload(["user", "files", "currentFile", "editors"]);
             }
         },
@@ -90,7 +90,7 @@ const newCommands = (state) => {
         {
             name: "Rename file",
             run: async () => {
-                let [name] = await state.prompt("Rename file", 'Input the new filename', { "Filename": 1 });
+                let [name] = await state.UI.prompt("Rename file", 'Input the new filename', { "Filename": 1 });
                 let editor = state.editor;
                 let res = await state.sendRequest("update_note", {
                     method: 'POST',
@@ -100,7 +100,7 @@ const newCommands = (state) => {
                 if (res === -1) return;
                 let text = await res.text();
                 console.log(text);
-                state.alert("Renamed", `Your file is now ${name}`);
+                state.UI.alert("Renamed", `Your file is now ${name}`);
 
                 state.reload(["files"]);
 
@@ -112,13 +112,13 @@ const newCommands = (state) => {
             run: async () => {
                 let text = await exportToMD(state.editor);
                 if (!text) {
-                    state.alert("Error", "Something went wrong with the export");
+                    state.UI.alert("Error", "Something went wrong with the export");
                     return;
                 }
                 navigator.clipboard.writeText(text).then(() => {
                     console.log('Copied!', text);
                 }).catch(console.error);
-                state.alert("Exported", "Your file has been copied to your clipboard");
+                state.UI.alert("Exported", "Your file has been copied to your clipboard");
             }
         },
         {
@@ -130,10 +130,10 @@ const newCommands = (state) => {
         {
             name: "Create file",
             run: async () => {
-                let [fileName] = await state.prompt("Create file", "Input the filename in the box below", { Filename: 1 });
+                let [fileName] = await state.UI.prompt("Create file", "Input the filename in the box below", { Filename: 1 });
 
                 await state.openFile(await state.createFile({ name: fileName }));
-                state.focusEditor();
+                state.UI.focusEditor();
             }
         },
         {
@@ -142,16 +142,16 @@ const newCommands = (state) => {
                 let url = new URL(window.location);
                 let noteUrl = window.state.getCurrentNoteUrl();
                 if (noteUrl == undefined) {
-                    state.alert("Something went wrong", "The note may not have shareable a URL.");
+                    state.UI.alert("Something went wrong", "The note may not have shareable a URL.");
                     return;
                 }
                 url.searchParams.set("note", noteUrl);
 
                 navigator.clipboard.writeText(url.href).then(() => {
                     console.log('Copied!', url.href);
-                    state.alert("URL copied", "Now you can share it with anyone. They will be able to see your note, but they won't be able to write to it.");
+                    state.UI.alert("URL copied", "Now you can share it with anyone. They will be able to see your note, but they won't be able to write to it.");
                 }).catch(() => {
-                    state.alert("Something went wrong with copying to your clipboard.", "Here is the URL though: " + url.href);
+                    state.UI.alert("Something went wrong with copying to your clipboard.", "Here is the URL though: " + url.href);
                 });
             }
         },
@@ -172,7 +172,7 @@ const newCommands = (state) => {
         {
             name: "List attachments",
             run: async () => {
-                if (state.attachments.children.length == 0) {
+                if (state.UI.attachments.children.length == 0) {
                     let res = await state.sendRequest("attachments", { credentials: 'include' });
                     if (res == -1) return;
                     let attachments = (await res.json());
@@ -180,11 +180,11 @@ const newCommands = (state) => {
                     for (let i of attachments) {
                         let img = document.createElement("img");
                         img.src = Environment.url + "view/" + i.url;
-                        state.attachments.appendChild(img);
+                        state.UI.attachments.appendChild(img);
                     }
                 }
 
-                state.openModal(state.attachments);
+                state.UI.openModal(state.UI.attachments);
             }
         },
         {
@@ -194,8 +194,8 @@ const newCommands = (state) => {
                 let goalMode = currentMode == "vim" ? "regular" : "vim";
                 state.settings.keyboard = goalMode;
                 if (goalMode == "vim")
-                    state.alert("Vim mode switched on", "Reload for the changes to take place.");
-                else state.alert("Vim mode switched off", "Reload for the changes to take place.");
+                    state.UI.alert("Vim mode switched on", "Reload for the changes to take place.");
+                else state.UI.alert("Vim mode switched off", "Reload for the changes to take place.");
             }
         },
         {
@@ -203,8 +203,8 @@ const newCommands = (state) => {
             run: () => {
                 state.settings.interactive = !state.settings.interactive;
                 if (state.settings.interactive)
-                    state.alert("Reading mode switched off", "Reload for the changes to take place.");
-                else state.alert("Reading mode switched on", "Reload for the changes to take place.");
+                    state.UI.alert("Reading mode switched off", "Reload for the changes to take place.");
+                else state.UI.alert("Reading mode switched on", "Reload for the changes to take place.");
             }
         },
         {
@@ -212,8 +212,8 @@ const newCommands = (state) => {
             run: () => {
                 state.settings.welcomeMessage = !state.settings.welcomeMessage;
                 if (state.settings.welcomeMessage)
-                    state.alert("Welcome message turned on", "Reload for the changes to take place.");
-                else state.alert("Welcome message turned off", "Reload for the changes to take place.");
+                    state.UI.alert("Welcome message turned on", "Reload for the changes to take place.");
+                else state.UI.alert("Welcome message turned off", "Reload for the changes to take place.");
             }
         },
         {

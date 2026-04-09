@@ -25,10 +25,10 @@ const createCommandSet = (editor) => {
             window.state.saveFile(editor);
         },
         // "M+o": () => {
-        //     window.state.openModal(window.state.filePicker);
+        //     window.state.UI.openModal(window.state.filePicker);
         // },
         // "M+p": () => {
-        //     window.state.openModal(window.state.commandPalette);
+        //     window.state.UI.openModal(window.state.commandPalette);
         // },
         "M+n": () => {
             window.state.settings.lineNumbers = !window.state.settings.lineNumbers;
