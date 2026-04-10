@@ -345,17 +345,21 @@ img {
     display: none;
 }
 
-#attachmentEditor {
+.modal.fullscreen {
     --width: calc(100vw - 20px);
     width: var(--width);
-    height: calc(100vh - 20px - env(safe-area-inset-top));
-    gap: 10px;
+    height: calc(100vh - 20px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
     top: calc(10px + env(safe-area-inset-top));
-    padding: 0;
     max-height: unset;
+    box-sizing: border-box;
+}
+
+#attachmentEditor {
+    gap: 10px;
+    padding: 0;
     border-radius: 0;
-    overflow: unset;
     background-color: transparent;
+    box-shadow: none;
 }
 
 #attachmentEditor .attachmentEditor {
