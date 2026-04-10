@@ -348,9 +348,9 @@ img {
 #attachmentEditor {
     --width: calc(100vw - 20px);
     width: var(--width);
-    height: calc(100vh - 20px);
+    height: calc(100vh - 20px - env(safe-area-inset-top));
     gap: 10px;
-    top: 10px;
+    top: calc(10px + env(safe-area-inset-top));
     padding: 0;
     max-height: unset;
     border-radius: 0;

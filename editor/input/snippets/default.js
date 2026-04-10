@@ -281,7 +281,7 @@ class DefaultSnippets {
             { from: "norm", to: "\\lvert ${0} \\rvert ${1}", in: "mA", priority: 1 },
             { from: "Norm", to: "\\lVert ${0} \\rVert ${1}", in: "mA", priority: 1 },
             { from: "ceil", to: "\\lceil ${0} \\rceil ${1}", in: "mA" },
-            { from: "fl\\inftyr", to: "\\lfloor ${0} \\rfloor ${1}", in: "mA", priority: 3 },
+            { from: "fl\\inftyr", to: "\\lfloor ${0} \\rfloor ${1}", in: "mA", priority: 4 },
             // { from: "mod", to: "|${0}|${1}", in: "mA" },
             // { from: "(", to: "(${VISUAL})", in: "mA" },
             // { from: "[", to: "[${VISUAL}]", in: "mA" },
