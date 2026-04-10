@@ -128,11 +128,11 @@ class UI {
                 let [x1, y1] = [e.touches[0].clientX, e.touches[0].clientY];
                 if (x1 - x0 > 80 && Math.abs(y1 - y0) < 40) {
                     this.touchStart = undefined;
-                    this.openModal(window.state.filePicker);
+                    this.openModal(this.filePicker);
                 }
                 else if (x1 - x0 < -80 && Math.abs(y1 - y0) < 40) {
                     this.touchStart = undefined;
-                    this.openModal(window.state.commandPalette);
+                    this.openModal(this.commandPalette);
                 }
             }
         })

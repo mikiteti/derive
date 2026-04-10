@@ -279,7 +279,7 @@ class State {
             .map(e => e.item);
     }
 
-    handleFuzzySearch(modal = this.filePicker, array = modal.entries) {
+    handleFuzzySearch(modal = this.UI.filePicker, array = modal.entries) {
         let matches = this.fuzzyFind(modal.querySelector("input").value, array).map(e => e.id);
         let entries = modal.querySelector(".list").children;
         let activeDone = false;
