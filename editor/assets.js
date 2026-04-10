@@ -375,11 +375,14 @@ const exportToMD = async (editor = window.editor) => {
     return content;
 }
 
-const isMac = navigator.platform.toUpperCase().includes("MAC");
+let platform;
+if (navigator.platform.toUpperCase().includes("MAC")) platform = "mac";
+if (navigator.platform.toUpperCase().includes("WIN")) platform = "windows";
+
 const key = {
-    metaKey: (e) => isMac ? e.metaKey : e.ctrlKey,
+    metaKey: (e) => platform == "mac" ? e.metaKey : e.ctrlKey,
     altKey: (e) => e.altKey,
-    ctrlKey: (e) => isMac ? e.ctrlKey : e.metaKey,
+    ctrlKey: (e) => platform == "mac" ? e.ctrlKey : e.metaKey,
     shiftKey: (e) => e.shiftKey,
 };
 
@@ -466,12 +469,12 @@ const _parseHotkey = (hotkey) => {
     for (let part of parts) {
         // modifier
         if (["M", "A", "C", "S"].includes(part)) {
-            result.push(isMac ? macMap[part] : winMap[part]);
+            result.push(platform == "mac" ? macMap[part] : winMap[part]);
             continue;
         }
 
         // key
-        const key = isMac
+        const key = platform == "mac"
             ? (keyMapMac[part] || part)
             : (keyMapWin[part] || part);
 
@@ -482,7 +485,8 @@ const _parseHotkey = (hotkey) => {
 }
 
 const parseHotkey = (hotkey) => {
+    if (platform !== "mac" && platform !== "windows") return "";
     return Array.isArray(hotkey) ? hotkey.map(e => _parseHotkey(e)).join(", ") : _parseHotkey(hotkey);
 }
 
-export { nodeSizes, checkTreeStructure, getColumnAt, findXIndicesInLine, getVisualLineAt, exportFile, nodeAt, exportToMD, isMac, key, saveState, getUrl, estimateHeight, measureHeight, isLineInViewport, getViewportMargins, nodeInLineAtColumn, snapshotCarets, parseHotkey };
+export { nodeSizes, checkTreeStructure, getColumnAt, findXIndicesInLine, getVisualLineAt, exportFile, nodeAt, exportToMD, key, saveState, getUrl, estimateHeight, measureHeight, isLineInViewport, getViewportMargins, nodeInLineAtColumn, snapshotCarets, parseHotkey };
