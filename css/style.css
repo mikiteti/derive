@@ -348,7 +348,7 @@ img {
 .modal.fullscreen {
     --width: calc(100vw - 20px);
     width: var(--width);
-    height: calc(100vh - 20px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    height: calc(100vh - 20px - env(safe-area-inset-top, 0) - env(safe-area-inset-bottom, 0));
     top: calc(10px + env(safe-area-inset-top));
     max-height: unset;
     box-sizing: border-box;
