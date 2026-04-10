@@ -71,14 +71,16 @@ class AttachmentEditor {
     async finishEditing() {
         this.wrapper.classList.remove("editing");
         this.wrapper.querySelector(".editButton").innerHTML = "Edit";
-        const state = await this.getState();
         const preview = await this.getPreview();
-        await window.state.sendRequest("update_attachment", {
-            method: 'POST',
-            body: JSON.stringify({ content: JSON.stringify(state), preview, url: this.url }),
-            headers: { "Content-Type": "application/json" },
-            credentials: 'include'
-        });
+        if (window.state.editor.interactive) {
+            const state = await this.getState();
+            await window.state.sendRequest("update_attachment", {
+                method: 'POST',
+                body: JSON.stringify({ content: JSON.stringify(state), preview, url: this.url }),
+                headers: { "Content-Type": "application/json" },
+                credentials: 'include'
+            });
+        }
 
         let img = this.wrapper.querySelector("img");
         const blob = new Blob([preview], { type: 'image/svg+xml' });
